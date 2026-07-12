@@ -101,7 +101,7 @@ export function Nav() {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/50 bg-white/25 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.7)] backdrop-blur-md transition-all duration-300 hover:scale-105 lg:hidden ${GLASS_PILL_HOVER}`}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift lg:hidden"
             aria-label="Open menu"
             aria-expanded={open}
           >
