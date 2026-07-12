@@ -61,10 +61,10 @@ export function Hero() {
         >
           <Link
             href="/contact#email"
-            className="group inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-[2.1rem] py-[1.2rem] text-[1.05rem] font-semibold text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
+            className="group inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-[1.26rem] py-[0.72rem] text-[0.7875rem] font-semibold text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift sm:px-[2.1rem] sm:py-[1.2rem] sm:text-[1.05rem]"
           >
             {hero.ctaPrimary}
-            <ArrowUpRight className="h-[1.2rem] w-[1.2rem] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <ArrowUpRight className="h-[0.9rem] w-[0.9rem] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:h-[1.2rem] sm:w-[1.2rem]" />
           </Link>
         </motion.div>
 

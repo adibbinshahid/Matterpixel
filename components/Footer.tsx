@@ -71,27 +71,27 @@ export function Footer() {
               </a>
               <span className="text-sm text-paper/80">{footer.contact.location}</span>
             </div>
-          </div>
-        </div>
 
-        <div className="flex flex-col items-center gap-3">
-          <span className="label-eyebrow !text-paper/70">Follow</span>
-          <div className="flex items-center gap-3">
-            {footer.socials.map((s) => {
-              const Icon = SOCIAL_ICONS[s.label];
-              return (
-                <a
-                  key={s.href}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={s.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-paper/10 text-paper transition-all duration-300 hover:scale-110 hover:bg-paper/20"
-                >
-                  <Icon className="h-4 w-4" />
-                </a>
-              );
-            })}
+            <div className="flex flex-col gap-3">
+              <span className="label-eyebrow !text-paper/70">Follow</span>
+              <div className="flex items-center gap-3">
+                {footer.socials.map((s) => {
+                  const Icon = SOCIAL_ICONS[s.label];
+                  return (
+                    <a
+                      key={s.href}
+                      href={s.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={s.label}
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-paper/10 text-paper transition-all duration-300 hover:scale-110 hover:bg-paper/20"
+                    >
+                      <Icon className="h-4 w-4" />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
