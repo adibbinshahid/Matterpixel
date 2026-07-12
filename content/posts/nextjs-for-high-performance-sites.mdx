@@ -1,0 +1,30 @@
+---
+title: "Next.js for High-Performance Sites"
+excerpt: "Why we build almost everything on Next.js App Router — and the specific features that make the performance budget achievable."
+date: "2026-02-03"
+tag: "Engineering"
+---
+
+We build almost everything on Next.js App Router. Not because it's trendy — because the specific set of features it ships map directly onto the performance budget every project has to hit.
+
+## Server Components change the default
+
+App Router's default is a Server Component: it renders on the server, ships zero JavaScript to the client unless you explicitly opt into `"use client"`. That's a meaningful default-flip from the previous era of React, where everything shipped client-side JS whether it needed interactivity or not.
+
+In practice, this means a marketing page built mostly of static content — headings, copy, images — costs almost nothing on the wire. The interactive pieces (a form, a canvas, a cursor effect) are the *exception* you opt into, not the baseline.
+
+## Streaming and partial rendering
+
+`loading.tsx` and `<Suspense>` boundaries let slow data fetches stream in without blocking the rest of the page. A dashboard that needs a slow database query for one widget doesn't have to hold the entire page hostage — the shell paints immediately, the widget fills in when it's ready.
+
+## Static generation where it counts
+
+Content that doesn't change per-request — case studies, service pages, blog posts — gets fully statically generated at build time via `generateStaticParams`. That means the response for those pages is a pre-built HTML file served from the edge, not a server computing a response on every request. It's the fastest possible response short of a static file, because it *is* a static file.
+
+## The image and font primitives aren't optional extras
+
+`next/image` handles responsive sizing, format negotiation (AVIF/WebP), and lazy-loading out of the box — the kind of thing that used to require a manual pipeline. `next/font` self-hosts and preloads fonts, eliminating the render-blocking font request to a third party. Both are "on by default" wins that show up directly in Lighthouse.
+
+## Where we still reach for something else
+
+Next.js isn't the answer to everything. Complex, deeply interactive canvas work (our own pixel-field and pixel-resolve effects included) still needs careful, hand-tuned client-side code — Next.js just gets out of the way and lets you code-split it so it only loads when needed. The framework's job is to make the *default* path fast; your job is to not undo that with the interactive 10% of the page.

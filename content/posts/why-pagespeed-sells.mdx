@@ -1,0 +1,31 @@
+---
+title: "Why PageSpeed Sells"
+excerpt: "A 90+ Lighthouse score isn't a vanity metric — it's a conversion lever most agencies quietly ignore. Here's the actual mechanism."
+date: "2026-01-12"
+tag: "Performance"
+---
+
+Most agencies treat performance as a checkbox: run Lighthouse once before launch, screenshot the score for the deck, move on. That's backwards. Performance isn't a report card — it's a conversion lever, and it compounds every single day the site is live.
+
+## The mechanism, not the metric
+
+A 100ms delay in load time can measurably drop conversion. This isn't folklore — it's been measured repeatedly by companies with enough traffic to isolate the variable. The mechanism is simple: every extra second between a click and a usable page is a second where the visitor's intent decays. Mobile makes this worse — flaky connections turn a "fast enough on my office wifi" site into a multi-second wait on a real device in the field.
+
+Google's Core Web Vitals (LCP, INP, CLS) aren't arbitrary either. They're proxies for three real user complaints:
+
+- **LCP (Largest Contentful Paint)** — "why is this taking so long to show me anything?"
+- **INP (Interaction to Next Paint)** — "why does tapping this button feel broken?"
+- **CLS (Cumulative Layout Shift)** — "why did the button move right as I tapped it?"
+
+Fix the metric, and you've fixed the actual complaint. That's why we treat 90+ mobile PageSpeed as a floor, not a stretch goal.
+
+## Where the score actually comes from
+
+A high score isn't a plugin you install after the fact — it's a sequence of decisions made throughout the build:
+
+1. **Image strategy first.** Every raster image ships as AVIF/WebP through `next/image`, sized for its actual container, with explicit dimensions so nothing shifts on load.
+2. **Ship less JavaScript.** Heavy interactive pieces (canvases, complex animation) are code-split and lazy-loaded, only paying their cost when they're actually needed — and paused when they're off-screen.
+3. **Respect the font.** Self-hosted or `next/font`-loaded type, preloaded, with `font-display: swap` so text never sits invisible waiting on a webfont.
+4. **Measure on a mid-tier device, not your laptop.** A site that feels instant on a 2024 MacBook can be unusable on the actual mid-range Android phone most of the world browses on.
+
+None of this is exotic. It's just discipline applied consistently, from the first commit — which is exactly the point: performance is cheap to build in and expensive to retrofit.
