@@ -20,6 +20,9 @@ const HOLD_MS = 900;
 const EASE = [0.22, 1, 0.36, 1] as const;
 const MIN_PX = 22;
 const SHRINK = 0.8; // 20% smaller than the fitted size, per request
+const MOBILE_BREAKPOINT = 640;
+
+type Metrics = { mobileSizes: number[]; mobileMax: number; desktop: number; isMobile: boolean };
 
 /** Trust strip between the hero subline and CTAs — one point at a time, on a loop. */
 export function FeatureStrip() {
@@ -28,7 +31,7 @@ export function FeatureStrip() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
   const [inView, setInView] = useState(false);
-  const [fontSizePx, setFontSizePx] = useState(0);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -46,9 +49,13 @@ export function FeatureStrip() {
     return () => clearTimeout(t);
   }, [index, reduced, inView]);
 
-  // One uniform font size for every phrase — measured with an offscreen
-  // canvas against the actual widest phrase (real glyph metrics, not a
-  // char-count guess), so nothing ever clips, then shrunk 20% for margin.
+  // Desktop: one uniform size fitted to the widest phrase (measured with an
+  // offscreen canvas — real glyph metrics, not a char-count guess) so
+  // nothing clips and rotation never jumps in size.
+  // Mobile: each phrase gets its OWN size, fitted to fill the strip
+  // edge-to-edge on its own — a short phrase isn't held small by a long
+  // one — while the container height is pinned to the largest of them so
+  // the CTA below never shifts as phrases rotate.
   useLayoutEffect(() => {
     const el = containerRef.current;
     const canvas = document.createElement("canvas");
@@ -61,14 +68,23 @@ export function FeatureStrip() {
       const bodyFont = getComputedStyle(document.body).fontFamily;
       const REF = 100;
       ctx.font = `700 ${REF}px ${bodyFont}`;
-      const widest = Math.max(...FEATURES.map((f) => ctx.measureText(f.toUpperCase()).width));
+      const widths = FEATURES.map((f) => ctx.measureText(f.toUpperCase()).width);
+      const widest = Math.max(...widths);
       const available = Math.max(0, cw - 32);
-      const fit = widest > 0 ? (available / widest) * REF : REF;
-      const vwCeiling = Math.min(108, Math.max(MIN_PX, window.innerWidth * 0.07));
-      const raw = Math.min(fit, vwCeiling);
-      // No MIN_PX floor here — fit is the hard guarantee against clipping;
-      // forcing a minimum size can push a long phrase past the container.
-      setFontSizePx(raw * SHRINK);
+      const vw = window.innerWidth;
+      const isMobile = vw < MOBILE_BREAKPOINT;
+
+      const desktopFit = widest > 0 ? (available / widest) * REF : REF;
+      const desktopVwCeiling = Math.min(108, Math.max(MIN_PX, vw * 0.07));
+      const desktop = Math.min(desktopFit, desktopVwCeiling) * SHRINK;
+
+      const mobileCeiling = Math.min(64, vw * 0.16);
+      const mobileSizes = widths.map((w) => {
+        const fit = w > 0 ? (available / w) * REF : REF;
+        return Math.min(fit, mobileCeiling) * SHRINK;
+      });
+
+      setMetrics({ mobileSizes, mobileMax: Math.max(...mobileSizes), desktop, isMobile });
     }
 
     update();
@@ -80,6 +96,11 @@ export function FeatureStrip() {
       window.removeEventListener("resize", update);
     };
   }, []);
+
+  const fontSizePx = metrics ? (metrics.isMobile ? metrics.mobileSizes[index] : metrics.desktop) : 0;
+  const containerMinHeight = metrics
+    ? (metrics.isMobile ? metrics.mobileMax : metrics.desktop) * 1.3
+    : undefined;
 
   return (
     <div ref={wrapRef} className="flex w-full flex-col items-center gap-[10px]">
@@ -96,7 +117,7 @@ export function FeatureStrip() {
       <div
         ref={containerRef}
         className="relative flex w-full items-center justify-center px-4"
-        style={{ minHeight: fontSizePx ? fontSizePx * 1.3 : undefined }}
+        style={{ minHeight: containerMinHeight }}
         role="status"
         aria-live="polite"
       >
