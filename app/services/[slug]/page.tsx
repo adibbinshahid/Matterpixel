@@ -84,7 +84,7 @@ export default async function ServiceDetailPage({
             </p>
             <Link
               href="/contact"
-              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-6 py-3.5 text-sm font-semibold text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
+              className="font-avenir group mt-8 inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-6 py-3.5 text-sm text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
             >
               Start a Project
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -134,7 +134,7 @@ export default async function ServiceDetailPage({
               {relatedProjects.map((project, i) => (
                 <RevealItem key={project.slug}>
                   <Link
-                    href={`/work/${project.slug}`}
+                    href={`/projects/${project.slug}`}
                     className="group block transition-transform duration-300 hover:scale-[1.02]"
                   >
                     <PixelResolve trigger="view" className="block">
@@ -176,7 +176,7 @@ export default async function ServiceDetailPage({
             </h2>
             <Link
               href="/contact"
-              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm font-semibold text-ink transition-all duration-300 hover:scale-105 hover:bg-ink hover:text-paper"
+              className="font-avenir group mt-8 inline-flex items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink transition-all duration-300 hover:scale-105 hover:bg-ink hover:text-paper"
             >
               Start a Project
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

@@ -28,7 +28,7 @@ export function WorkGrid() {
             role="tab"
             aria-selected={active === tag}
             onClick={() => setActive(tag)}
-            className={`rounded-full border px-4 py-2 text-sm font-semibold transition-all duration-300 hover:scale-105 ${
+            className={`font-avenir rounded-full border px-4 py-2 text-sm transition-all duration-300 hover:scale-105 ${
               active === tag
                 ? "border-blue bg-blue text-paper"
                 : "border-line bg-paper text-ink-soft hover:border-blue hover:text-ink"
@@ -81,7 +81,7 @@ export function WorkGrid() {
 
                   <div className="mt-6 flex flex-wrap items-center gap-6">
                     <Link
-                      href={`/work/${project.slug}`}
+                      href={`/projects/${project.slug}`}
                       className="group inline-flex items-center gap-2 text-sm font-semibold text-ink transition-transform duration-300 hover:scale-105"
                     >
                       View Case Study

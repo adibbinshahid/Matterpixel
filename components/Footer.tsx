@@ -12,7 +12,7 @@ const SOCIAL_ICONS: Record<string, typeof FaFacebook> = {
 };
 
 const contactButton =
-  "inline-flex w-fit items-center gap-2 rounded-full bg-paper/10 px-4 py-2 text-sm text-paper transition-all duration-300 hover:scale-105 hover:bg-paper/20";
+  "font-avenir inline-flex w-fit items-center gap-2 rounded-full bg-paper/10 px-4 py-2 text-sm text-paper transition-all duration-300 hover:scale-105 hover:bg-paper/20";
 
 export function Footer() {
   const waNumber = footer.contact.whatsapp.replace(/[^\d]/g, "");
@@ -58,7 +58,7 @@ export function Footer() {
                 className={contactButton}
               >
                 <SiWhatsapp className="h-4 w-4" />
-                {footer.contact.whatsapp}
+                Contact through WhatsApp
               </a>
               <a
                 href={`https://t.me/${footer.contact.telegram}`}
@@ -67,7 +67,7 @@ export function Footer() {
                 className={contactButton}
               >
                 <SiTelegram className="h-4 w-4" />
-                {footer.contact.telegram}
+                Contact via Telegram
               </a>
               <span className="text-sm text-paper/80">{footer.contact.location}</span>
             </div>

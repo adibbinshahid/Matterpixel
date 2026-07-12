@@ -24,11 +24,11 @@ export async function generateMetadata({
   return {
     title: project.name,
     description: project.summary,
-    alternates: { canonical: `/work/${project.slug}` },
+    alternates: { canonical: `/projects/${project.slug}` },
     openGraph: {
       title: `${project.name} — Matterpixel`,
       description: project.summary,
-      url: `${siteUrl}/work/${project.slug}`,
+      url: `${siteUrl}/projects/${project.slug}`,
       type: "article",
     },
   };
@@ -54,7 +54,7 @@ export default async function CaseStudyPage({
     "@type": "CreativeWork",
     name: project.name,
     description: project.summary,
-    url: `${siteUrl}/work/${project.slug}`,
+    url: `${siteUrl}/projects/${project.slug}`,
     creator: { "@type": "Organization", name: "Matterpixel" },
   };
 
@@ -69,7 +69,7 @@ export default async function CaseStudyPage({
         <div className="mx-auto max-w-[1400px]">
           <Reveal>
             <Link
-              href="/work"
+              href="/projects"
               className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-ink-soft transition-all duration-300 hover:scale-105 hover:text-ink"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -88,13 +88,13 @@ export default async function CaseStudyPage({
                 href={project.liveDemoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-6 py-3.5 text-sm font-semibold text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
+                className="font-avenir group inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-6 py-3.5 text-sm text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
               >
                 Live Demo
                 <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </a>
               <Link
-                href={`/work/${next.slug}`}
+                href={`/projects/${next.slug}`}
                 className="group inline-flex items-center gap-2 text-sm font-semibold text-ink transition-transform duration-300 hover:scale-105"
               >
                 Next Project: {next.name}
@@ -209,7 +209,7 @@ export default async function CaseStudyPage({
             </h2>
             <Link
               href="/contact"
-              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-7 py-4 text-sm font-semibold text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
+              className="font-avenir group mt-8 inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-7 py-4 text-sm text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
             >
               Start a Project
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

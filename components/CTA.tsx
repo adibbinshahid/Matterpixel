@@ -56,7 +56,7 @@ export function CTA() {
               href={bookingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-4 text-sm font-semibold text-paper transition-all duration-300 hover:scale-105 hover:bg-blue"
+              className="font-avenir group inline-flex items-center justify-center gap-2 rounded-full bg-ink px-6 py-4 text-sm text-paper transition-all duration-300 hover:scale-105 hover:bg-blue"
             >
               Book a 15-min call
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

@@ -21,8 +21,8 @@ npm run lint
 | Route | Source | Notes |
 |---|---|---|
 | `/` | `app/page.tsx` | Trimmed funnel: hero → proof strip → services → work → playground → process → stats → CTA. |
-| `/work` | `app/work/page.tsx` | Filterable grid of demo builds (`components/WorkGrid.tsx`). |
-| `/work/[slug]` | `app/work/[slug]/page.tsx` | Case study template (overview, approach, tech stack, highlights, gallery, related services, CTA). SSG via `generateStaticParams`. |
+| `/projects` | `app/projects/page.tsx` | Filterable grid of demo builds (`components/WorkGrid.tsx`). |
+| `/projects/[slug]` | `app/projects/[slug]/page.tsx` | Case study template (overview, approach, tech stack, highlights, gallery, related services, CTA). SSG via `generateStaticParams`. |
 | `/services` | `app/services/page.tsx` | Overview of all 6 services. |
 | `/services/[slug]` | `app/services/[slug]/page.tsx` | Service detail template (what's included, related demo builds, FAQ accordion, CTA). SSG. |
 | `/about` | `app/about/page.tsx` | Founder credibility + founding-client offer. |
@@ -42,7 +42,7 @@ across components:
 - **`content/projects.ts`** — the 4 demo builds (`Project[]`). Add a
   new case study by appending an object here (slug, category, accent,
   summary, approach, techStack, highlights, `liveDemoUrl`,
-  `relatedServiceSlugs`) — `/work` and `/work/[slug]` pick it up
+  `relatedServiceSlugs`) — `/projects` and `/projects/[slug]` pick it up
   automatically, as does the sitemap.
 - **`content/services.ts`** — the 6 services (`Service[]`), including
   each one's FAQ. Add a new service the same way; it'll appear on
@@ -144,7 +144,7 @@ currently only `console.log`s it — the send step is stubbed with a
   block for `position: fixed` descendants and break viewport-relative
   positioning (e.g. the nav). Keep any future transition work on
   `clip-path`/`opacity` for the same reason.
-- All content routes (`/work/*`, `/services/*`, `/insights/*`) are
+- All content routes (`/projects/*`, `/services/*`, `/insights/*`) are
   statically generated via `generateStaticParams`.
 - Run `npm run build` and check the route size table, then a Lighthouse
   pass (mobile, throttled) before shipping — budget is 90+ performance /

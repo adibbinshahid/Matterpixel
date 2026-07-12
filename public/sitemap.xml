@@ -6,7 +6,7 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/work</loc>
+    <loc>https://matterpixel.com/projects</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -31,22 +31,22 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/work/scentora</loc>
+    <loc>https://matterpixel.com/projects/scentora</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/work/mindwell</loc>
+    <loc>https://matterpixel.com/projects/mindwell</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/work/lcinco-pizza</loc>
+    <loc>https://matterpixel.com/projects/lcinco-pizza</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/work/insightflow</loc>
+    <loc>https://matterpixel.com/projects/insightflow</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

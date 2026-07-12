@@ -76,8 +76,8 @@ export function Nav() {
                 )}
                 <Link
                   href={l.href}
-                  className={`relative inline-block rounded-full px-4 py-2 text-sm transition-colors duration-300 ${
-                    active ? "font-bold text-magenta" : `font-medium text-ink-soft hover:text-ink ${GLASS_PILL_HOVER}`
+                  className={`font-avenir relative inline-block rounded-full px-4 py-2 text-sm transition-colors duration-300 ${
+                    active ? "text-magenta" : `text-ink-soft hover:text-ink ${GLASS_PILL_HOVER}`
                   }`}
                 >
                   {l.label}
@@ -91,7 +91,7 @@ export function Nav() {
           <div className="hidden lg:block">
             <Link
               href="/contact#email"
-              className="group inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-5 py-2.5 text-sm font-semibold text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
+              className="font-avenir group inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-5 py-2.5 text-sm text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
             >
               {nav.cta}
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -152,7 +152,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
                 <Link
                   href={l.href}
                   onClick={onClose}
-                  className="block origin-left py-3 text-4xl font-bold tracking-tight text-ink transition-transform duration-300 hover:scale-105"
+                  className="font-avenir block origin-left py-3 text-4xl tracking-tight text-ink transition-transform duration-300 hover:scale-105"
                 >
                   {l.label}
                 </Link>
@@ -167,7 +167,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
               <Link
                 href="/contact#email"
                 onClick={onClose}
-                className="inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-5 py-3 text-sm font-semibold text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
+                className="font-avenir inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-5 py-3 text-sm text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
               >
                 {nav.cta}
                 <ArrowUpRight className="h-4 w-4" />

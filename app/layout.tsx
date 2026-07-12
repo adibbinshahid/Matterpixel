@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter_Tight } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
 import { MotionConfig } from "motion/react";
@@ -15,6 +16,15 @@ const interTight = Inter_Tight({
   variable: "--font-inter-tight",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+// Avenir has no dedicated "Bold" cut — Heavy is the standard stand-in
+// (Avenir Next is the only variant with a true Bold weight).
+const avenir = localFont({
+  src: "../public/fonts/Avenir-Heavy.ttf",
+  variable: "--font-avenir",
+  weight: "700",
   display: "swap",
 });
 
@@ -90,7 +100,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${interTight.variable} antialiased`}>
+    <html lang="en" className={`${interTight.variable} ${avenir.variable} antialiased`}>
       <body className="flex min-h-screen flex-col bg-paper text-ink" suppressHydrationWarning>
         <script
           type="application/ld+json"
@@ -104,7 +114,7 @@ export default function RootLayout({
           this session; otherwise Loader's own useLayoutEffect hides it
           the instant it takes over, handing off with zero gap either way.
         */}
-        <div id="mp-preload-mask" className="fixed inset-0 z-[300] bg-paper" />
+        <div id="mp-preload-mask" className="fixed inset-0 z-[300] bg-paper" suppressHydrationWarning />
         <script
           dangerouslySetInnerHTML={{
             __html: `try{if(sessionStorage.getItem('mp-loader-seen')){document.getElementById('mp-preload-mask').style.display='none';}}catch(e){}`,

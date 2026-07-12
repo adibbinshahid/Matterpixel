@@ -5,6 +5,7 @@ import Lenis from "lenis";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useReducedMotion } from "@/lib/useReducedMotion";
+import { setLenis } from "@/lib/lenisInstance";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -27,6 +28,7 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       wheelMultiplier: 1.2,
     });
     lenisRef.current = lenis;
+    setLenis(lenis);
     document.documentElement.classList.add("lenis");
 
     lenis.on("scroll", ScrollTrigger.update);
@@ -39,6 +41,7 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       gsap.ticker.remove(tick);
       lenis.destroy();
       lenisRef.current = null;
+      setLenis(null);
       document.documentElement.classList.remove("lenis");
     };
   }, [reduced]);

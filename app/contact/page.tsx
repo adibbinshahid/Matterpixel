@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CTA } from "@/components/CTA";
+import { GlobeHero } from "@/components/GlobeHero";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -9,5 +10,10 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
-  return <CTA />;
+  return (
+    <>
+      <GlobeHero />
+      <CTA />
+    </>
+  );
 }

@@ -114,7 +114,7 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="group relative inline-flex items-center gap-2 bg-ink px-8 py-4 text-sm font-semibold text-paper transition-all duration-300 hover:scale-105 hover:bg-blue disabled:opacity-60 disabled:hover:scale-100"
+          className="font-avenir group relative inline-flex items-center gap-2 bg-ink px-8 py-4 text-sm text-paper transition-all duration-300 hover:scale-105 hover:bg-blue disabled:opacity-60 disabled:hover:scale-100"
         >
           {isSubmitting ? "Sending…" : "Send it over"}
           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />

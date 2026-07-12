@@ -125,6 +125,12 @@ body {
   }
 }
 
+/* Nav text and every button label — Avenir Bold (Heavy cut) per request */
+.font-avenir {
+  font-family: var(--font-avenir), sans-serif;
+  font-weight: 700;
+}
+
 /* Utility: uppercase tracked label, per typography spec §6 */
 .label-eyebrow {
   font-size: 0.75rem;

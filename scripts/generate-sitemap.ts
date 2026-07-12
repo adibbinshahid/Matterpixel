@@ -25,7 +25,7 @@ type UrlEntry = { loc: string; changefreq: string; priority: string; lastmod?: s
 function buildUrls(): UrlEntry[] {
   const staticRoutes: UrlEntry[] = [
     { loc: "", changefreq: "monthly", priority: "1.0" },
-    { loc: "/work", changefreq: "monthly", priority: "0.8" },
+    { loc: "/projects", changefreq: "monthly", priority: "0.8" },
     { loc: "/services", changefreq: "monthly", priority: "0.8" },
     { loc: "/about", changefreq: "monthly", priority: "0.8" },
     { loc: "/insights", changefreq: "weekly", priority: "0.8" },
@@ -33,7 +33,7 @@ function buildUrls(): UrlEntry[] {
   ];
 
   const projectRoutes: UrlEntry[] = projects.map((p) => ({
-    loc: `/work/${p.slug}`,
+    loc: `/projects/${p.slug}`,
     changefreq: "monthly",
     priority: "0.7",
   }));
