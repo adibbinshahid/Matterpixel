@@ -95,6 +95,20 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
+        {/*
+          Static, non-interactive mask — present in the raw server HTML so
+          the page can never flash visible before React hydrates. A
+          blocking inline script (runs synchronously during parse, before
+          first paint) hides it immediately if the intro was already seen
+          this session; otherwise Loader's own useLayoutEffect hides it
+          the instant it takes over, handing off with zero gap either way.
+        */}
+        <div id="mp-preload-mask" className="fixed inset-0 z-[300] bg-paper" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(sessionStorage.getItem('mp-loader-seen')){document.getElementById('mp-preload-mask').style.display='none';}}catch(e){}`,
+          }}
+        />
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded focus:bg-blue focus:px-4 focus:py-2 focus:text-paper"

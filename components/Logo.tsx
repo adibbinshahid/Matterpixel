@@ -10,15 +10,18 @@ import { cn } from "@/lib/utils";
 export function Logo({
   className,
   imgClassName = "h-8 w-auto",
+  imgId,
   priority = false,
 }: {
   className?: string;
   imgClassName?: string;
+  imgId?: string;
   priority?: boolean;
 }) {
   return (
     <span className={cn("inline-flex items-center", className)}>
       <Image
+        id={imgId}
         src="/logo.png"
         alt="Matterpixel"
         width={4920}

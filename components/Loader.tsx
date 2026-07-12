@@ -16,30 +16,77 @@ const BLOCKS: { x: number; y: number; w: number; h: number; color: "blue" | "mag
   { x: 80, y: 20, w: 20, h: 40, color: "magenta" },
 ];
 
+// The "M" icon's bounding box as a fraction of the full logo.png lockup
+// (measured from the source asset: icon spans x 361-1349, y 331-924 of a
+// 4920x1256 canvas) — lets us land on the icon's true center/size inside
+// the nav's rendered lockup, not a guessed offset.
+const ICON_WIDTH_FRAC = (1349 - 361) / 4920;
+const ICON_HEIGHT_FRAC = (924 - 331) / 1256;
+const ICON_CENTER_X_FRAC = 361 / 4920 + ICON_WIDTH_FRAC / 2;
+const ICON_CENTER_Y_FRAC = 331 / 1256 + ICON_HEIGHT_FRAC / 2;
+
+// Fly-easing tuned for a soft, premium deceleration into the landing spot.
+const FLY_EASE = [0.16, 1, 0.3, 1] as const;
+
+// Sequence timing (ms): blocks scatter in and settle, the assembled M
+// holds still so it actually registers, then it flies to the nav.
+const ASSEMBLE_MS = 700;
+const HOLD_MS = 125;
+const FLY_MS = 500;
+const TOTAL_MS = ASSEMBLE_MS + HOLD_MS + FLY_MS;
+const FLY_START_FRACTION = (ASSEMBLE_MS + HOLD_MS) / TOTAL_MS;
+
+function hidePreloadMask() {
+  const mask = document.getElementById("mp-preload-mask");
+  if (mask) mask.style.display = "none";
+}
+
 /**
- * ~1.2s intro: pixels scatter in and assemble the M, then fly toward the
- * nav mark as the paper overlay wipes away. Skipped on repeat visits in
- * the same tab (sessionStorage) and reduced to an instant fade under
- * prefers-reduced-motion.
+ * Intro: pixels scatter in and assemble the M, hold for a beat, then fly
+ * to the exact on-screen position/size of the nav bar's logo mark
+ * (measured live via its DOM rect, not a guessed offset) as the paper
+ * overlay wipes away. A static mask (rendered in raw HTML, see layout.tsx)
+ * covers the page until this component's first effect runs, so there's
+ * never a flash of the underlying site either way. Skipped on repeat
+ * visits in the same tab (sessionStorage) and reduced to an instant fade
+ * under prefers-reduced-motion.
  */
 export function Loader() {
   const [phase, setPhase] = useState<"idle" | "show" | "done">("idle");
-  const [flyTarget, setFlyTarget] = useState({ x: 0, y: 0 });
+  const [fly, setFly] = useState({ x: 0, y: 0, scale: 0.3 });
   const reduced = useReducedMotion();
 
   useLayoutEffect(() => {
+    hidePreloadMask();
+
     const seen = sessionStorage.getItem("mp-loader-seen");
     if (seen) {
       setPhase("done");
       return;
     }
-    setFlyTarget({
-      x: -(window.innerWidth / 2 - 32),
-      y: -(window.innerHeight / 2 - 24),
-    });
+
+    const navMark = document.getElementById("nav-logo-mark");
+    const rect = navMark?.getBoundingClientRect();
+    const isSmUp = window.innerWidth >= 640;
+    const loaderMarkPx = isSmUp ? 128 : 96; // matches h-24 / sm:h-32
+
+    if (rect && rect.width > 0) {
+      const iconCenterX = rect.left + ICON_CENTER_X_FRAC * rect.width;
+      const iconCenterY = rect.top + ICON_CENTER_Y_FRAC * rect.height;
+      const iconHeightPx = ICON_HEIGHT_FRAC * rect.height;
+      setFly({
+        x: iconCenterX - window.innerWidth / 2,
+        y: iconCenterY - window.innerHeight / 2,
+        scale: iconHeightPx / loaderMarkPx,
+      });
+    } else {
+      // Fallback if the nav mark isn't found for some reason.
+      setFly({ x: -(window.innerWidth / 2 - 32), y: -(window.innerHeight / 2 - 24), scale: 0.3 });
+    }
+
     setPhase("show");
     sessionStorage.setItem("mp-loader-seen", "1");
-    const t = setTimeout(() => setPhase("done"), reduced ? 350 : 1150);
+    const t = setTimeout(() => setPhase("done"), reduced ? 350 : TOTAL_MS);
     return () => clearTimeout(t);
   }, [reduced]);
 
@@ -57,8 +104,12 @@ export function Loader() {
           <motion.div
             className="relative h-24 sm:h-32"
             style={{ aspectRatio: `${W} / ${H}` }}
-            animate={{ scale: [1, 1, 0.3], x: [0, 0, flyTarget.x], y: [0, 0, flyTarget.y] }}
-            transition={{ duration: 1.15, times: [0, 0.62, 1], ease: EASE }}
+            animate={{ scale: [1, 1, fly.scale], x: [0, 0, fly.x], y: [0, 0, fly.y] }}
+            transition={{
+              duration: TOTAL_MS / 1000,
+              times: [0, FLY_START_FRACTION, 1],
+              ease: ["linear", FLY_EASE],
+            }}
           >
             {BLOCKS.map((b, i) => (
               <motion.div

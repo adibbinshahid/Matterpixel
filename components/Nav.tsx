@@ -56,7 +56,7 @@ export function Nav() {
           href="/"
           className="flex items-center transition-transform duration-300 hover:scale-105"
         >
-          <Logo priority imgClassName="h-[3.84rem] w-auto" />
+          <Logo priority imgId="nav-logo-mark" imgClassName="h-[3.84rem] w-auto" />
         </Link>
 
         <ul className="hidden items-center gap-5 lg:flex">
