@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter_Tight } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next";
 import { MotionConfig } from "motion/react";
 import { SmoothScrollProvider } from "@/components/SmoothScrollProvider";
 import { Loader } from "@/components/Loader";
@@ -127,6 +128,7 @@ export default function RootLayout({
             <Footer />
           </SmoothScrollProvider>
         </MotionConfig>
+        <Analytics />
       </body>
     </html>
   );
