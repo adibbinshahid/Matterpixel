@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowRight, Check } from "lucide-react";
 import { contactSchema, type ContactValues } from "@/lib/schema";
+import { services } from "@/content/services";
 import { cn, EASE } from "@/lib/utils";
 
 const BURST = Array.from({ length: 14 }, (_, i) => {
@@ -46,23 +47,23 @@ export function ContactForm() {
     <form
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="flex flex-col gap-5"
+      className="flex flex-col gap-3"
     >
-      <div className="grid gap-5 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field
-          label="Name"
-          error={errors.name?.message}
+          label="Full Name"
+          error={errors.fullName?.message}
           input={
             <input
-              {...register("name")}
+              {...register("fullName")}
               type="text"
               autoComplete="name"
-              aria-invalid={!!errors.name}
-              aria-describedby={errors.name ? "name-error" : undefined}
-              className={fieldClass(!!errors.name)}
+              aria-invalid={!!errors.fullName}
+              aria-describedby={errors.fullName ? "fullName-error" : undefined}
+              className={fieldClass(!!errors.fullName)}
             />
           }
-          errorId="name-error"
+          errorId="fullName-error"
         />
         <Field
           label="Email"
@@ -82,39 +83,64 @@ export function ContactForm() {
       </div>
 
       <Field
-        label="Company (optional)"
-        error={errors.company?.message}
+        label="WhatsApp Number"
+        error={errors.whatsapp?.message}
         input={
           <input
-            {...register("company")}
-            type="text"
-            autoComplete="organization"
-            className={fieldClass(!!errors.company)}
+            {...register("whatsapp")}
+            type="tel"
+            autoComplete="tel"
+            aria-invalid={!!errors.whatsapp}
+            aria-describedby={errors.whatsapp ? "whatsapp-error" : undefined}
+            className={fieldClass(!!errors.whatsapp)}
           />
         }
-        errorId="company-error"
+        errorId="whatsapp-error"
       />
+
+      <div className="flex flex-col gap-1.5 text-sm font-bold text-ink">
+        Service Types
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+          {services.map((s) => (
+            <label
+              key={s.slug}
+              className="flex cursor-pointer items-center gap-2 rounded-xl border border-ink-soft/30 bg-paper px-3 py-2 text-sm font-normal text-ink-soft transition-colors has-[:checked]:border-blue has-[:checked]:text-ink"
+            >
+              <input
+                {...register("serviceTypes")}
+                type="checkbox"
+                value={s.title}
+                className="h-4 w-4 shrink-0 accent-blue"
+              />
+              {s.title}
+            </label>
+          ))}
+        </div>
+        {errors.serviceTypes && (
+          <span className="text-xs font-semibold text-magenta">{errors.serviceTypes.message}</span>
+        )}
+      </div>
 
       <Field
-        label="What are you building?"
-        error={errors.message?.message}
+        label="Project Details"
+        error={errors.projectDetails?.message}
         input={
           <textarea
-            {...register("message")}
-            rows={4}
-            aria-invalid={!!errors.message}
-            aria-describedby={errors.message ? "message-error" : undefined}
-            className={fieldClass(!!errors.message)}
+            {...register("projectDetails")}
+            rows={2}
+            aria-invalid={!!errors.projectDetails}
+            aria-describedby={errors.projectDetails ? "projectDetails-error" : undefined}
+            className={fieldClass(!!errors.projectDetails)}
           />
         }
-        errorId="message-error"
+        errorId="projectDetails-error"
       />
 
-      <div className="relative mt-2 flex items-center gap-4">
+      <div className="relative mt-1 flex flex-col items-center gap-3">
         <button
           type="submit"
           disabled={isSubmitting}
-          className="font-avenir group relative inline-flex items-center gap-2 bg-ink px-8 py-4 text-sm text-paper transition-all duration-300 hover:scale-105 hover:bg-blue disabled:opacity-60 disabled:hover:scale-100"
+          className="font-avenir group relative inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-8 py-3.5 text-sm text-paper transition-all duration-300 hover:scale-[1.02] hover:bg-blue disabled:opacity-60 disabled:hover:scale-100"
         >
           {isSubmitting ? "Sending…" : "Send it over"}
           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -168,8 +194,8 @@ export function ContactForm() {
 
 function fieldClass(hasError: boolean) {
   return cn(
-    "w-full border-b bg-transparent py-2.5 text-ink outline-none transition-colors placeholder:text-ink-soft/50",
-    hasError ? "border-magenta" : "border-line focus:border-blue",
+    "w-full rounded-xl border bg-paper px-3 py-2.5 text-ink outline-none transition-colors placeholder:text-ink-soft/50",
+    hasError ? "border-magenta" : "border-ink-soft/30 focus:border-blue",
   );
 }
 
@@ -185,7 +211,7 @@ function Field({
   errorId: string;
 }) {
   return (
-    <label className="flex flex-col gap-2 text-sm font-medium text-ink-soft">
+    <label className="flex flex-col gap-1.5 text-sm font-bold text-ink">
       {label}
       {input}
       {error && (

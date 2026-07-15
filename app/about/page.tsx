@@ -31,7 +31,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="border-t border-line bg-grid px-6 py-20 sm:px-8 lg:px-12">
+      <section className="border-t border-line px-6 py-20 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-[1400px]">
           <Reveal>
             <p className="label-eyebrow mb-4">{founder.eyebrow}</p>

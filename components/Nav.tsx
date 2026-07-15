@@ -24,15 +24,7 @@ const GLASS_PILL_HOVER =
 
 export function Nav() {
   const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     document.documentElement.style.overflow = open ? "hidden" : "";
@@ -48,14 +40,9 @@ export function Nav() {
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 sm:px-6">
       <nav
-        className={`mx-auto flex w-full max-w-[1400px] items-center justify-between overflow-visible rounded-full border border-white/50 bg-gradient-to-b from-white/55 to-white/20 px-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8),0_8px_32px_-8px_rgba(22,22,28,0.18)] backdrop-blur-2xl backdrop-saturate-150 transition-[height] duration-300 sm:px-8 ${
-          scrolled ? "h-[3.84rem]" : "h-[4.992rem]"
-        }`}
+        className="mx-auto flex h-[4.992rem] w-full max-w-[1400px] items-center justify-between overflow-visible rounded-full border border-white/50 bg-gradient-to-b from-white/100 to-white/38 px-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.8),0_8px_32px_-8px_rgba(22,22,28,0.18)] backdrop-blur-[20px] backdrop-saturate-150 sm:px-8"
       >
-        <Link
-          href="/"
-          className="flex items-center transition-transform duration-300 hover:scale-105"
-        >
+        <Link href="/" className="flex items-center">
           <Logo priority imgId="nav-logo-mark" imgClassName="h-[3.84rem] w-auto" />
         </Link>
 
@@ -65,7 +52,7 @@ export function Nav() {
             return (
               <li
                 key={l.href}
-                className={`relative origin-center transition-transform duration-300 hover:scale-110 ${active ? "scale-110" : ""}`}
+                className={`relative origin-center transition-transform duration-300 ${active ? "scale-110" : ""}`}
               >
                 {active && (
                   <motion.span
@@ -76,7 +63,7 @@ export function Nav() {
                 )}
                 <Link
                   href={l.href}
-                  className={`font-avenir relative inline-block rounded-full px-4 py-2 text-sm transition-colors duration-300 ${
+                  className={`font-avenir relative inline-block rounded-full px-4 py-2 text-sm uppercase transition-colors duration-300 ${
                     active ? "text-magenta" : `text-ink-soft hover:text-ink ${GLASS_PILL_HOVER}`
                   }`}
                 >

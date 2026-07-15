@@ -70,7 +70,7 @@ export default async function ServiceDetailPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <section className="bg-grid px-6 pb-16 pt-32 sm:px-8 lg:px-12">
+      <section className="px-6 pb-16 pt-32 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-[1400px]">
           <Reveal>
             <p className="label-eyebrow mb-4">

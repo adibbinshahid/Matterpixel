@@ -33,11 +33,18 @@ export const hero = {
 };
 
 export const servicesIntro = {
-  eyebrow: "what we do",
-  heading: "End-to-end digital, engineered for growth.",
-  headingHighlight: "growth",
+  eyebrow: "Services",
+  headingLines: ["End-to-end solutions.", "Pixel-perfect execution.", "Real business impact."],
   engagementNote:
-    "Every engagement runs senior-led with fixed quotes and a clear process — no juniors, no scope surprises.",
+    "We partner with ambitious brands to design, build and grow digital experiences that drive measurable results.",
+};
+
+export const servicesCta = {
+  heading: "Ready to build something amazing together?",
+  headingHighlight: "together?",
+  body: "Let's create digital experiences that perform, convert and leave a lasting impact.",
+  badges: ["NDA Friendly", "On-time Delivery", "Fixed Pricing"],
+  button: "Let's Talk",
 };
 
 export const workIntro = {
@@ -95,19 +102,6 @@ export const foundingOffer = {
   heading: "Now taking a select few founding clients.",
   body: "New studio, senior attention. Founding clients get priority scheduling, direct access to the person actually building your product, and founding-client pricing that won't be repeated once the roster fills up.",
 };
-
-export const cta = {
-  heading: "Got something that matters? Let's build it.",
-  email: brand.email,
-  location: brand.location,
-};
-
-export const contactReassurance = [
-  "NDA-friendly",
-  "Fixed quotes",
-  "Senior-led",
-  brand.replyPromise,
-];
 
 // TODO(booking): replace with real Calendly (or Cal.com) link once set up.
 export const bookingUrl = "https://calendly.com/matterpixel/intro-call";

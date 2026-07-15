@@ -100,14 +100,6 @@ body {
   border-radius: 2px;
 }
 
-/* Faint 1px design-grid texture, opt-in via .bg-grid */
-.bg-grid {
-  background-image:
-    linear-gradient(to right, var(--line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
-  background-size: 48px 48px;
-}
-
 /* Pixelated image rendering for the signature PixelResolve effect */
 .pixelated {
   image-rendering: pixelated;
