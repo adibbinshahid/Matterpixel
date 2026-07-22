@@ -2,7 +2,7 @@
 
 import { motion, type Variants } from "motion/react";
 import type { ReactNode } from "react";
-import { EASE } from "@/lib/utils";
+import { DURATIONS, EASE } from "@/lib/utils";
 
 /**
  * Site-wide scroll reveal: staggered fade + upward translate + blur-to-sharp.
@@ -12,6 +12,7 @@ export function Reveal({
   children,
   className,
   delay = 0,
+  duration = DURATIONS.standard,
   y = 24,
   as = "div",
   once = true,
@@ -19,6 +20,10 @@ export function Reveal({
   children: ReactNode;
   className?: string;
   delay?: number;
+  /** Override the reveal duration — e.g. DURATIONS.quick for a fast-
+   * checkpoint section (Trust). Defaults to the standard content-reveal
+   * tier every other section already uses. */
+  duration?: number;
   y?: number;
   as?: "div" | "span";
   once?: boolean;
@@ -29,7 +34,7 @@ export function Reveal({
       opacity: 1,
       y: 0,
       filter: "blur(0px)",
-      transition: { duration: 0.7, delay, ease: EASE },
+      transition: { duration, delay, ease: EASE },
     },
   };
 
@@ -77,10 +82,12 @@ export function RevealItem({
   children,
   className,
   y = 24,
+  duration = DURATIONS.standard,
 }: {
   children: ReactNode;
   className?: string;
   y?: number;
+  duration?: number;
 }) {
   const variants: Variants = {
     hidden: { opacity: 0, y, filter: "blur(8px)" },
@@ -88,7 +95,7 @@ export function RevealItem({
       opacity: 1,
       y: 0,
       filter: "blur(0px)",
-      transition: { duration: 0.7, ease: EASE },
+      transition: { duration, ease: EASE },
     },
   };
   return (

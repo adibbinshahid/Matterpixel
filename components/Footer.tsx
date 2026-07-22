@@ -12,13 +12,13 @@ const SOCIAL_ICONS: Record<string, typeof FaFacebook> = {
 };
 
 const contactButton =
-  "font-avenir inline-flex w-fit items-center gap-2 rounded-full bg-paper/10 px-4 py-2 text-sm text-paper transition-all duration-300 hover:scale-105 hover:bg-paper/20";
+  "hover-lift font-avenir inline-flex w-fit items-center gap-2 rounded-full bg-paper/10 px-4 py-2 text-sm text-paper hover:bg-paper/20";
 
 export function Footer() {
   const waNumber = footer.contact.whatsapp.replace(/[^\d]/g, "");
 
   return (
-    <footer className="relative overflow-hidden bg-blue px-6 py-16 sm:px-8 lg:px-12">
+    <footer className="relative overflow-hidden bg-[#1a1a1f] px-6 py-16 sm:px-8 lg:px-12">
       <div className="relative mx-auto flex max-w-[1400px] flex-col gap-12">
         <div className="flex flex-col justify-between gap-10 sm:flex-row">
           <div className="flex max-w-sm flex-col gap-5">
@@ -84,7 +84,7 @@ export function Footer() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={s.label}
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-paper/10 text-paper transition-all duration-300 hover:scale-110 hover:bg-paper/20"
+                      className="hover-lift flex h-9 w-9 items-center justify-center rounded-full bg-paper/10 text-paper hover:bg-paper/20"
                     >
                       <Icon className="h-4 w-4" />
                     </a>

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
-import { EASE } from "@/lib/utils";
+import { DURATIONS, EASE } from "@/lib/utils";
 
 /**
  * Per-navigation clip-path wipe reveal. Keyed by pathname so it retriggers
@@ -22,7 +22,7 @@ export function RouteTransition({ children }: { children: ReactNode }) {
       key={pathname}
       initial={{ clipPath: "inset(0% 0% 100% 0%)" }}
       animate={{ clipPath: "inset(0% 0% 0% 0%)" }}
-      transition={{ duration: 0.55, ease: EASE }}
+      transition={{ duration: DURATIONS.transition, ease: EASE }}
     >
       {children}
     </motion.div>

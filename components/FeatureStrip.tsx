@@ -24,8 +24,19 @@ const MOBILE_BREAKPOINT = 640;
 
 type Metrics = { mobile: number; desktop: number; isMobile: boolean };
 
-/** Trust strip between the hero subline and CTAs — one point at a time, on a loop. */
-export function FeatureStrip() {
+/**
+ * Trust strip between the hero subline and CTAs — one point at a time,
+ * on a loop.
+ *
+ * `big`: a bolder standalone variant (e.g. services page banner) — a
+ * large responsive clamp size that's allowed to wrap onto a second line
+ * for the longest phrases, instead of the single-line auto-fit used
+ * elsewhere. Forcing a much bigger font onto one line at any fixed
+ * width is a geometric impossibility once text is long enough (bigger
+ * font ⇒ proportionally wider text), so `big` trades the single-line
+ * guarantee for a wrap-safe one at a genuinely larger size.
+ */
+export function FeatureStrip({ big = false }: { big?: boolean }) {
   const reduced = useReducedMotion();
   const wrapRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -56,7 +67,9 @@ export function FeatureStrip() {
   // margin, so it doesn't balloon inside the wide centered column.
   // Mobile: no ceiling, no shrink — sized to the maximum that fits the
   // strip edge-to-edge with only a 3px gutter on each side.
+  // Skipped entirely in `big` mode, which uses a fixed clamp size instead.
   useLayoutEffect(() => {
+    if (big) return;
     const el = containerRef.current;
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
@@ -89,10 +102,17 @@ export function FeatureStrip() {
       ro.disconnect();
       window.removeEventListener("resize", update);
     };
-  }, []);
+  }, [big]);
 
   const fontSizePx = metrics ? (metrics.isMobile ? metrics.mobile : metrics.desktop) : 0;
   const containerMinHeight = fontSizePx ? fontSizePx * 1.3 : undefined;
+
+  const textClass = big
+    ? "w-full text-center font-extrabold leading-[1.05] text-magenta"
+    : "absolute w-full whitespace-nowrap text-center font-extrabold leading-tight text-magenta";
+  const textStyle = big
+    ? { fontSize: "clamp(2rem, 5vw, 4.5rem)" }
+    : { fontSize: fontSizePx || undefined };
 
   return (
     <div ref={wrapRef} className="flex w-full flex-col items-center gap-[10px]">
@@ -109,27 +129,24 @@ export function FeatureStrip() {
       <div
         ref={containerRef}
         className="relative flex w-full items-center justify-center px-[3px] sm:px-4"
-        style={{ minHeight: containerMinHeight }}
+        style={{ minHeight: big ? undefined : containerMinHeight }}
         role="status"
         aria-live="polite"
       >
         {reduced ? (
-          <span
-            className="whitespace-nowrap font-extrabold leading-tight text-magenta"
-            style={{ fontSize: fontSizePx || undefined }}
-          >
+          <span className={big ? textClass : "whitespace-nowrap font-extrabold leading-tight text-magenta"} style={textStyle}>
             {FEATURES[0]}
           </span>
         ) : (
-          <AnimatePresence>
+          <AnimatePresence mode={big ? "wait" : undefined}>
             <motion.span
               key={index}
               initial={{ opacity: 0, y: 36, scale: 1.06, filter: "blur(16px)" }}
               animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
               exit={{ opacity: 0, y: -36, scale: 0.94, filter: "blur(16px)" }}
               transition={{ duration: 0.65, ease: EASE }}
-              className="absolute w-full whitespace-nowrap text-center font-extrabold leading-tight text-magenta"
-              style={{ fontSize: fontSizePx || undefined }}
+              className={textClass}
+              style={textStyle}
             >
               {FEATURES[index]}
             </motion.span>

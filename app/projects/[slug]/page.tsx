@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowRight, ArrowUpRight } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { PixelResolve } from "@/components/PixelResolve";
-import { WorkMockup } from "@/components/WorkMockup";
+import { ProjectMedia } from "@/components/ProjectMedia";
 import { projects, getProjectBySlug } from "@/content/projects";
 import { getServiceBySlug } from "@/content/services";
 import { siteUrl } from "@/content/siteConfig";
@@ -88,7 +88,7 @@ export default async function CaseStudyPage({
                 href={project.liveDemoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-avenir group inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-6 py-3.5 text-sm text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
+                className="hover-lift font-avenir group inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-6 py-3.5 text-sm text-paper animate-gradient-shift"
               >
                 Live Demo
                 <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -105,7 +105,7 @@ export default async function CaseStudyPage({
 
           <Reveal delay={0.1} className="mt-14">
             <PixelResolve trigger="view" className="block">
-              <WorkMockup index={index + 1} accent={project.accent} />
+              <ProjectMedia project={project} />
             </PixelResolve>
           </Reveal>
         </div>
@@ -162,15 +162,12 @@ export default async function CaseStudyPage({
           <RevealGroup className="grid grid-cols-1 gap-10 md:grid-cols-2">
             <RevealItem>
               <PixelResolve trigger="view" className="block">
-                <WorkMockup index={index + 2} accent={project.accent} />
+                <ProjectMedia project={project} />
               </PixelResolve>
             </RevealItem>
             <RevealItem>
               <PixelResolve trigger="view" className="block">
-                <WorkMockup
-                  index={index + 3}
-                  accent={project.accent === "blue" ? "magenta" : "blue"}
-                />
+                <ProjectMedia project={project} />
               </PixelResolve>
             </RevealItem>
           </RevealGroup>
@@ -188,7 +185,7 @@ export default async function CaseStudyPage({
                 <RevealItem key={service.slug}>
                   <Link
                     href={`/services/${service.slug}`}
-                    className="group inline-flex items-center gap-2 border border-line bg-paper-2 px-5 py-3 text-sm font-semibold text-ink transition-all duration-300 hover:scale-105 hover:border-blue"
+                    className="hover-lift group inline-flex items-center gap-2 border border-line bg-paper-2 px-5 py-3 text-sm font-semibold text-ink hover:border-blue"
                   >
                     {service.title}
                     <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -209,7 +206,7 @@ export default async function CaseStudyPage({
             </h2>
             <Link
               href="/contact"
-              className="font-avenir group mt-8 inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-7 py-4 text-sm text-paper transition-transform duration-300 hover:scale-105 animate-gradient-shift"
+              className="hover-lift font-avenir group mt-8 inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-7 py-4 text-sm text-paper animate-gradient-shift"
             >
               Start a Project
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

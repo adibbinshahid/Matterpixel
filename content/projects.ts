@@ -17,6 +17,10 @@ export type Project = {
   highlights: { label: string; value: string }[];
   // TODO(demo): swap in the real deployed URL once each demo is live.
   liveDemoUrl: string;
+  // TODO(assets): add a real screenshot path once each demo is live.
+  // Left unset deliberately — ProjectMedia renders an honest "Project
+  // preview coming soon" state rather than a fabricated mockup.
+  previewImage?: string;
   relatedServiceSlugs: string[];
 };
 

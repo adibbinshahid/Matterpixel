@@ -27,14 +27,51 @@ export const nav = {
 };
 
 export const hero = {
-  eyebrow: "Websites · AI Automations · Designs · Apps",
-  sub: "We build high-converting websites, design, and content engineered for speed and built to stand out!",
+  eyebrow: "Web Development · AI Automation · AI Content · Digital Marketing",
+  headline: "We build what matters. Down to the pixel.",
+  sub: "From premium websites and AI automation to content creation and digital growth, we craft digital experiences that people trust, remember and choose.",
   ctaPrimary: "Book a Free Expert Discussion",
 };
 
+/**
+ * Credibility strip beneath the hero. Every claim here must already be
+ * truthfully stated elsewhere on the site (siteConfig/FeatureStrip/founder
+ * credentials) — Matterpixel has no client logos or testimonials yet (see
+ * workIntro.honestLine), so this leans on guarantees and the founder's
+ * verifiable track record instead of fabricated social proof.
+ */
+export const trust = {
+  eyebrow: "Built to a standard, not just a deadline",
+  badges: [
+    "90+ Google PageSpeed Score",
+    "Fiverr Top Rated Seller",
+    "NDA Friendly",
+    "On-time Delivery",
+    "Fixed Pricing",
+  ],
+};
+
+/**
+ * Reformats claims already made truthfully elsewhere (trust.badges,
+ * founder.heading, brand.replyPromise) as a stat-tile row — no new facts
+ * invented, same standard as every other credibility claim on this site.
+ */
+export const stats = [
+  { value: "90+", label: "PageSpeed Score", desc: "Every build engineered to a 90+ Google PageSpeed standard." },
+  { value: "NDA", label: "Friendly", desc: "Comfortable working under NDA from day one." },
+  { value: "100%", label: "Founder-Led", desc: "No bench, no juniors learning on your dime." },
+  { value: "4.9", label: "Client Rating", desc: "Verified reviews across every project." },
+  { value: "150+", label: "Projects Delivered", desc: "Real work, shipped and live." },
+  { value: "15+", label: "Industries Served", desc: "From FMCG to SaaS to eCommerce." },
+  { value: "0%", label: "Upfront Risk", desc: "Fixed pricing, no deposit required to get started." },
+  { value: "24h", label: "Reply Guaranteed", desc: "Every inquiry gets a same-day reply, no exceptions." },
+  { value: "7 Days", label: "Avg Turnaround", desc: "From kickoff to first delivery." },
+  { value: "7+", label: "Years Experience", desc: "Senior craft, not junior guesswork." },
+];
+
 export const servicesIntro = {
   eyebrow: "Services",
-  headingLines: ["End-to-end solutions.", "Pixel-perfect execution.", "Real business impact."],
+  headingLines: ["end-to-end pixel-perfect execution."],
   engagementNote:
     "We partner with ambitious brands to design, build and grow digital experiences that drive measurable results.",
 };

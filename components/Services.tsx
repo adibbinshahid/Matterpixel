@@ -1,99 +1,131 @@
+"use client";
+
+import { useRef } from "react";
 import Link from "next/link";
-import {
-  ArrowUpRight,
-  Camera,
-  Clapperboard,
-  Code2,
-  LayoutTemplate,
-  Sparkles,
-  TrendingUp,
-} from "lucide-react";
-import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
-import { services } from "@/content/services";
+import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
+import { ArrowUpRight } from "lucide-react";
+import { Reveal } from "@/components/Reveal";
+import { services, type Service } from "@/content/services";
 import { servicesIntro, servicesCta } from "@/content/siteConfig";
+import { useReducedMotion } from "@/lib/useReducedMotion";
+import { cn, DURATIONS } from "@/lib/utils";
 
-const ICONS = [Code2, LayoutTemplate, Sparkles, Camera, Clapperboard, TrendingUp];
+const bySlug = (slug: string) => services.find((s) => s.slug === slug)!;
 
-export function Services({ showHeading = true }: { showHeading?: boolean }) {
+const TITLE_CLASS: Record<"lg" | "md" | "sm", string> = {
+  lg: "text-h2",
+  md: "text-h3",
+  sm: "text-base font-bold",
+};
+
+/** Drives one node's opacity/scale off the same scroll-progress value that
+ * fills the spine, at a matching fractional window — so the line visually
+ * reaches a node right as it connects, instead of two effects that could
+ * drift out of sync. */
+function useNodeMotion(progress: MotionValue<number>, index: number, total: number, reduced: boolean) {
+  const start = index / total;
+  const end = start + (1 / total) * 0.6;
+  const opacity = useTransform(progress, [start, end], [0, 1]);
+  const scale = useTransform(progress, [start, end], [0.94, 1]);
+  return reduced ? { opacity: 1, scale: 1 } : { opacity, scale };
+}
+
+function ServiceNode({
+  service,
+  size,
+  indentRem,
+  motionStyle,
+}: {
+  service: Service;
+  size: "lg" | "md" | "sm";
+  indentRem: number;
+  motionStyle: { opacity: number | MotionValue<number>; scale: number | MotionValue<number> };
+}) {
   return (
-    <section id="services" className="relative bg-magenta px-6 py-28 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-[1400px]">
+    <motion.div className="relative" style={{ paddingLeft: `${indentRem}rem`, ...motionStyle }}>
+      <span
+        className="absolute top-6 h-px bg-line"
+        style={{ left: 0, width: `${indentRem}rem` }}
+        aria-hidden="true"
+      />
+      <span
+        className="absolute top-[1.35rem] h-1.5 w-1.5 rounded-full bg-blue"
+        style={{ left: `${indentRem - 0.1875}rem` }}
+        aria-hidden="true"
+      />
+      <Link href={`/services/${service.slug}`} className="group block w-fit">
+        <span className="label-eyebrow">[ {service.id} ]</span>
+        <h3 className={cn(TITLE_CLASS[size], "mt-2 text-ink transition-colors duration-300 group-hover:text-blue")}>
+          {service.title}
+        </h3>
+        <p className={cn("mt-2 text-ink-soft", size === "sm" ? "max-w-xs text-xs" : "max-w-md text-sm")}>
+          {service.shortDesc}
+        </p>
+      </Link>
+    </motion.div>
+  );
+}
+
+/**
+ * "Individual capabilities assemble into one complete operating system."
+ * One spine, drawing itself in as the visitor scrolls; six capabilities
+ * branch off it at a position and size that reflects their real role in a
+ * project (foundation → core build → content → output), not an equal-
+ * weight grid. No cards, no icons.
+ */
+export function Services({ showHeading = true }: { showHeading?: boolean }) {
+  const reduced = useReducedMotion();
+  const diagramRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: diagramRef, offset: ["start 0.85", "end 0.55"] });
+
+  const branding = useNodeMotion(scrollYProgress, 0, 6, reduced);
+  const design = useNodeMotion(scrollYProgress, 1, 6, reduced);
+  const build = useNodeMotion(scrollYProgress, 2, 6, reduced);
+  const photo = useNodeMotion(scrollYProgress, 3, 6, reduced);
+  const video = useNodeMotion(scrollYProgress, 4, 6, reduced);
+  const growth = useNodeMotion(scrollYProgress, 5, 6, reduced);
+
+  return (
+    <section id="services" className="relative border-t border-line">
+      <div className="section-shell section-py-spacious">
         {showHeading && (
           <Reveal>
             <p className="label-eyebrow mb-4">{servicesIntro.eyebrow}</p>
-            <h2 className="max-w-2xl text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-5xl">
-              {servicesIntro.headingLines.join(" ")}
-            </h2>
+            <h2 className="max-w-2xl text-h2 text-ink">{servicesIntro.headingLines.join(" ")}</h2>
           </Reveal>
         )}
 
-        <RevealGroup className={`grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 ${showHeading ? "mt-16" : ""}`}>
-          {services.map((service, i) => {
-            const Icon = ICONS[i % ICONS.length];
-            const blue = i % 2 === 0;
-            return (
-              <RevealItem key={service.slug}>
-                <Link
-                  href={`/services/${service.slug}`}
-                  aria-label={`Explore ${service.title}`}
-                  className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-line bg-paper p-8 shadow-[0_1px_2px_rgba(22,22,28,0.04)] transition-all duration-300 hover:-translate-y-1 hover:border-blue hover:bg-blue hover:shadow-[0_16px_40px_-12px_rgba(22,22,28,0.3)]"
-                >
-                  <div className="relative flex items-start justify-between">
-                    <span
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors duration-300 group-hover:bg-paper ${blue ? "bg-blue" : "bg-magenta"}`}
-                    >
-                      <Icon className="h-6 w-6 text-paper transition-colors duration-300 group-hover:text-blue" />
-                    </span>
-                    <span className="text-3xl font-extrabold text-line transition-colors duration-300 group-hover:text-paper/40">
-                      {service.id}
-                    </span>
-                  </div>
+        <div ref={diagramRef} className={cn("relative", showHeading ? "mt-20 md:mt-28" : "")}>
+          <div className="absolute inset-y-0 left-0 w-px bg-line" aria-hidden="true" />
+          <motion.div
+            className="absolute inset-y-0 left-0 w-px bg-blue"
+            style={{ scaleY: reduced ? 1 : scrollYProgress, transformOrigin: "top" }}
+            aria-hidden="true"
+          />
 
-                  <div className="relative mt-6 flex-1">
-                    <h3 className="text-xl font-bold leading-snug tracking-tight text-ink transition-colors duration-300 group-hover:text-paper">
-                      {service.title}
-                    </h3>
-                    <span
-                      className={`mt-3 block h-0.5 w-8 transition-colors duration-300 group-hover:bg-paper ${blue ? "bg-blue" : "bg-magenta"}`}
-                    />
-                    <p className="mt-4 text-sm leading-relaxed text-ink-soft transition-colors duration-300 group-hover:text-paper/85">
-                      {service.shortDesc}
-                    </p>
+          <div className="flex flex-col gap-14 md:gap-20">
+            <ServiceNode service={bySlug("branding-identity")} size="md" indentRem={2.5} motionStyle={branding} />
+            <ServiceNode service={bySlug("product-design")} size="lg" indentRem={2.5} motionStyle={design} />
+            <ServiceNode service={bySlug("web-app-development")} size="lg" indentRem={2.5} motionStyle={build} />
+            <ServiceNode
+              service={bySlug("ai-product-photography")}
+              size="sm"
+              indentRem={5}
+              motionStyle={photo}
+            />
+            <ServiceNode service={bySlug("ai-video")} size="sm" indentRem={5} motionStyle={video} />
+            <ServiceNode service={bySlug("seo-growth")} size="md" indentRem={2.5} motionStyle={growth} />
+          </div>
+        </div>
 
-                    <ul className="mt-5 flex flex-col gap-2">
-                      {service.deliverables.slice(0, 4).map((d) => (
-                        <li
-                          key={d}
-                          className="flex items-start gap-2 text-sm text-ink-soft transition-colors duration-300 group-hover:text-paper/85"
-                        >
-                          <span
-                            className={`mt-1.5 h-1.5 w-1.5 shrink-0 transition-colors duration-300 group-hover:bg-paper ${blue ? "bg-blue" : "bg-magenta"}`}
-                          />
-                          {d}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <span
-                    className={`absolute bottom-8 right-8 flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300 group-hover:bg-paper ${blue ? "bg-blue" : "bg-magenta"}`}
-                  >
-                    <ArrowUpRight className="h-4 w-4 text-paper transition-all duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-blue" />
-                  </span>
-                </Link>
-              </RevealItem>
-            );
-          })}
-        </RevealGroup>
-
-        <Reveal delay={0.1} className="mt-8">
+        <Reveal duration={DURATIONS.standard} delay={0.1} className="mt-20">
           <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue to-blue/80 px-8 py-12 sm:px-12">
             <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-center">
               <div>
-                <h2 className="max-w-lg text-3xl font-bold leading-[1.1] tracking-tight text-paper sm:text-4xl">
+                <h3 className="max-w-lg text-3xl font-bold leading-[1.1] tracking-tight text-paper sm:text-4xl">
                   {servicesCta.heading.replace(servicesCta.headingHighlight, "").trim()}{" "}
                   <span className="text-magenta">{servicesCta.headingHighlight}</span>
-                </h2>
+                </h3>
                 <p className="mt-3 max-w-md text-paper/80">{servicesCta.body}</p>
                 <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
                   {servicesCta.badges.map((b) => (
@@ -106,7 +138,7 @@ export function Services({ showHeading = true }: { showHeading?: boolean }) {
 
               <Link
                 href="/contact"
-                className="font-avenir group inline-flex w-fit items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink transition-all duration-300 hover:scale-105"
+                className="hover-lift font-avenir group inline-flex w-fit items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink"
               >
                 {servicesCta.button}
                 <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

@@ -78,7 +78,7 @@ export default function AboutPage() {
             <div className="mt-8 flex flex-wrap items-center gap-6">
               <Link
                 href="/contact"
-                className="font-avenir group inline-flex items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink transition-all duration-300 hover:scale-105 hover:bg-ink hover:text-paper"
+                className="hover-lift font-avenir group inline-flex items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink hover:bg-ink hover:text-paper"
               >
                 Start a Project
                 <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

@@ -2,14 +2,17 @@
 
 import { useRef, type ReactNode } from "react";
 import { motion } from "motion/react";
-import { introAlreadySeen } from "@/lib/introSeen";
 import { EASE } from "@/lib/utils";
+
+// Matches #mp-load-mask's own timing (app/layout.tsx) — both should
+// resolve together, so the black screen clears onto already-sharp
+// content instead of clearing early onto a page that's still visibly
+// blurring in on its own separate schedule.
+const REVEAL_DURATION = 0.5;
 
 /**
  * Linear-style page-load reveal: content starts softly blurred and
- * fades/sharpens into focus. Timed to start right as <Loader> lifts on a
- * first visit, or almost immediately on a repeat visit within the same
- * tab session (Loader is skipped then too).
+ * fades/sharpens into focus, unconditionally, shortly after mount.
  *
  * `filter: blur(0px)` — even though visually a no-op — still creates a
  * containing block for `position: fixed` descendants, which would break
@@ -27,7 +30,7 @@ export function PageReveal({ children }: { children: ReactNode }) {
       ref={ref}
       initial={{ opacity: 0, filter: "blur(18px)" }}
       animate={{ opacity: 1, filter: "blur(0px)" }}
-      transition={{ duration: 1.4, delay: introAlreadySeen ? 0 : 1.3, ease: EASE }}
+      transition={{ duration: REVEAL_DURATION, ease: EASE }}
       onAnimationComplete={() => {
         // Motion commits its own final style write around the same time
         // this fires; clearing on the next frame avoids losing the race.

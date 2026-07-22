@@ -49,6 +49,17 @@ export function ContactForm() {
       noValidate
       className="flex flex-col gap-3"
     >
+      {/* Honeypot — hidden from sighted and AT users, real visitors never
+          fill it. Any bot that autofills every input trips this. */}
+      <input
+        {...register("company")}
+        type="text"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
+      />
+
       <div className="grid gap-3 sm:grid-cols-2">
         <Field
           label="Full Name"
@@ -140,7 +151,7 @@ export function ContactForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="font-avenir group relative inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-8 py-3.5 text-sm text-paper transition-all duration-300 hover:scale-[1.02] hover:bg-blue disabled:opacity-60 disabled:hover:scale-100"
+          className="hover-lift font-avenir group relative inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-8 py-3.5 text-sm text-paper hover:bg-blue disabled:opacity-60"
         >
           {isSubmitting ? "Sending…" : "Send it over"}
           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />

@@ -8,7 +8,7 @@ import { ContactForm } from "@/components/ContactForm";
 import { footer } from "@/content/siteConfig";
 
 const contactButton =
-  "font-avenir inline-flex w-fit items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm text-paper transition-all duration-300 hover:scale-105 hover:bg-blue";
+  "hover-lift font-avenir inline-flex w-fit items-center gap-2 rounded-full bg-ink px-5 py-3 text-sm text-paper hover:bg-blue";
 
 /**
  * /contact opener — a looping globe video background, the "we're global"

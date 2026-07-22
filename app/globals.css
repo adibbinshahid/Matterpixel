@@ -12,7 +12,35 @@
   --paper-2: #f2efe8;
   --line: #e4e0d6;
 
+  /* Liquid-glass nav/panel chrome — light default. */
+  --glass-bg: rgba(255, 255, 255, 0.5);
+  --glass-bg-strong: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(236, 240, 255, 0.92) 55%, rgba(255, 250, 253, 0.55) 100%);
+  --glass-border: rgba(255, 255, 255, 0.5);
+  /* Definitional hairline for the main nav capsule — unlike --glass-border
+     above (a bright highlight-only rim, invisible against light content by
+     design), this is a fixed dark-tinted stroke so the capsule reads as a
+     distinct floating pane against any backdrop. */
+  --glass-border-strong: rgba(22, 22, 28, 0.1);
+  --glass-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.06),
+    0 4px 12px -4px rgba(22, 22, 28, 0.25);
+  --glass-shadow-strong:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.8),
+    0 8px 32px -8px rgba(22, 22, 28, 0.18);
+
   --ease-site: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Tailwind's own override point (see tailwindcss/theme.css) for every
+     transition- / duration- utility's default timing function — every
+     hover/transition across the whole site that doesn't set its own
+     explicit ease (nearly all of them; they only set duration-300) was
+     quietly running on Tailwind's generic cubic-bezier(0.4,0,0.2,1)
+     instead of the site's one signature curve used everywhere else
+     (Framer's EASE, GSAP_EASE). Overriding it here — instead of hunting
+     down every hover: className across the codebase — makes every button/
+     link/card hover site-wide use the same curve in one place. */
+  --default-transition-timing-function: var(--ease-site);
 }
 
 @supports (color: color(display-p3 1 1 1)) {
@@ -36,6 +64,7 @@
 
   --animate-pixel-in: pixel-in 0.6s var(--ease-site) both;
   --animate-gradient-shift: gradient-shift 4s ease-in-out infinite;
+  --animate-toggle-glow: toggle-glow 2.4s ease-in-out infinite;
 }
 
 @keyframes marquee {
@@ -57,6 +86,22 @@
   }
 }
 
+@keyframes toggle-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(44, 75, 255, 0.55),
+      0 0 32px 6px rgba(255, 46, 147, 0.35),
+      0 0 64px 16px rgba(44, 75, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 0 0 14px rgba(44, 75, 255, 0),
+      0 0 54px 18px rgba(255, 46, 147, 0.6),
+      0 0 100px 30px rgba(44, 75, 255, 0.32);
+  }
+}
+
 @keyframes pixel-in {
   from {
     opacity: 0;
@@ -70,8 +115,41 @@
   }
 }
 
+@keyframes mp-load-fade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* First-paint black screen the whole site emerges from — see the
+   comment on #mp-load-mask in app/layout.tsx. Pure CSS: opacity 1 (via
+   the `backwards` fill) from the very first frame, holds briefly, then
+   fades out fast and stays gone (`forwards`). `pointer-events: none`
+   throughout so it never blocks a click even mid-fade. */
+#mp-load-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  background: #0a0a0a;
+  pointer-events: none;
+  animation: mp-load-fade 0.4s ease-out 0.1s both;
+}
+
 * {
   border-color: var(--line);
+  /* Light↔dark switch, site-wide: quick and low-key, not a showcase
+     animation — every surface (backgrounds, text, borders, icons) fades
+     together instead of hard-cutting. Elements with their own Tailwind
+     transition utility (e.g. `transition-transform`) keep that instead —
+     a single-class selector always wins over this bare `*` one, so hover
+     effects are unaffected. Reduced-motion already zeroes this out (see
+     the `prefers-reduced-motion` block below). */
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-out;
 }
 
 html {
@@ -94,10 +172,13 @@ body {
 }
 
 /* Focus ring — brand-colored, always visible for keyboard nav */
+/* No border-radius here — outline already follows each element's own
+   border-radius natively (Chrome/Firefox/Safari all round it to match).
+   Forcing 2px here was clobbering any already-rounded element's actual
+   shape (rounded-full buttons/switches) whenever it gained focus. */
 :focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 3px;
-  border-radius: 2px;
 }
 
 /* Pixelated image rendering for the signature PixelResolve effect */
@@ -142,4 +223,237 @@ html.lenis body {
 }
 .lenis.lenis-stopped {
   overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Foundation layer — Phase 06.1. Shared primitives for future sections   */
+/* to consume. Nothing below is applied to any existing markup yet; every */
+/* value mirrors what a current component already ships, so adopting it   */
+/* later is a rename, not a redesign.                                     */
+/* ---------------------------------------------------------------------- */
+
+/* Radius reference — NOT under Tailwind's reserved `--radius-*` theme
+   namespace (redefining that would silently reflow every existing
+   `rounded-*` utility site-wide). Plain vars for non-Tailwind consumers
+   (canvas/inline styles); components should keep using the matching
+   Tailwind utility directly — rounded-lg (sm), rounded-2xl (md),
+   rounded-full (pill) — documented here as the one scale to converge on. */
+:root {
+  --mp-radius-sm: 0.5rem; /* 8px  — Tailwind rounded-lg  — inputs, badges */
+  --mp-radius-md: 1rem; /* 16px — Tailwind rounded-2xl — cards, tiles */
+  --mp-radius-full: 9999px; /* Tailwind rounded-full — buttons, switches, pills */
+}
+
+/* Elevation — separate from --glass-* (glass stays chrome-only per the
+   Visual Bible; these are for ordinary raised content like cards). */
+:root {
+  --shadow-resting: 0 1px 2px 0 rgba(22, 22, 28, 0.06), 0 1px 3px 0 rgba(22, 22, 28, 0.08);
+  --shadow-lifted: 0 8px 24px -8px rgba(22, 22, 28, 0.18), 0 2px 6px -2px rgba(22, 22, 28, 0.1);
+}
+
+/* Section padding scale — three named tiers replacing ad-hoc py-16/24/28
+   picks. "spacious" matches the homepage's current dominant rhythm. */
+.section-py-compact {
+  padding-block: 4rem; /* matches Trust's current py-16 */
+}
+.section-py-standard {
+  padding-block: 6rem; /* matches FinalCta's current py-24 */
+}
+.section-py-spacious {
+  padding-block: 7rem; /* matches Process/Services/Work's current py-28 */
+}
+
+/* Section container — mirrors app/page.tsx's existing repeated wrapper
+   (mx-auto max-w-[1400px] px-6 sm:px-8 lg:px-12) as one reusable class. */
+.section-shell {
+  margin-inline: auto;
+  max-width: 1400px;
+  padding-inline: 1.5rem;
+}
+@media (min-width: 640px) {
+  .section-shell {
+    padding-inline: 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .section-shell {
+    padding-inline: 3rem;
+  }
+}
+
+/* Typography scale — fluid via clamp() so it doesn't need per-breakpoint
+   duplication. Bracketed around the sizes already in use across the
+   homepage today (text-3xl/4xl/5xl), so adopting these later converges
+   existing inconsistency rather than introducing new sizes. */
+.text-display {
+  font-size: clamp(2.5rem, 1.9rem + 3vw, 4.5rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+/* Hero manifesto only — .text-display scaled up 25% (also used by
+   Stats.tsx's stat numbers, which shouldn't grow along with this). */
+.text-hero-headline {
+  font-size: clamp(3.125rem, 2.375rem + 3.75vw, 5.625rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.text-h1 {
+  font-size: clamp(2.25rem, 1.9rem + 1.5vw, 3rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.text-h2 {
+  font-size: clamp(1.875rem, 1.6rem + 1.2vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+}
+.text-h3 {
+  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+
+/* Button system — copied verbatim from ContactForm's submit button
+   (primary) and app/page.tsx's "View all work" link (secondary). */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--mp-radius-full);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.875rem 2rem;
+  font-family: var(--font-avenir), sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition:
+    transform 0.3s var(--ease-site),
+    background-color 0.3s var(--ease-site),
+    box-shadow 0.3s var(--ease-site);
+}
+.btn-primary:hover {
+  transform: translateY(-2px) scale(1.03);
+  background: var(--blue);
+  box-shadow: var(--shadow-lifted);
+}
+.btn-primary:active {
+  transform: translateY(0) scale(1.01);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+}
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: var(--mp-radius-full);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  padding: 0.875rem 2rem;
+  font-family: var(--font-avenir), sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  transition:
+    transform 0.3s var(--ease-site),
+    border-color 0.3s var(--ease-site),
+    background-color 0.3s var(--ease-site),
+    box-shadow 0.3s var(--ease-site);
+}
+.btn-outline:hover {
+  transform: translateY(-2px) scale(1.03);
+  border-color: var(--blue);
+  background: var(--paper-2);
+  box-shadow: var(--shadow-lifted);
+}
+.btn-outline:active {
+  transform: translateY(0) scale(1.01);
+}
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ink);
+  transition: transform 0.3s var(--ease-site);
+}
+.btn-secondary:hover {
+  transform: translateY(-1px) scale(1.05);
+}
+.btn-secondary:active {
+  transform: translateY(0) scale(1.02);
+}
+
+/* Unified rich hover — the one motion recipe every button/icon-button/pill
+   across the site should use (a lift + slight scale + shadow bloom, on the
+   shared --ease-site curve) instead of each spot picking its own ad hoc
+   scale amount (1.02 here, 1.05 there, 1.1 elsewhere). Additive: it only
+   owns `transform`/`box-shadow`, so it layers cleanly on top of whatever
+   background/border/color classes an element already has (those keep
+   transitioning via the sitewide `*` color-transition rule above). */
+.hover-lift {
+  transition: transform 0.3s var(--ease-site), box-shadow 0.3s var(--ease-site);
+}
+.hover-lift:hover {
+  transform: translateY(-2px) scale(1.035);
+  box-shadow: var(--shadow-lifted);
+}
+.hover-lift:active {
+  transform: translateY(0) scale(1.01);
+}
+.hover-lift:disabled {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Forced-dark section — reassigns the brand tokens to dark values scoped
+   to one section instead of the whole page (mirrors FinalCta's own
+   unconditional `bg-magenta` full-bleed section). Every existing
+   `bg-paper`/`text-ink`/`text-ink-soft`/`border-line` utility renders
+   correctly dark inside this with zero component-level changes. */
+.panel-dark {
+  --ink: #f5f3ee;
+  --ink-soft: #b8b5ac;
+  --paper: #121214;
+  --paper-2: #1a1a1f;
+  --line: #2a2a30;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* Dashed top divider for stat tiles (Stats.tsx) — fixed light value, not
+   the theme's --line, since Stats sits on a solid brand-blue background. */
+.stat-divider {
+  border-top: 1px dashed rgba(255, 255, 255, 0.3);
+}
+
+/* Card system — copied verbatim from WorkGrid's current card treatment,
+   plus one standardized hover (lift + shadow-step) as a new, currently
+   unused capability for later sections to opt into. */
+.card {
+  border-radius: var(--mp-radius-md);
+  border: 1px solid var(--line);
+  background: var(--paper-2);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-resting);
+  transition:
+    transform 0.3s var(--ease-site),
+    box-shadow 0.3s var(--ease-site),
+    border-color 0.3s var(--ease-site);
+}
+@media (min-width: 640px) {
+  .card {
+    padding: 2rem;
+  }
+}
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lifted);
 }

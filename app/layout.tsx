@@ -2,10 +2,10 @@ import type { Metadata, Viewport } from "next";
 import { Inter_Tight } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { MotionConfig } from "motion/react";
 import { SmoothScrollProvider } from "@/components/SmoothScrollProvider";
-import { Loader } from "@/components/Loader";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { PageReveal } from "@/components/PageReveal";
@@ -102,23 +102,25 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${interTight.variable} ${avenir.variable} antialiased`}>
       <body className="flex min-h-screen flex-col bg-paper text-ink" suppressHydrationWarning>
+        {/* Solid black on the very first paint (present in the raw server
+            HTML, so there's no flash of the light page underneath before
+            this even renders), fading away quickly on its own via a plain
+            CSS animation — no JS, no gating, so it can never get stuck. The
+            whole page underneath is already fully rendered by the time this
+            clears, so everything arrives together in one moment. */}
+        <div id="mp-load-mask" aria-hidden="true" suppressHydrationWarning />
+        {/* Must run before the browser's own automatic scroll restoration
+            (which happens synchronously during navigation, before React
+            ever hydrates) — a reload should always land at the top of the
+            page, never wherever you'd previously scrolled to. Setting this
+            from a React effect runs too late to preempt it; `beforeInteractive`
+            is the earliest Next.js lets a script run. */}
+        <Script id="disable-scroll-restoration" strategy="beforeInteractive">
+          {`if ('scrollRestoration' in history) { history.scrollRestoration = 'manual'; } window.scrollTo(0, 0);`}
+        </Script>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
-        />
-        {/*
-          Static, non-interactive mask — present in the raw server HTML so
-          the page can never flash visible before React hydrates. A
-          blocking inline script (runs synchronously during parse, before
-          first paint) hides it immediately if the intro was already seen
-          this session; otherwise Loader's own useLayoutEffect hides it
-          the instant it takes over, handing off with zero gap either way.
-        */}
-        <div id="mp-preload-mask" className="fixed inset-0 z-[300] bg-paper" suppressHydrationWarning />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `try{if(sessionStorage.getItem('mp-loader-seen')){document.getElementById('mp-preload-mask').style.display='none';}}catch(e){}`,
-          }}
         />
         <a
           href="#main"
@@ -127,7 +129,6 @@ export default function RootLayout({
           Skip to content
         </a>
         <MotionConfig reducedMotion="user" transition={{ ease: [0.22, 1, 0.36, 1] }}>
-          <Loader />
           <SmoothScrollProvider>
             <Nav />
             <main id="main">
