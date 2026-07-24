@@ -91,7 +91,7 @@ export const workIntro = {
     "A sample of what we build — real code, production-quality, built to demonstrate our craft. No client work yet — these are concept builds you can try live.",
 };
 
-export const process = {
+export const processSteps = {
   eyebrow: "how we build",
   heading: "Systems, not guesswork.",
   steps: [

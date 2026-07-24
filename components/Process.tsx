@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { motion } from "motion/react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { PixelResolve } from "@/components/PixelResolve";
-import { process } from "@/content/siteConfig";
+import { processSteps } from "@/content/siteConfig";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { DURATIONS, EASE } from "@/lib/utils";
 import { GSAP_EASE } from "@/lib/gsapEase";
@@ -86,7 +86,7 @@ function PinnedProcess() {
     const dots = dotRefs.current.filter((el): el is HTMLSpanElement => !!el);
     if (!wrap || !pinned || !track) return;
 
-    const total = process.steps.length;
+    const total = processSteps.steps.length;
 
     gsap.set(dots[0], { scale: 1 });
     gsap.set(dots.slice(1), { scale: 0 });
@@ -162,8 +162,8 @@ function PinnedProcess() {
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: DURATIONS.standard, ease: EASE }}
         >
-          <p className="label-eyebrow mb-4">{process.eyebrow}</p>
-          <h2 className="max-w-xl text-h2 text-ink">{process.heading}</h2>
+          <p className="label-eyebrow mb-4">{processSteps.eyebrow}</p>
+          <h2 className="max-w-xl text-h2 text-ink">{processSteps.heading}</h2>
         </motion.div>
       </div>
 
@@ -173,10 +173,10 @@ function PinnedProcess() {
          to just steps*100vh undercounts by a full viewport, so the pinned
          content overflowed this wrapper's bottom edge and bled into
          whatever section came next. */}
-      <div ref={pinWrapRef} style={{ height: `${(process.steps.length + 1) * 100}vh` }}>
+      <div ref={pinWrapRef} style={{ height: `${(processSteps.steps.length + 1) * 100}vh` }}>
         <div ref={pinnedRef} className="relative h-screen overflow-hidden">
-          <div ref={trackRef} className="flex h-full" style={{ width: `${process.steps.length * 100}vw` }}>
-            {process.steps.map((step, i) => (
+          <div ref={trackRef} className="flex h-full" style={{ width: `${processSteps.steps.length * 100}vw` }}>
+            {processSteps.steps.map((step, i) => (
               <div key={step.id} className="relative h-full w-screen shrink-0">
                 {/* Giant watermark numeral — the step's graphic anchor.
                     Faint enough to never compete with the real text. */}
@@ -188,7 +188,7 @@ function PinnedProcess() {
                 </span>
 
                 <div className="section-shell flex h-full max-w-xl flex-col justify-center">
-                  <span className="label-eyebrow">Step {step.id} of {String(process.steps.length).padStart(2, "0")}</span>
+                  <span className="label-eyebrow">Step {step.id} of {String(processSteps.steps.length).padStart(2, "0")}</span>
                   <div
                     ref={(el) => {
                       glyphWrapRefs.current[i] = el;
@@ -222,7 +222,7 @@ function PinnedProcess() {
               />
             </svg>
             <div className="mt-[-4px] flex max-w-xl justify-between">
-              {process.steps.map((step, i) => (
+              {processSteps.steps.map((step, i) => (
                 <span
                   key={step.id}
                   ref={(el) => {
@@ -246,15 +246,15 @@ function FallbackProcess() {
     <section className="border-t border-line">
       <div className="section-shell section-py-spacious">
         <Reveal>
-          <p className="label-eyebrow mb-4">{process.eyebrow}</p>
-          <h2 className="max-w-xl text-h2 text-ink">{process.heading}</h2>
+          <p className="label-eyebrow mb-4">{processSteps.eyebrow}</p>
+          <h2 className="max-w-xl text-h2 text-ink">{processSteps.heading}</h2>
         </Reveal>
 
         <RevealGroup
           stagger={0.15}
           className="mt-16 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0"
         >
-          {process.steps.map((step, i) => (
+          {processSteps.steps.map((step, i) => (
             <RevealItem
               key={step.id}
               className={`relative lg:px-8 ${i > 0 ? "lg:border-l lg:border-line" : ""}`}

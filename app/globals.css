@@ -115,6 +115,32 @@
   }
 }
 
+@keyframes grid-drift {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 64px 64px;
+  }
+}
+
+@keyframes scan-sweep {
+  0% {
+    transform: translateY(-40%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(340%);
+    opacity: 0;
+  }
+}
+
 @keyframes mp-load-fade {
   0% {
     opacity: 1;
@@ -184,6 +210,36 @@ body {
 /* Pixelated image rendering for the signature PixelResolve effect */
 .pixelated {
   image-rendering: pixelated;
+}
+
+/* Drifting circuit-board grid, sits behind the services carousel cards
+   (not on them) for a sci-fi HUD backdrop. */
+.services-bg-grid {
+  position: absolute;
+  inset: -64px;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  background-size: 64px 64px;
+  animation: grid-drift 6s linear infinite;
+}
+
+/* HUD-style scan line sweeping down the services stage backdrop. */
+.scan-line {
+  position: absolute;
+  inset-inline: 0;
+  height: 30%;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 255, 255, 0.35) 45%,
+    rgba(255, 255, 255, 0.9) 50%,
+    rgba(255, 255, 255, 0.35) 55%,
+    transparent
+  );
+  mix-blend-mode: overlay;
+  animation: scan-sweep 2.6s linear infinite;
 }
 
 /* Reduced motion: kill everything animated, keep content usable */

@@ -11,9 +11,9 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
 import { DURATIONS } from "@/lib/utils";
 
 const MOBILE_BREAKPOINT = 768; // matches the site's shared `md` breakpoint
-const ACTIVE_SCALE = 1.16; // how much bigger the centered card is than a resting one
+const ACTIVE_SCALE = 1.1; // how much bigger the centered card is than a resting one — kept modest so the scaled-up card doesn't collide into its scaled-and-tilted neighbors
 const CARD_WIDTH = 320; // px — matches the sm:w-80 card class below
-const CARD_GAP = 32; // px — matches the gap-8 track class below
+const CARD_GAP = 56; // px — matches the gap-14 track class below; wider than the card's own scale/tilt growth so neighbors never overlap
 const CARD_STEP = CARD_WIDTH + CARD_GAP;
 // Fraction of a full viewport-height of scroll spent traveling between one
 // card and the next — short on purpose, so cards glide past quickly
@@ -117,8 +117,8 @@ export function ServicesFold() {
          max-w-[1400px] centered) so the giant heading's edges line up with
          the nav bar's, instead of running to the true screen edge. */}
       <div className="px-4 pb-4 pt-28 sm:px-6 sm:pb-5 sm:pt-28">
-        <div className="mx-auto max-w-[1400px]">
-          <Reveal>
+        <div className="mx-auto flex max-w-[1400px] flex-col items-center text-center">
+          <Reveal className="w-full">
             <p className="label-eyebrow mb-4">{servicesIntro.eyebrow}</p>
             <GiantHeading lines={servicesIntro.headingLines} />
           </Reveal>
@@ -235,7 +235,15 @@ function CardStage() {
         const scale = 1 + (ACTIVE_SCALE - 1) * (1 - absD);
         const lift = (1 - absD) * 14;
         const opacity = 0.45 + 0.55 * (1 - absD);
-        el.style.transform = `translateY(${-lift}px) scale(${scale})`;
+        const rotateY = d * -14;
+        const translateZ = -absD * 80;
+        // Extra outward push beyond the track's own uniform spacing —
+        // rotateY's foreshortening pulls a tilted card's near edge inward,
+        // which is what reads as neighboring cards "crashing" into each
+        // other mid-transition. This fans them apart exactly when tilted
+        // (zero at d = 0, so the resting/centered layout is untouched).
+        const spread = d * 36;
+        el.style.transform = `translateX(${spread}px) translateY(${-lift}px) scale(${scale}) rotateY(${rotateY}deg) translateZ(${translateZ}px)`;
         el.style.opacity = String(opacity);
         el.style.zIndex = String(Math.round((1 - absD) * 100));
         el.style.filter = absD > 0.15 ? `blur(${(absD * 1.5).toFixed(1)}px)` : "none";
@@ -254,7 +262,7 @@ function CardStage() {
       pin: pinned,
       start: "top top",
       end: () => `+=${total * window.innerHeight * SCROLL_PER_CARD}`,
-      scrub: 0.5,
+      scrub: 0.9,
       anticipatePin: 1,
       // Card slots are evenly spaced across progress (1 / (total - 1) per
       // card, matching the x-mapping above) — snapping to that increment
@@ -288,10 +296,16 @@ function CardStage() {
       <div ref={pinnedRef} className="relative h-screen overflow-hidden">
         <div ref={glowRef} className="pointer-events-none absolute inset-0" aria-hidden="true" />
 
-        <div className="relative h-full">
+        {/* Sci-fi motion behind the cards, not on them: a drifting circuit
+           grid, visible through the cards' own glass. */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-40" aria-hidden="true">
+          <div className="services-bg-grid" />
+        </div>
+
+        <div className="relative h-full" style={{ perspective: "1600px" }}>
           <div
             ref={trackRef}
-            className="absolute left-0 top-1/2 flex items-center gap-8"
+            className="absolute left-0 top-1/2 flex items-center gap-14"
             style={{ willChange: "transform" }}
           >
             {services.map((service, i) => (
@@ -300,8 +314,20 @@ function CardStage() {
                 ref={(el) => {
                   cardRefs.current[i] = el;
                 }}
-                className="relative h-[24rem] w-72 shrink-0 overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-magenta to-magenta/45 p-8 shadow-[0_30px_80px_-25px_rgba(255,46,147,0.55)] will-change-transform sm:h-[28rem] sm:w-80"
+                className="relative h-[24rem] w-72 shrink-0 overflow-hidden rounded-[2rem] border border-white/25 bg-white/10 p-8 shadow-[0_30px_80px_-25px_rgba(255,46,147,0.45)] backdrop-blur-xl will-change-transform sm:h-[28rem] sm:w-80"
+                style={{ transformStyle: "preserve-3d" }}
               >
+                {/* Glass sheen — diagonal highlight + magenta brand tint,
+                   layered over the transparent/blurred card so the grid
+                   behind still reads through. */}
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/30 via-magenta/10 to-transparent"
+                />
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent"
+                />
                 <span
                   aria-hidden="true"
                   className="pointer-events-none absolute -right-4 -top-8 select-none text-[7rem] font-black leading-none text-white/10 sm:text-[9rem]"
@@ -337,8 +363,12 @@ function FallbackGrid() {
         {services.map((service) => (
           <RevealItem
             key={service.slug}
-            className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-magenta to-magenta/45 p-6 shadow-[0_20px_60px_-20px_rgba(255,46,147,0.5)]"
+            className="relative overflow-hidden rounded-[2rem] border border-white/25 bg-white/10 p-6 shadow-[0_20px_60px_-20px_rgba(255,46,147,0.5)] backdrop-blur-xl"
           >
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/30 via-magenta/10 to-transparent"
+            />
             <span
               aria-hidden="true"
               className="pointer-events-none absolute -right-3 -top-6 select-none text-[6rem] font-black leading-none text-white/10"
