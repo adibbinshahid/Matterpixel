@@ -235,10 +235,10 @@ function CarouselCard({
           <span className="inline-flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/70">
             <span className="h-1.5 w-1.5 rounded-full bg-blue" aria-hidden="true" />[ {service.id} ]
           </span>
-          <h3 className="mt-4 break-words text-2xl font-bold leading-tight tracking-tight text-white">
+          <h3 className="mt-4 text-3xl font-black leading-[1.05] tracking-tight text-white sm:text-4xl">
             {service.title}
           </h3>
-          <p className="mt-3 max-w-xs break-words text-sm leading-relaxed text-white/80">
+          <p className="mt-3 max-w-xs text-[1.3125rem] leading-relaxed text-white/80">
             {service.shortDesc}
           </p>
         </div>

@@ -1,20 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
-import { PixelResolve } from "@/components/PixelResolve";
-import { WorkMockup } from "@/components/WorkMockup";
 import { Accordion } from "@/components/ui/Accordion";
 import { services, getServiceBySlug } from "@/content/services";
-import { projects } from "@/content/projects";
 import { siteUrl } from "@/content/siteConfig";
 
 const WHY_MATTERPIXEL = [
-  "Senior-led — the person who scopes it is the person who builds it",
-  "Performance held to a 90+ mobile PageSpeed floor, not an afterthought",
-  "Fixed quotes, agreed before work starts",
-  "Every demo build is live and testable, not a screenshot",
+  "Senior-led from strategy to final delivery",
+  "Every decision tied to measurable business outcomes",
+  "Fast execution without sacrificing craft",
+  "One creative partner across design, AI, and development",
+  "Transparent pricing and clear timelines",
 ];
 
 export function generateStaticParams() {
@@ -52,7 +50,18 @@ export default async function ServiceDetailPage({
   const service = getServiceBySlug(slug);
   if (!service) notFound();
 
-  const relatedProjects = projects.filter((p) => p.relatedServiceSlugs.includes(slug));
+  const breakdownSections = [
+    { title: "Capabilities", items: service.capabilities },
+    { title: "Performance", items: service.performance },
+    { title: "Integrations", items: service.integrations },
+    { title: "Deployment", items: service.deployment },
+    { title: "Optional ongoing support", items: service.ongoingSupport },
+    { title: "Ideal for", items: service.idealFor },
+    { title: "Deliverables", items: service.fileDeliverables },
+    { title: "Optional add-ons", items: service.addOns },
+    { title: "Frequently requested", items: service.frequentlyRequested },
+    { title: "Why clients choose this service", items: service.whyChooseUs },
+  ].filter((s): s is { title: string; items: string[] } => !!s.items?.length);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -73,6 +82,13 @@ export default async function ServiceDetailPage({
       <section className="px-6 pb-16 pt-32 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-[1400px]">
           <Reveal>
+            <Link
+              href="/services"
+              className="group mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition-colors duration-300 hover:text-blue"
+            >
+              <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
+              Back to Services
+            </Link>
             <p className="label-eyebrow mb-4">
               [ {service.id} ] {service.title}
             </p>
@@ -120,38 +136,49 @@ export default async function ServiceDetailPage({
             <p className="mt-6 border border-line bg-paper-2 p-5 text-sm leading-relaxed text-ink-soft">
               {service.processNote}
             </p>
+            {service.proofNote && (
+              <p className="mt-4 text-sm leading-relaxed text-ink-soft">{service.proofNote}</p>
+            )}
           </Reveal>
         </div>
       </section>
 
-      {relatedProjects.length > 0 && (
-        <section className="border-t border-line bg-ink px-6 py-20 text-paper sm:px-8 lg:px-12">
+      {breakdownSections.length > 0 && (
+        <section className="border-t border-line bg-paper-2 px-6 py-20 sm:px-8 lg:px-12">
           <div className="mx-auto max-w-[1400px]">
-            <Reveal>
-              <p className="label-eyebrow mb-6 !text-blue">Demo builds using this service</p>
-            </Reveal>
-            <RevealGroup className="grid grid-cols-1 gap-10 md:grid-cols-2">
-              {relatedProjects.map((project, i) => (
-                <RevealItem key={project.slug}>
-                  <Link
-                    href={`/projects/${project.slug}`}
-                    className="group block transition-transform duration-300 hover:scale-[1.02]"
-                  >
-                    <PixelResolve trigger="view" className="block">
-                      <WorkMockup index={i + 1} accent={project.accent} />
-                    </PixelResolve>
-                    <h3 className="mt-6 flex items-center gap-2 text-xl font-bold tracking-tight text-paper">
-                      {project.name}
-                      <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </h3>
-                    <p className="mt-1 text-sm text-paper/60">{project.category}</p>
-                  </Link>
+            <RevealGroup className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-3">
+              {breakdownSections.map(({ title, items }) => (
+                <RevealItem key={title}>
+                  <h3 className="text-lg font-bold tracking-tight text-ink">{title}</h3>
+                  <ul className="mt-4 flex flex-col gap-3">
+                    {items.map((item) => (
+                      <li key={item} className="flex items-start gap-3 text-sm text-ink-soft">
+                        <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </RevealItem>
               ))}
             </RevealGroup>
           </div>
         </section>
       )}
+
+      <section className="border-t border-line bg-ink px-6 py-10 text-paper sm:px-8 lg:px-12">
+        <Reveal className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+          <h2 className="text-xl font-bold tracking-tight text-paper sm:text-2xl">
+            See the work behind the promise — visit our projects.
+          </h2>
+          <Link
+            href="/projects"
+            className="hover-lift font-avenir group inline-flex shrink-0 items-center gap-2 rounded-full bg-paper px-6 py-3.5 text-sm text-ink hover:bg-blue hover:text-paper"
+          >
+            View all projects
+            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
+        </Reveal>
+      </section>
 
       <section className="border-t border-line px-6 py-20 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-[1400px]">

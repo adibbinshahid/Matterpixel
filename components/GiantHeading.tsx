@@ -46,6 +46,7 @@ export function GiantHeading({
   lines,
   sizeRef,
   highlight,
+  maxFontSize,
 }: {
   lines: string[];
   sizeRef?: string[];
@@ -53,6 +54,11 @@ export function GiantHeading({
    * heading names its own (e.g. "pixel-perfect", "custom codes"), not a
    * single word hardcoded for every caller. */
   highlight?: string;
+  /** Caps the fitted size (px) — for callers that want "shrink to fit on
+   * narrow viewports" without also growing to a full edge-to-edge giant
+   * headline on wide ones (e.g. a page hero's h1, not a section giant
+   * heading). Omit for the original always-edge-to-edge behavior. */
+  maxFontSize?: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState<number | null>(null);
@@ -71,7 +77,8 @@ export function GiantHeading({
       const REF = 100;
       ctx.font = `800 ${REF}px ${bodyFont}`;
       const widest = Math.max(...measureLines.map((line) => ctx.measureText(line).width));
-      const next = widest > 0 ? (cw / widest) * REF : REF;
+      let next = widest > 0 ? (cw / widest) * REF : REF;
+      if (maxFontSize) next = Math.min(next, maxFontSize);
       setFontSize((prev) => (prev !== null && Math.abs(prev - next) < 0.5 ? prev : next));
     }
 
@@ -79,7 +86,7 @@ export function GiantHeading({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [measureLines, sizeRef]);
+  }, [measureLines, sizeRef, maxFontSize]);
 
   return (
     <div ref={containerRef} className="w-full">
