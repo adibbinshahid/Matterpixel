@@ -1,29 +1,43 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from "react";
 import Link from "next/link";
+import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight } from "lucide-react";
-import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
+import { Reveal } from "@/components/Reveal";
+import { getLenis } from "@/components/SmoothScrollProvider";
 import { services } from "@/content/services";
-import { servicesIntro, servicesCta } from "@/content/siteConfig";
-import { useReducedMotion } from "@/lib/useReducedMotion";
+import { bookingUrl, servicesIntro, servicesCta } from "@/content/siteConfig";
 import { DURATIONS } from "@/lib/utils";
+import { useReducedMotion } from "@/lib/useReducedMotion";
 
-const MOBILE_BREAKPOINT = 768; // matches the site's shared `md` breakpoint
-const ACTIVE_SCALE = 1.1; // how much bigger the centered card is than a resting one — kept modest so the scaled-up card doesn't collide into its scaled-and-tilted neighbors
-const CARD_WIDTH = 320; // px — matches the sm:w-80 card class below
-const CARD_GAP = 56; // px — matches the gap-14 track class below; wider than the card's own scale/tilt growth so neighbors never overlap
-const CARD_STEP = CARD_WIDTH + CARD_GAP;
-// Fraction of a full viewport-height of scroll spent traveling between one
-// card and the next — short on purpose, so cards glide past quickly
-// rather than a long haul per card.
-const SCROLL_PER_CARD = 0.3;
-// Pinned stage is a full h-screen box so the cards — vertically centered
-// within it — always sit at the true vertical center of the actual
-// screen, at any viewport height, not just centered within some smaller
-// fitted box.
-const PINNED_HEIGHT_VH = 100;
+const ACTIVE_SCALE = 1.1; // scale of the centered card
+const REST_SCALE = 0.8; // scale of an unselected/off-center card — 20% smaller than the neutral 1x baseline
+const CARD_GAP = 56; // px — matches the gap-14 row class below
+
+/**
+ * Section background — sits behind everything (headline, cards, CTA
+ * banner) via plain DOM order. The CTA banner further down has its own
+ * opaque bg-blue, so it naturally paints over this.
+ *
+ * A slow-drifting hairline grid (`.services-grid-bg`, see globals.css)
+ * over the dark `panel-dark` base, faded out toward the edges via a
+ * radial mask so it reads as an ambient field rather than a hard-edged
+ * tiled pattern running to the section boundary.
+ */
+function ServicesBgGrid() {
+  return (
+    <div
+      aria-hidden="true"
+      className="services-grid-bg pointer-events-none absolute inset-0"
+      style={{
+        maskImage: "radial-gradient(ellipse at center, black 0%, transparent 75%)",
+        WebkitMaskImage: "radial-gradient(ellipse at center, black 0%, transparent 75%)",
+      }}
+    />
+  );
+}
 
 /**
  * Fits every line to a single uniform font-size sized so the WIDEST line
@@ -49,7 +63,8 @@ function GiantHeading({ lines }: { lines: string[] }) {
       const REF = 100;
       ctx.font = `800 ${REF}px ${bodyFont}`;
       const widest = Math.max(...lines.map((line) => ctx.measureText(line).width));
-      setFontSize(widest > 0 ? (cw / widest) * REF : REF);
+      const next = widest > 0 ? (cw / widest) * REF : REF;
+      setFontSize((prev) => (prev !== null && Math.abs(prev - next) < 0.5 ? prev : next));
     }
 
     update();
@@ -88,264 +103,413 @@ function highlightPixel(line: string) {
 }
 
 /**
- * A seamless horizontal carousel of 6 service cards, driven by vertical
- * scroll: the card nearest the center of the screen is always the biggest
- * and sharpest, and the whole row glides continuously (never a discrete
- * jump-cut) as scroll advances, handing off center-stage to the next card
- * in line. Once the last card has had its turn, the section releases into
- * normal scroll.
+ * Same margin recipe as Nav's own pill (px-4 sm:px-6 outer gutter,
+ * max-w-[1400px] centered) so the giant heading's edges line up with the
+ * nav bar's, instead of running to the true screen edge.
  *
- * Gated on prefers-reduced-motion AND a `md`-and-up viewport, same
- * reasoning as Process.tsx's pinned journey — pinned scroll-jacking is
- * fragile on mobile and has no way to be verified on real device jank
- * here, so narrow viewports get a plain stacked fallback instead.
+ * Rendered *inside* the pinned wrapper in motion mode (see
+ * PinnedCarouselRow) rather than above it, so the heading stays visible
+ * throughout the whole horizontal scrub instead of scrolling away the
+ * moment the card row engages its pin.
  */
+function ServicesHeading() {
+  return (
+    <div className="relative px-4 pb-4 pt-28 sm:px-6 sm:pb-5 sm:pt-28">
+      <div className="mx-auto flex max-w-[1400px] flex-col items-center text-center">
+        <Reveal className="w-full">
+          <p className="label-eyebrow mb-4" style={{ fontSize: "1.5rem" }}>
+            {servicesIntro.eyebrow}
+          </p>
+          <GiantHeading lines={servicesIntro.headingLines} />
+        </Reveal>
+      </div>
+    </div>
+  );
+}
+
+/** Curved glow baseline the cards sit along — decorative only, sits
+ * behind the row (earlier in DOM, no z-index needed). Shared by both
+ * carousel modes below. */
+function ServicesArcGlow() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 1440 140"
+      preserveAspectRatio="none"
+      className="pointer-events-none absolute inset-x-0 bottom-10 h-28 w-full opacity-80 sm:bottom-16"
+    >
+      <defs>
+        <linearGradient id="services-arc-glow" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="var(--blue)" stopOpacity="0" />
+          <stop offset="50%" stopColor="var(--magenta)" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="var(--blue)" stopOpacity="0" />
+        </linearGradient>
+        <filter id="services-arc-blur">
+          <feGaussianBlur stdDeviation="3" />
+        </filter>
+      </defs>
+      <path
+        d="M0,120 Q720,-20 1440,120"
+        stroke="url(#services-arc-glow)"
+        strokeWidth="2.5"
+        fill="none"
+        filter="url(#services-arc-blur)"
+      />
+    </svg>
+  );
+}
+
 export function ServicesFold() {
-  const reduced = useReducedMotion();
-  const [showPinned, setShowPinned] = useState(true);
-
-  useEffect(() => {
-    const update = () => setShowPinned(!reduced && window.innerWidth >= MOBILE_BREAKPOINT);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, [reduced]);
-
   return (
     <section id="services" className="panel-dark relative border-t border-line">
-      {/* Same margin recipe as Nav's own pill (px-4 sm:px-6 outer gutter,
-         max-w-[1400px] centered) so the giant heading's edges line up with
-         the nav bar's, instead of running to the true screen edge. */}
-      <div className="px-4 pb-4 pt-28 sm:px-6 sm:pb-5 sm:pt-28">
-        <div className="mx-auto flex max-w-[1400px] flex-col items-center text-center">
-          <Reveal className="w-full">
-            <p className="label-eyebrow mb-4">{servicesIntro.eyebrow}</p>
-            <GiantHeading lines={servicesIntro.headingLines} />
-          </Reveal>
-        </div>
-      </div>
+      <ServicesBgGrid />
 
-      {showPinned ? <CardStage /> : <FallbackGrid />}
+      <ServicesCarousel />
 
-      {/* Its own full-bleed section now (not an inset card floating inside
-         another section) — same edge-to-edge treatment as Stats.tsx's
-         bg-blue, with the actual text/button content still constrained by
-         the standard section-shell margin. */}
-      <div className="relative overflow-hidden bg-blue">
-        <div className="section-shell section-py-standard">
+      {/* Same structure/style as FinalCta.tsx's closing banner — flat
+         single-color heading, one body paragraph, a primary pill link plus
+         a plain-text secondary link, no badges row, no corner decoration.
+         Explicit white/black here rather than the text-paper/bg-paper
+         tokens — this banner sits inside the outer panel-dark section,
+         which reassigns exactly those tokens to their dark-mode values,
+         flipping this "light text + white pill on blue" banner backwards
+         into black text on blue with a black button. */}
+      <div className="relative overflow-hidden border-t border-line px-6 py-24 sm:px-8 lg:px-12">
+        <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
+        <div className="relative mx-auto max-w-[1400px]">
           <Reveal duration={DURATIONS.standard} delay={0.1}>
-            <div className="relative z-10 flex flex-col justify-between gap-8 lg:flex-row lg:items-center">
-              <div>
-                {/* Explicit white/black here, not the text-paper/bg-paper
-                   tokens — this banner sits inside the outer panel-dark
-                   section, which reassigns exactly those tokens to their
-                   dark-mode values, flipping this "light text + white
-                   pill on blue" banner backwards into black text on blue
-                   with a black button. */}
-                <h3 className="max-w-lg text-3xl font-bold leading-[1.1] tracking-tight text-white sm:text-4xl">
-                  {servicesCta.heading.replace(servicesCta.headingHighlight, "").trim()}{" "}
-                  <span className="text-magenta">{servicesCta.headingHighlight}</span>
-                </h3>
-                <p className="mt-3 max-w-md text-white/80">{servicesCta.body}</p>
-                <div className="mt-5 flex flex-wrap gap-x-6 gap-y-2">
-                  {servicesCta.badges.map((b) => (
-                    <span key={b} className="text-sm font-semibold text-white/90">
-                      {b}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
+            <h3 className="max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-5xl">
+              {servicesCta.heading}
+            </h3>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/85">{servicesCta.body}</p>
+            <div className="mt-8 flex flex-wrap items-center gap-6">
               <Link
                 href="/contact"
-                className="hover-lift font-avenir group inline-flex w-fit items-center gap-2 rounded-full bg-white px-7 py-4 text-sm text-black"
+                className="hover-lift font-avenir group inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 text-sm text-black hover:bg-black hover:text-white"
               >
                 {servicesCta.button}
                 <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
+              <a
+                href={bookingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block w-fit origin-left text-sm font-semibold text-white underline-offset-4 transition-transform duration-300 hover:scale-105 hover:underline"
+              >
+                Book a 15-min intro call
+              </a>
             </div>
           </Reveal>
-        </div>
-
-        <div
-          className="pointer-events-none absolute bottom-0 right-0 grid grid-cols-6 gap-1 p-6 opacity-70"
-          aria-hidden="true"
-        >
-          {Array.from({ length: 24 }, (_, i) => (
-            <span
-              key={i}
-              className="h-3 w-3"
-              style={{
-                background:
-                  i % 3 === 0 ? "var(--paper)" : i % 3 === 1 ? "var(--magenta)" : "transparent",
-                opacity: i % 3 === 2 ? 0 : 0.5 + ((i * 7) % 5) / 10,
-              }}
-            />
-          ))}
         </div>
       </div>
     </section>
   );
 }
 
-function CardStage() {
-  const total = services.length;
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const pinnedRef = useRef<HTMLDivElement>(null);
-  const glowRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+type CardRefs = MutableRefObject<(HTMLDivElement | null)[]>;
+
+/**
+ * Per-card scale/lift/tilt/glow math, shared by both carousel modes below.
+ * Takes only a `centerX` (viewport px) and each card's real
+ * `getBoundingClientRect()` — it doesn't care whether that position came
+ * from native `scrollLeft` or a GSAP-driven `transform: translateX`, so
+ * the same function drives both the reduced-motion fallback and the
+ * pinned/scrubbed version without duplicating the visual treatment.
+ */
+function applyCardTransforms(cards: CardRefs, glowRings: CardRefs, centerX: number) {
+  cards.current.forEach((el, i) => {
+    if (!el) return;
+    const cardRect = el.getBoundingClientRect();
+    const cardCenter = cardRect.left + cardRect.width / 2;
+    const step = cardRect.width + CARD_GAP;
+    const d = Math.max(-1, Math.min(1, (cardCenter - centerX) / step));
+    const absD = Math.abs(d);
+
+    const scale = REST_SCALE + (ACTIVE_SCALE - REST_SCALE) * (1 - absD);
+    // Off-center cards sit noticeably lower than the centered one,
+    // reading as a pronounced arc/curved shelf rather than a flat row.
+    const lift = (1 - absD) * 70;
+    // Darker/more muted falloff than a plain opacity fade — the
+    // centered card reads bright and lit-up, others flat and dim.
+    const opacity = 0.35 + 0.65 * (1 - absD);
+    const brightness = 0.55 + 0.45 * (1 - absD);
+    const rotateY = d * -14;
+    const translateZ = -absD * 80;
+    // In-plane tilt following the arc's tangent.
+    const rotateZ = d * -7;
+
+    el.style.transform = `translateY(${-lift}px) scale(${scale}) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) translateZ(${translateZ}px)`;
+    el.style.opacity = String(opacity);
+    el.style.zIndex = String(Math.round((1 - absD) * 100));
+    el.style.filter =
+      absD > 0.15
+        ? `blur(${(absD * 1.5).toFixed(1)}px) brightness(${brightness.toFixed(2)})`
+        : `brightness(${brightness.toFixed(2)})`;
+
+    const ring = glowRings.current[i];
+    if (ring) ring.style.opacity = String(Math.max(0, 1 - absD * 1.6));
+  });
+}
+
+function CarouselCard({
+  service,
+  snap,
+  registerCard,
+  registerGlow,
+}: {
+  service: (typeof services)[number];
+  snap: boolean;
+  registerCard: (el: HTMLDivElement | null) => void;
+  registerGlow: (el: HTMLDivElement | null) => void;
+}) {
+  return (
+    <div
+      ref={registerCard}
+      className={`relative h-[24rem] w-72 shrink-0 will-change-transform sm:h-[28rem] sm:w-80 ${
+        snap ? "snap-center [scroll-snap-stop:always]" : ""
+      }`}
+      style={{ transformStyle: "preserve-3d" }}
+    >
+      {/* Neon ring, only around the active/centered card — sits outside
+         the card's own overflow-hidden so it isn't clipped; opacity
+         driven per-frame by applyCardTransforms(). */}
+      <div
+        ref={registerGlow}
+        aria-hidden="true"
+        className="glow-ring pointer-events-none absolute -inset-1 rounded-[2.6rem] opacity-0"
+      />
+      <div className="relative h-full w-full overflow-hidden rounded-[2.5rem] bg-blue p-8 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.4),0_40px_80px_-28px_rgba(0,0,0,0.55)]">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-4 -top-8 select-none text-[7rem] font-black leading-none text-white/10 sm:text-[9rem]"
+        >
+          {service.id}
+        </span>
+        <div className="relative flex h-full flex-col justify-start">
+          <span className="inline-flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/70">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue" aria-hidden="true" />[ {service.id} ]
+          </span>
+          <h3 className="mt-4 break-words text-2xl font-bold leading-tight tracking-tight text-white">
+            {service.title}
+          </h3>
+          <p className="mt-3 max-w-xs break-words text-sm leading-relaxed text-white/80">
+            {service.shortDesc}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Reduced-motion fallback: a real, native horizontally-scrolling row —
+ * `overflow-x: auto` + `scroll-snap-type: x mandatory` +
+ * `scroll-snap-stop: always` on each card, so one card advances per
+ * gesture with zero custom event interception. No pin, no scroll-jack:
+ * the page's vertical scroll and this row's horizontal scroll are
+ * independent axes.
+ */
+function NativeCarouselRow({ cardRefs, glowRingRefs }: { cardRefs: CardRefs; glowRingRefs: CardRefs }) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const wrap = wrapRef.current;
-    const pinned = pinnedRef.current;
-    const track = trackRef.current;
-    if (!wrap || !pinned || !track) return;
+    const scroller = scrollerRef.current;
+    if (!scroller) return;
 
-    // Pure function of scroll progress — the track's horizontal position
-    // (which card sits center-screen) and each card's own scale/opacity
-    // are both just continuous functions of "how far is the current
-    // scroll position from my own slot," so the whole row reads as one
-    // seamless glide rather than a sequence of discrete steps.
-    function update(progress: number) {
-      // `progress * total` would put card 0 at d = -0.5 when progress = 0
-      // (half-transitioned, not actually centered) and the last card at
-      // d = +0.5 when progress = 1 — the section would visibly rest on a
-      // dim, off-center, half-scaled card at both the moment it pins and
-      // the moment it releases, instead of ever settling cleanly on one.
-      // Mapping progress across (total - 1) instead of `total`, offset by
-      // 0.5, guarantees card 0 is exactly centered at progress = 0 and the
-      // last card is exactly centered at progress = 1.
-      const x = 0.5 + progress * (total - 1);
-      const viewportW = window.innerWidth;
+    let rafId = 0;
 
-      // Centers the card at continuous position `x - 0.5` under the
-      // viewport's horizontal middle — at x = i + 0.5 (card i's own
-      // center, matching the `d` falloff below), this places card i's
-      // actual center pixel exactly at viewportW / 2.
-      const focusPx = (x - 0.5) * CARD_STEP + CARD_WIDTH / 2;
-      if (trackRef.current) {
-        trackRef.current.style.transform = `translateY(-50%) translateX(${viewportW / 2 - focusPx}px)`;
-      }
-
-      cardRefs.current.forEach((el, i) => {
-        if (!el) return;
-        const d = Math.max(-1, Math.min(1, x - (i + 0.5)));
-        const absD = Math.abs(d);
-        const scale = 1 + (ACTIVE_SCALE - 1) * (1 - absD);
-        const lift = (1 - absD) * 14;
-        const opacity = 0.45 + 0.55 * (1 - absD);
-        const rotateY = d * -14;
-        const translateZ = -absD * 80;
-        // Extra outward push beyond the track's own uniform spacing —
-        // rotateY's foreshortening pulls a tilted card's near edge inward,
-        // which is what reads as neighboring cards "crashing" into each
-        // other mid-transition. This fans them apart exactly when tilted
-        // (zero at d = 0, so the resting/centered layout is untouched).
-        const spread = d * 36;
-        el.style.transform = `translateX(${spread}px) translateY(${-lift}px) scale(${scale}) rotateY(${rotateY}deg) translateZ(${translateZ}px)`;
-        el.style.opacity = String(opacity);
-        el.style.zIndex = String(Math.round((1 - absD) * 100));
-        el.style.filter = absD > 0.15 ? `blur(${(absD * 1.5).toFixed(1)}px)` : "none";
-      });
-
-      if (glowRef.current) {
-        const posX = 15 + progress * 70;
-        glowRef.current.style.background = `radial-gradient(700px circle at ${posX}% 45%, var(--magenta)26, transparent 70%)`;
-      }
+    function update() {
+      rafId = 0;
+      if (!scroller) return;
+      const rect = scroller.getBoundingClientRect();
+      applyCardTransforms(cardRefs, glowRingRefs, rect.left + rect.width / 2);
     }
 
-    update(0);
+    function onScroll() {
+      if (rafId) return;
+      rafId = requestAnimationFrame(update);
+    }
 
-    const st = ScrollTrigger.create({
-      trigger: wrap,
-      pin: pinned,
-      start: "top top",
-      end: () => `+=${total * window.innerHeight * SCROLL_PER_CARD}`,
-      scrub: 0.9,
-      anticipatePin: 1,
-      // Card slots are evenly spaced across progress (1 / (total - 1) per
-      // card, matching the x-mapping above) — snapping to that increment
-      // means the moment scrolling lets up, it auto-finishes the glide to
-      // whichever card is nearest instead of requiring the visitor to
-      // scroll the exact pixel distance to land on one themselves.
-      snap: {
-        snapTo: 1 / (total - 1),
-        duration: { min: 0.2, max: 0.6 },
-        ease: "power1.inOut",
-      },
-      onUpdate: (self) => update(self.progress),
-    });
+    update();
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
 
-    const onResize = () => update(st.progress);
-    window.addEventListener("resize", onResize);
+    // Convenience for a plain (non-trackpad) mouse wheel, which has no
+    // native horizontal axis of its own: redirect vertical wheel input
+    // into horizontal scroll while hovering the row. A trackpad's own
+    // horizontal swipe already scrolls the row natively without this.
+    function onWheel(e: WheelEvent) {
+      if (!scroller || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+      const atStart = scroller.scrollLeft <= 0;
+      const atEnd = scroller.scrollLeft >= scroller.scrollWidth - scroller.clientWidth - 1;
+      if ((e.deltaY < 0 && atStart) || (e.deltaY > 0 && atEnd)) return;
+      e.preventDefault();
+      scroller.scrollBy({ left: e.deltaY });
+    }
+    scroller.addEventListener("wheel", onWheel, { passive: false });
 
     return () => {
-      st.kill();
-      window.removeEventListener("resize", onResize);
+      if (rafId) cancelAnimationFrame(rafId);
+      scroller.removeEventListener("scroll", onScroll);
+      scroller.removeEventListener("wheel", onWheel);
+      window.removeEventListener("resize", onScroll);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cardRefs, glowRingRefs]);
 
-  // GSAP's pin-spacer reserves the scroll distance (`end`, above) PLUS the
-  // pinned element's own natural height (100vh, since it's h-screen) — see
-  // the identical fix/comment in Process.tsx, which had this exact bug
-  // when this wrapper's height didn't also account for that extra 100vh.
   return (
-    <div ref={wrapRef} style={{ height: `${total * 100 * SCROLL_PER_CARD + PINNED_HEIGHT_VH}vh` }}>
-      <div ref={pinnedRef} className="relative h-screen overflow-hidden">
-        <div ref={glowRef} className="pointer-events-none absolute inset-0" aria-hidden="true" />
-
-        {/* Sci-fi motion behind the cards, not on them: a drifting circuit
-           grid, visible through the cards' own glass. */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden opacity-40" aria-hidden="true">
-          <div className="services-bg-grid" />
-        </div>
-
-        <div className="relative h-full" style={{ perspective: "1600px" }}>
-          <div
-            ref={trackRef}
-            className="absolute left-0 top-1/2 flex items-center gap-14"
-            style={{ willChange: "transform" }}
-          >
+    <>
+      <ServicesHeading />
+      <div className="relative py-10 sm:py-16">
+        <ServicesArcGlow />
+        <div
+          ref={scrollerRef}
+          className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto pt-20 pb-8"
+          style={{ perspective: "1600px" }}
+        >
+          {/* Spacer cells so the first/last card can scroll all the way to
+             true center — without these, native scroll can only bring an
+             edge card's own edge to the container's edge, not its center. */}
+          <div aria-hidden="true" className="w-[calc(50%-144px)] shrink-0 sm:w-[calc(50%-160px)]" />
+          <div className="flex items-center gap-14">
             {services.map((service, i) => (
-              <div
+              <CarouselCard
                 key={service.slug}
-                ref={(el) => {
+                service={service}
+                snap
+                registerCard={(el) => {
                   cardRefs.current[i] = el;
                 }}
-                className="relative h-[24rem] w-72 shrink-0 overflow-hidden rounded-[2rem] border border-white/25 bg-white/10 p-8 shadow-[0_30px_80px_-25px_rgba(255,46,147,0.45)] backdrop-blur-xl will-change-transform sm:h-[28rem] sm:w-80"
-                style={{ transformStyle: "preserve-3d" }}
-              >
-                {/* Glass sheen — diagonal highlight + magenta brand tint,
-                   layered over the transparent/blurred card so the grid
-                   behind still reads through. */}
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/30 via-magenta/10 to-transparent"
-                />
-                <div
-                  aria-hidden="true"
-                  className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent"
-                />
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -right-4 -top-8 select-none text-[7rem] font-black leading-none text-white/10 sm:text-[9rem]"
-                >
-                  {service.id}
-                </span>
-                <div className="relative flex h-full flex-col justify-center">
-                  <span className="inline-flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/70">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue" aria-hidden="true" />[ {service.id} ]
-                  </span>
-                  <h3 className="mt-4 break-words text-2xl font-bold leading-tight tracking-tight text-white">
-                    {service.title}
-                  </h3>
-                  <p className="mt-3 max-w-xs break-words text-sm leading-relaxed text-white/80">
-                    {service.shortDesc}
-                  </p>
-                </div>
-              </div>
+                registerGlow={(el) => {
+                  glowRingRefs.current[i] = el;
+                }}
+              />
+            ))}
+          </div>
+          <div aria-hidden="true" className="w-[calc(50%-144px)] shrink-0 sm:w-[calc(50%-160px)]" />
+        </div>
+      </div>
+    </>
+  );
+}
+
+/**
+ * Full-motion mode: pins (GSAP ScrollTrigger `pin: true`) once its top
+ * hits the viewport top, and the card track's `x` is scrubbed 1:1 against
+ * scroll progress until the last card reaches center, at which point it
+ * unpins and the page continues — reversing cleanly on scroll-up since a
+ * scrubbed tween is just scroll-position-driven, no direction branch
+ * needed. `end`/`x` are functions (with `invalidateOnRefresh`) so
+ * resize/font-swap recomputes the pin distance instead of a manual
+ * ResizeObserver rebuild.
+ *
+ * The pin target (`pinRef`) wraps the heading *and* the card row, not
+ * just the row — so the heading rides along pinned in place for the
+ * whole scrub instead of scrolling off before the cards even start
+ * moving. `rowRef`/`trackRef` (a level deeper) still drive the actual
+ * distance/centering math, unchanged by that wrapping.
+ *
+ * This *is* the pin-and-scroll-jack idea a previous version of this
+ * carousel attempted — that one hand-rolled it with wheel/touch listeners
+ * and Lenis stop()/start() coordination and went through many rounds of
+ * edge-case bugs (spurious unpinning, trackpad momentum swallowing the
+ * next swipe, auto-advance on entry). The difference here is using GSAP
+ * ScrollTrigger's own pin+scrub primitives instead of reimplementing scroll
+ * capture by hand — Lenis already feeds ScrollTrigger via
+ * `lenis.on("scroll", ScrollTrigger.update)` in SmoothScrollProvider, so
+ * this needs no custom wheel/touch interception at all.
+ */
+function PinnedCarouselRow({ cardRefs, glowRingRefs }: { cardRefs: CardRefs; glowRingRefs: CardRefs }) {
+  const pinRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const pinEl = pinRef.current;
+    const row = rowRef.current;
+    const track = trackRef.current;
+    if (!pinEl || !row || !track) return;
+
+    function distance() {
+      return Math.max(0, track!.scrollWidth - row!.clientWidth);
+    }
+
+    function updateCards() {
+      const rect = row!.getBoundingClientRect();
+      applyCardTransforms(cardRefs, glowRingRefs, rect.left + rect.width / 2);
+    }
+
+    const tween = gsap.to(track, {
+      x: () => -distance(),
+      ease: "none",
+      scrollTrigger: {
+        trigger: pinEl,
+        start: "top top",
+        end: () => `+=${distance()}`,
+        // A number (not `true`) — GSAP only builds its internal catch-up
+        // tween, and therefore only ever fires `onScrubComplete` below,
+        // when `scrub` is numeric. The value itself is a light smoothing
+        // lag on the card motion, independent of Lenis's own scroll easing.
+        scrub: 0.3,
+        pin: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        onUpdate: updateCards,
+        onRefresh: updateCards,
+        // Free-scrub while the user is actively scrolling; once they stop
+        // (this fires ~0.3s after the last scroll update, so it naturally
+        // waits out Lenis's own momentum first), animate to the nearest of
+        // the (n-1) even steps between card centers via `lenis.scrollTo()`
+        // — not GSAP's own built-in `snap`, which sets scroll position
+        // directly and gets silently overwritten by Lenis on its next
+        // rAF tick since Lenis, not the browser, owns scroll position here.
+        onScrubComplete: (self) => {
+          const steps = services.length - 1;
+          const snapProgress = Math.round(self.progress * steps) / steps;
+          const target = self.start + (self.end - self.start) * snapProgress;
+          if (Math.abs(target - window.scrollY) < 1) return;
+          getLenis()?.scrollTo(target, { duration: 0.6, easing: (t) => 1 - Math.pow(1 - t, 3) });
+        },
+      },
+    });
+
+    updateCards();
+    ScrollTrigger.refresh();
+
+    return () => {
+      tween.scrollTrigger?.kill();
+      tween.kill();
+    };
+  }, [cardRefs, glowRingRefs]);
+
+  return (
+    <div ref={pinRef} className="relative">
+      <ServicesHeading />
+      <div className="relative py-10 sm:py-16">
+        <ServicesArcGlow />
+        {/* pt-28 (112px): the centered card's real upward reach is more
+           than the 70px `lift` alone — `scale(1.1)` grows the box from its
+           center, so half the height gain (~22px at h-28rem) also pushes
+           the top edge up, ~92px total. Needs to clear that everywhere or
+           this row's own overflow-hidden (required to clip the
+           wider-than-viewport track) clips the lifted card's top instead. */}
+        <div ref={rowRef} className="overflow-hidden pb-8 pt-28">
+          <div
+            ref={trackRef}
+            className="flex w-max items-center gap-14 pl-[calc(50%-144px)] pr-[calc(50%-144px)] will-change-transform sm:pl-[calc(50%-160px)] sm:pr-[calc(50%-160px)]"
+            style={{ perspective: "1600px" }}
+          >
+            {services.map((service, i) => (
+              <CarouselCard
+                key={service.slug}
+                service={service}
+                snap={false}
+                registerCard={(el) => {
+                  cardRefs.current[i] = el;
+                }}
+                registerGlow={(el) => {
+                  glowRingRefs.current[i] = el;
+                }}
+              />
             ))}
           </div>
         </div>
@@ -354,35 +518,14 @@ function CardStage() {
   );
 }
 
-/** No pinning, no 3D — same six services, plain stacked reveal. Used
- * under prefers-reduced-motion and below the `md` breakpoint. */
-function FallbackGrid() {
-  return (
-    <div className="section-shell pb-20">
-      <RevealGroup stagger={0.1} className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {services.map((service) => (
-          <RevealItem
-            key={service.slug}
-            className="relative overflow-hidden rounded-[2rem] border border-white/25 bg-white/10 p-6 shadow-[0_20px_60px_-20px_rgba(255,46,147,0.5)] backdrop-blur-xl"
-          >
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/30 via-magenta/10 to-transparent"
-            />
-            <span
-              aria-hidden="true"
-              className="pointer-events-none absolute -right-3 -top-6 select-none text-[6rem] font-black leading-none text-white/10"
-            >
-              {service.id}
-            </span>
-            <span className="relative inline-flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/70">
-              <span className="h-1.5 w-1.5 rounded-full bg-blue" aria-hidden="true" />[ {service.id} ]
-            </span>
-            <h3 className="relative mt-3 text-h3 text-white">{service.title}</h3>
-            <p className="relative mt-3 text-sm leading-relaxed text-white/80">{service.shortDesc}</p>
-          </RevealItem>
-        ))}
-      </RevealGroup>
-    </div>
+function ServicesCarousel() {
+  const reduced = useReducedMotion();
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const glowRingRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  return reduced ? (
+    <NativeCarouselRow cardRefs={cardRefs} glowRingRefs={glowRingRefs} />
+  ) : (
+    <PinnedCarouselRow cardRefs={cardRefs} glowRingRefs={glowRingRefs} />
   );
 }

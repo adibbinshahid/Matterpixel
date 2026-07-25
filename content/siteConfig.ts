@@ -57,7 +57,7 @@ export const trust = {
  * invented, same standard as every other credibility claim on this site.
  */
 export const stats = [
-  { value: "90+", label: "PageSpeed Score", desc: "Every build engineered to a 90+ Google PageSpeed standard." },
+  { value: "90+", label: "PageSpeed Score", desc: "Every build hits a 90+ Google PageSpeed score." },
   { value: "NDA", label: "Friendly", desc: "Comfortable working under NDA from day one." },
   { value: "100%", label: "Founder-Led", desc: "No bench, no juniors learning on your dime." },
   { value: "4.9", label: "Client Rating", desc: "Verified reviews across every project." },

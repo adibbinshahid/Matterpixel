@@ -7,11 +7,8 @@ import { stats } from "@/content/siteConfig";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { DURATIONS, EASE } from "@/lib/utils";
 
-// 2x the site's normal pace, on request — this section's reveal and
-// count-up both read as noticeably slower/more deliberate than everywhere
-// else on the site.
-const REVEAL_DURATION = DURATIONS.standard * 2;
-const COUNT_UP_DURATION = 2.2 * 2;
+const REVEAL_DURATION = DURATIONS.standard;
+const COUNT_UP_DURATION = 2.2;
 
 /** Splits "90+" / "100%" / "24h" into an animatable number + trailing
  * suffix; non-numeric values ("NDA") count-up as a no-op and just render. */
@@ -55,15 +52,9 @@ function StatTile({ stat }: { stat: (typeof stats)[number] }) {
   }, [num, reduced]);
 
   return (
-    <RevealItem className="stat-divider pt-6" duration={REVEAL_DURATION}>
-      <div ref={ref}>
-        <p
-          className={
-            stat.value.length > 6
-              ? "break-words text-3xl font-bold leading-tight tracking-tight text-paper sm:text-4xl"
-              : "break-words text-display text-paper"
-          }
-        >
+    <RevealItem className="glass-card overflow-hidden rounded-3xl p-6" duration={REVEAL_DURATION}>
+      <div ref={ref} className="relative">
+        <p className="whitespace-nowrap text-4xl font-bold leading-tight tracking-tight text-paper sm:text-5xl">
           {num === null ? stat.value : `${display}${suffix}`}
         </p>
         <p className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-paper">{stat.label}</p>
