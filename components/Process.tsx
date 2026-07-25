@@ -192,7 +192,7 @@ export function Process() {
         </div>
 
         {/* Panel */}
-        <div className="relative mt-12 min-h-[22rem] sm:min-h-[18rem]">
+        <div className="relative mt-12">
           <AnimatePresence mode="wait">
             <motion.div
               key={step.id}
