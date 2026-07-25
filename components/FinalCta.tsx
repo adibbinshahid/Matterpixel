@@ -11,7 +11,7 @@ import { foundingOffer, bookingUrl } from "@/content/siteConfig";
  */
 export function FinalCta() {
   return (
-    <section className="relative overflow-hidden border-t border-line px-6 py-24 sm:px-8 lg:px-12">
+    <section className="relative overflow-hidden px-6 py-24 sm:px-8 lg:px-12">
       <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
       <div className="relative mx-auto max-w-[1400px]">
         <Reveal>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, type MutableRefObject } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight } from "lucide-react";
+import { GiantHeading } from "@/components/GiantHeading";
 import { Reveal } from "@/components/Reveal";
 import { getLenis } from "@/components/SmoothScrollProvider";
 import { services } from "@/content/services";
@@ -32,73 +33,10 @@ function ServicesBgGrid() {
       aria-hidden="true"
       className="services-grid-bg pointer-events-none absolute inset-0"
       style={{
-        maskImage: "radial-gradient(ellipse at center, black 0%, transparent 75%)",
-        WebkitMaskImage: "radial-gradient(ellipse at center, black 0%, transparent 75%)",
+        maskImage: "radial-gradient(ellipse at center, black 0%, transparent 90%)",
+        WebkitMaskImage: "radial-gradient(ellipse at center, black 0%, transparent 90%)",
       }}
     />
-  );
-}
-
-/**
- * Fits every line to a single uniform font-size sized so the WIDEST line
- * spans exactly the full width of its container — real canvas text
- * measurement (same technique as FeatureStrip.tsx), not a guessed clamp(),
- * so "End-to-end solutions." genuinely reaches edge-to-edge at any
- * viewport width instead of an approximation that's only right sometimes.
- */
-function GiantHeading({ lines }: { lines: string[] }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [fontSize, setFontSize] = useState<number | null>(null);
-
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!el || !ctx) return;
-
-    function update() {
-      if (!el || !ctx) return;
-      const cw = el.clientWidth;
-      const bodyFont = getComputedStyle(document.body).fontFamily;
-      const REF = 100;
-      ctx.font = `800 ${REF}px ${bodyFont}`;
-      const widest = Math.max(...lines.map((line) => ctx.measureText(line).width));
-      const next = widest > 0 ? (cw / widest) * REF : REF;
-      setFontSize((prev) => (prev !== null && Math.abs(prev - next) < 0.5 ? prev : next));
-    }
-
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [lines]);
-
-  return (
-    <div ref={containerRef} className="w-full">
-      {lines.map((line) => (
-        <div
-          key={line}
-          className="whitespace-nowrap font-extrabold leading-[0.94] tracking-tight text-ink"
-          style={{ fontSize: fontSize ? `${fontSize}px` : "1px", opacity: fontSize ? 1 : 0 }}
-        >
-          {highlightPixel(line)}
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/** Brand-colors any occurrence of the word "pixel" — the one word this
- * heading should always call out, regardless of which line it lands on. */
-function highlightPixel(line: string) {
-  return line.split(/(pixel)/).map((part, i) =>
-    part === "pixel" ? (
-      <span key={i} className="text-magenta">
-        {part}
-      </span>
-    ) : (
-      <span key={i}>{part}</span>
-    ),
   );
 }
 
@@ -120,7 +58,9 @@ function ServicesHeading() {
           <p className="label-eyebrow mb-4" style={{ fontSize: "1.5rem" }}>
             {servicesIntro.eyebrow}
           </p>
-          <GiantHeading lines={servicesIntro.headingLines} />
+          <h2>
+            <GiantHeading lines={servicesIntro.headingLines} />
+          </h2>
         </Reveal>
       </div>
     </div>

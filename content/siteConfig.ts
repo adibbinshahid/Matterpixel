@@ -97,23 +97,47 @@ export const processSteps = {
   steps: [
     {
       id: "01",
-      title: "Discover",
-      desc: "We map the business problem before touching a single pixel.",
+      title: "Video meetup",
+      desc: "We'll meet (Zoom) to discuss your project.",
+      details: [
+        { label: "Specifications", text: "We'll write the specifications for your site's functionality and features." },
+        { label: "Research", text: "We'll do research based on your needs." },
+      ],
     },
     {
       id: "02",
-      title: "Design",
-      desc: "Interfaces built on real hierarchy, tested against real behavior.",
+      title: "Requirements",
+      desc: "We'll make sure we have everything needed to complete your project.",
+      details: [
+        { label: "Planning", text: "We'll use your provided requirements to start planning your website." },
+      ],
     },
     {
       id: "03",
-      title: "Build",
-      desc: "Clean, typed, performant code — engineered to scale from day one.",
+      title: "Website Design",
+      desc: "We'll create the design for your website.",
+      details: [
+        { label: "Design Concept", text: "We'll design a concept for your website." },
+        { label: "Follow-up session", text: "We'll have a follow-up session to discuss any open questions." },
+      ],
     },
     {
       id: "04",
-      title: "Ship",
-      desc: "Launched, measured, and handed off with full documentation.",
+      title: "Development",
+      desc: "We'll develop the website and deliver a working product for your review.",
+      details: [
+        { label: "Content Upload", text: "We'll upload your content (copy, images, videos, etc.) to your website." },
+        { label: "Progress check", text: "We'll meet to review your project status and the steps needed to finish it." },
+      ],
+    },
+    {
+      id: "05",
+      title: "Delivery",
+      desc: "We'll send you the final delivery for review and feedback.",
+      details: [
+        { label: "Modifications", text: "We'll modify assets based on your feedback." },
+        { label: "Delivery", text: "We'll send you the final delivery for review and feedback." },
+      ],
     },
   ],
 };

@@ -252,8 +252,8 @@ body {
    local media query. */
 .services-grid-bg {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
   background-size: 64px 64px;
   animation: services-grid-drift 24s linear infinite;
 }
@@ -265,6 +265,35 @@ body {
   to {
     background-position: 64px 64px;
   }
+}
+
+/* Slow vertical drift for Process's background ghost numerals — rotation
+   is baked into each instance's own static inline `transform` (see
+   ProcessGhostNumbers in Process.tsx), not here, since animating
+   `transform` from a keyframe would otherwise overwrite that inline
+   rotation outright rather than compose with it. */
+@keyframes process-ghost-drift {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(18px, -38px) scale(1.04);
+  }
+  50% {
+    transform: translate(-14px, -60px) scale(1);
+  }
+  75% {
+    transform: translate(-22px, -26px) scale(0.97);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+.process-ghost-num {
+  display: inline-block;
+  animation-name: process-ghost-drift;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
 }
 
 /* Hides the native scrollbar on the services carousel's horizontal
@@ -517,6 +546,23 @@ html.lenis body {
   --paper-2: #1a1a1f;
   --line: #2a2a30;
   background: var(--paper);
+  color: var(--ink);
+}
+
+/* Same reassignment technique as .panel-dark, but on brand blue — every
+   existing text-ink/text-ink-soft/bg-paper-2/border-line utility inside a
+   .panel-blue section renders correctly white-on-blue with zero
+   component-level changes. Doesn't touch --blue itself (still the real
+   brand blue everywhere else); elements that use text-blue/bg-blue for
+   *accent* purposes still need an explicit override where they're nested
+   inside this class, since blue-on-blue would be invisible. */
+.panel-blue {
+  --ink: #ffffff;
+  --ink-soft: rgba(255, 255, 255, 0.72);
+  --paper: var(--blue);
+  --paper-2: rgba(255, 255, 255, 0.12);
+  --line: rgba(255, 255, 255, 0.25);
+  background: var(--blue);
   color: var(--ink);
 }
 

@@ -1,31 +1,54 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { GiantHeading } from "@/components/GiantHeading";
 import { Reveal } from "@/components/Reveal";
-import { processSteps } from "@/content/siteConfig";
+import { processSteps, servicesIntro } from "@/content/siteConfig";
 import { useReducedMotion } from "@/lib/useReducedMotion";
-import { GSAP_EASE } from "@/lib/gsapEase";
+import { EASE } from "@/lib/utils";
+
+const AUTO_ADVANCE_MS = 1000;
+const CLICK_PAUSE_MS = 5000;
+
+const total = processSteps.steps.length;
 
 /**
- * `data-cell` marks each cell for the row's staggered "assemble"
- * animation — an echo of the Threshold's ignition-particle burst, so the
- * brand's own pixel motif is what announces each step, not a generic fade.
+ * Scattered giant step numerals drifting slowly behind the section — the
+ * same "01 02 03 04 05" the stepper below makes prominent, doing double
+ * duty as this section's background instead of a second, unrelated motif.
+ * Fixed px `top` (not %) so it doesn't visually reflow when the panel
+ * below changes height on step-switch; `left` as % is safe since the
+ * section's width doesn't change. Reduced-motion strips the drift via the
+ * global animation kill-switch in globals.css (plain CSS `animation`, not
+ * JS-driven, so no separate handling needed here).
  */
-function StepGlyph({ index }: { index: number }) {
-  const cells = Array.from({ length: 16 }, (_, i) => i);
+const GHOST_POSITIONS: { top: string; left: string; rotate: number }[] = [
+  { top: "-60px", left: "4%", rotate: -8 },
+  { top: "50px", left: "27%", rotate: 6 },
+  { top: "-90px", left: "50%", rotate: -5 },
+  { top: "60px", left: "74%", rotate: 8 },
+  { top: "-50px", left: "97%", rotate: -10 },
+];
+
+function ProcessGhostNumbers() {
   return (
-    <div className="grid h-14 w-14 grid-cols-4 grid-rows-4 gap-0.5">
-      {cells.map((i) => {
-        const active = (i + index * 3) % 5 !== 0;
+    <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+      {processSteps.steps.map((s, i) => {
+        const pos = GHOST_POSITIONS[i % GHOST_POSITIONS.length];
         return (
           <div
-            key={i}
-            data-cell
-            style={{
-              background: active ? (i % 2 === 0 ? "var(--blue)" : "var(--magenta)") : "transparent",
-            }}
-          />
+            key={s.id}
+            className="absolute select-none font-black leading-none text-ink/[0.1]"
+            style={{ top: pos.top, left: pos.left, fontSize: "20rem", transform: `translateX(-50%) rotate(${pos.rotate}deg)` }}
+          >
+            <span
+              className="process-ghost-num block"
+              style={{ animationDelay: `${i * -2}s`, animationDuration: `${12 + i * 2}s` }}
+            >
+              {s.id}
+            </span>
+          </div>
         );
       })}
     </div>
@@ -33,154 +56,184 @@ function StepGlyph({ index }: { index: number }) {
 }
 
 /**
- * A single-screen horizontal row, not a pinned scroll journey — the whole
- * process is visible at once, no scroll-jacking. What still ties the four
- * steps together as one system (echoing "Systems, not guesswork.") is a
- * hand-drawn blueprint line across the top, drawing itself in once when
- * the row enters view, with each step's dot/glyph/copy assembling in as
- * the line "reaches" it. One authored GSAP timeline, triggered once
- * (`scrollTrigger: { once: true }`, no pin, no scrub) — not the generic
- * per-item fade `RevealGroup` uses elsewhere, since the line-draw is what
- * makes this section's connected-steps idea legible instead of just four
- * independent cards.
+ * Auto-advancing (1s/step) as well as click-driven — still not a
+ * scroll-triggered stepper, the whole point is a fixed-height
+ * single-screen block regardless of how much copy any one step carries,
+ * since only one step's panel is ever mounted at a time.
+ *
+ * Auto-advance runs on a plain `setInterval` that always keeps ticking;
+ * clicking a step doesn't stop it, just tells it to *skip* ticks for the
+ * next `CLICK_PAUSE_MS` via a timestamp ref (`pausedUntilRef`) — cheaper
+ * than tearing down/recreating the interval on every click, and it means
+ * resuming naturally continues forward from whatever step the user
+ * clicked, with no separate "resume position" to track.
+ *
+ * Three animation layers work together on every step change, none of them
+ * a generic opacity/translate fade:
+ *  1. The rail's fill bar grows/shrinks to the new node (a real progress
+ *     indicator, not decoration — it's *why* the site's brand line motif
+ *     belongs here).
+ *  2. The active step's numeral scales up and its underline is a
+ *     shared-layout element (`layoutId`) that physically slides from the
+ *     old step to the new one, rather than one fading out while another
+ *     fades in.
+ *  3. The panel itself clip-path wipes out/in (AnimatePresence,
+ *     `mode="wait"`); its contents are keyed to the same step and get a
+ *     quick fade+rise rather than a slower dissolve — at a 1s auto-advance
+ *     cadence there isn't room for a leisurely reveal.
  */
 export function Process() {
   const reduced = useReducedMotion();
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const lineRef = useRef<SVGLineElement>(null);
-  const dotRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const glyphWrapRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const textRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const step = processSteps.steps[activeIndex];
+  const fillPercent = total > 1 ? (activeIndex / (total - 1)) * 100 : 0;
+  const pausedUntilRef = useRef(0);
 
   useEffect(() => {
-    const section = sectionRef.current;
-    const line = lineRef.current;
-    if (!section) return;
-
-    const total = processSteps.steps.length;
-    const dots = dotRefs.current.filter((el): el is HTMLSpanElement => !!el);
-    const cellGroups = glyphWrapRefs.current.map(
-      (el) => el?.querySelectorAll<HTMLElement>("[data-cell]") ?? null,
-    );
-    const cells = cellGroups.filter((g): g is NodeListOf<HTMLElement> => !!g);
-    const texts = textRefs.current.filter((el): el is HTMLDivElement => !!el);
-
-    if (reduced) {
-      // `useReducedMotion()` always starts `false` on first render (it
-      // can't know `matchMedia` before mount) and flips to `true` a tick
-      // later — so this effect's *first* run, below, may already have
-      // hidden everything before that flip re-runs it here. Explicitly
-      // force the visible end-state rather than just bailing out, or
-      // those elements stay stuck invisible with nothing left to reveal
-      // them (the scrollTrigger/timeline that would have gets killed by
-      // this same re-run's cleanup before it ever plays).
-      gsap.set(dots, { scale: 1 });
-      gsap.set(cells, { scale: 1, opacity: 1 });
-      gsap.set(texts, { opacity: 1, y: 0 });
-      if (line) gsap.set(line, { strokeDasharray: "none", strokeDashoffset: 0 });
-      return;
-    }
-
-    gsap.set(dots, { scale: 0 });
-    gsap.set(cells, { scale: 0, opacity: 0 });
-    gsap.set(texts, { opacity: 0, y: 16 });
-
-    let lineLength = 0;
-    if (line) {
-      lineLength = line.getTotalLength();
-      gsap.set(line, { strokeDasharray: lineLength, strokeDashoffset: lineLength });
-    }
-
-    const tl = gsap.timeline({
-      scrollTrigger: { trigger: section, start: "top 75%", once: true },
-      defaults: { ease: GSAP_EASE },
-    });
-
-    const drawDuration = 1;
-    if (line) {
-      tl.to(line, { strokeDashoffset: 0, duration: drawDuration, ease: "power2.inOut" }, 0);
-    }
-
-    for (let i = 0; i < total; i++) {
-      // Where the line "reaches" this step's dot, as a fraction of the draw.
-      const reach = total > 1 ? (i / (total - 1)) * drawDuration : 0;
-      tl.to(dots[i], { scale: 1, duration: 0.3 }, reach);
-      const stepCells = cellGroups[i];
-      if (stepCells?.length) {
-        tl.to(stepCells, { scale: 1, opacity: 1, duration: 0.4, stagger: 0.015 }, reach + 0.05);
-      }
-      const text = textRefs.current[i];
-      if (text) {
-        tl.to(text, { opacity: 1, y: 0, duration: 0.4 }, reach + 0.1);
-      }
-    }
-
-    return () => {
-      tl.scrollTrigger?.kill();
-      tl.kill();
-    };
+    if (reduced) return;
+    const id = window.setInterval(() => {
+      if (Date.now() < pausedUntilRef.current) return;
+      setActiveIndex((prev) => (prev + 1) % total);
+    }, AUTO_ADVANCE_MS);
+    return () => window.clearInterval(id);
   }, [reduced]);
 
+  function selectStep(i: number) {
+    setActiveIndex(i);
+    pausedUntilRef.current = Date.now() + CLICK_PAUSE_MS;
+  }
+
   return (
-    <section ref={sectionRef} className="border-t border-line">
-      <div className="section-shell section-py-spacious">
+    <section className="relative panel-blue border-t border-line">
+      <ProcessGhostNumbers />
+      <div className="relative section-shell section-py-spacious">
         <Reveal>
-          <p className="label-eyebrow mb-4">{processSteps.eyebrow}</p>
-          <h2 className="max-w-xl text-h2 text-ink">{processSteps.heading}</h2>
+          <div className="flex flex-col items-center text-center">
+            {/* .label-eyebrow hardcodes color: var(--blue) itself — the
+               section's own token reassignment (panel-blue) only touches
+               --ink/--ink-soft/etc, so this needs an explicit override or
+               it's blue eyebrow text on a blue background. */}
+            <p className="label-eyebrow mb-4" style={{ fontSize: "1.5rem", color: "#fff" }}>
+              {processSteps.eyebrow}
+            </p>
+            <h2>
+              <GiantHeading lines={[processSteps.heading]} sizeRef={servicesIntro.headingLines} />
+            </h2>
+          </div>
         </Reveal>
 
-        {/* Blueprint rail — dots sit at each step's horizontal center via
-           the same `justify-between` row the 4-column grid below uses, so
-           they line up without hardcoding percentage positions. */}
-        <div className="relative mt-16">
-          <svg viewBox="0 0 100 1" preserveAspectRatio="none" className="h-px w-full overflow-visible">
-            <line x1="0" y1="0.5" x2="100" y2="0.5" stroke="var(--line)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-            <line
-              ref={lineRef}
-              x1="0"
-              y1="0.5"
-              x2="100"
-              y2="0.5"
-              stroke="var(--blue)"
-              strokeWidth="2"
-              vectorEffect="non-scaling-stroke"
-            />
-          </svg>
-          <div className="mt-[-4px] hidden justify-between lg:flex">
-            {processSteps.steps.map((step, i) => (
-              <span
-                key={step.id}
-                ref={(el) => {
-                  dotRefs.current[i] = el;
-                }}
-                className="h-2 w-2 rounded-full bg-blue"
-              />
-            ))}
-          </div>
+        {/* Progress rail — a plain thick bar above the numeral row, not
+           threaded through each marker's center like the old small-circle
+           version needed; decoupling the two means the numerals below can
+           be as big as they want without fighting the rail's alignment. */}
+        <div className="relative mt-16 h-3 px-5">
+          <div className="h-3 rounded-full bg-white/20" aria-hidden="true" />
+          <motion.div
+            className="absolute inset-y-0 left-5 rounded-full bg-magenta"
+            initial={false}
+            animate={{ width: `${fillPercent}%` }}
+            transition={reduced ? { duration: 0 } : { duration: 0.6, ease: EASE }}
+            style={{ maxWidth: "calc(100% - 2.5rem)" }}
+            aria-hidden="true"
+          />
         </div>
 
-        <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-0">
-          {processSteps.steps.map((step, i) => (
-            <div key={step.id} className={`relative lg:px-8 ${i > 0 ? "lg:border-l lg:border-line" : ""}`}>
-              <span className="label-eyebrow">[ {step.id} ]</span>
-              <div
-                ref={(el) => {
-                  glyphWrapRefs.current[i] = el;
-                }}
-                className="mt-5 h-14 w-14"
+        {/* Numeral row — the step numbers *are* the primary UI here, not
+           a label under a small marker, per "more prominent Step 01,
+           02..." feedback on the previous circle-based version. */}
+        <div className="relative mt-8 flex justify-between px-5" role="tablist" aria-label="Project process steps">
+          {processSteps.steps.map((s, i) => {
+            const isActive = i === activeIndex;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-controls={`process-panel-${s.id}`}
+                id={`process-tab-${s.id}`}
+                onClick={() => selectStep(i)}
+                className="group relative flex flex-col items-center gap-1 outline-none"
               >
-                <StepGlyph index={i} />
-              </div>
-              <div
-                ref={(el) => {
-                  textRefs.current[i] = el;
-                }}
+                <span
+                  className={`text-[0.6rem] font-semibold uppercase tracking-[0.15em] transition-colors duration-300 ${
+                    isActive ? "text-white/80" : "text-ink-soft/50 group-hover:text-ink-soft"
+                  }`}
+                >
+                  Step
+                </span>
+                <motion.span
+                  animate={{ scale: isActive ? 1 : 0.7, opacity: isActive ? 1 : 0.4 }}
+                  transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 26 }}
+                  className={`text-4xl font-extrabold leading-none tracking-tight transition-colors duration-300 sm:text-5xl lg:text-6xl ${
+                    isActive ? "text-white" : "text-ink-soft group-hover:text-ink"
+                  }`}
+                >
+                  {s.id}
+                </motion.span>
+                <span
+                  className={`mt-1 hidden text-xs font-semibold uppercase tracking-[0.08em] transition-colors duration-300 sm:block ${
+                    isActive ? "text-ink" : "text-ink-soft/70 group-hover:text-ink-soft"
+                  }`}
+                >
+                  {s.title}
+                </span>
+                {isActive && (
+                  <motion.span
+                    layoutId="process-active-underline"
+                    className="absolute -bottom-2 h-[3px] w-8 rounded-full bg-white"
+                    transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 32 }}
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Panel */}
+        <div className="relative mt-12 min-h-[22rem] sm:min-h-[18rem]">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={step.id}
+              id={`process-panel-${step.id}`}
+              role="tabpanel"
+              aria-labelledby={`process-tab-${step.id}`}
+              initial={reduced ? false : { clipPath: "inset(0 0 0 100%)", opacity: 0 }}
+              animate={{ clipPath: "inset(0 0 0 0%)", opacity: 1 }}
+              exit={reduced ? undefined : { clipPath: "inset(0 100% 0 0)", opacity: 0 }}
+              transition={{ duration: 0.3, ease: EASE }}
+            >
+              <motion.div
+                initial={reduced ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: EASE }}
               >
-                <h3 className="mt-6 text-h3 text-ink">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-soft">{step.desc}</p>
+                <span className="label-eyebrow" style={{ color: "#fff" }}>
+                  Step {step.id} of {String(total).padStart(2, "0")}
+                </span>
+                <h3 className="mt-4 text-h3 text-ink">{step.title}</h3>
+                <p className="mt-2 max-w-xl text-lg leading-relaxed text-ink-soft">{step.desc}</p>
+              </motion.div>
+
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {step.details.map((d, i) => (
+                  <motion.div
+                    key={d.label}
+                    initial={reduced ? false : { opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: reduced ? 0 : 0.05 + i * 0.05, ease: EASE }}
+                    className="rounded-2xl bg-paper-2 p-5"
+                  >
+                    <p className="text-sm leading-relaxed text-ink-soft">
+                      <span className="font-semibold text-ink">{d.label}: </span>
+                      {d.text}
+                    </p>
+                  </motion.div>
+                ))}
               </div>
-            </div>
-          ))}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </section>
