@@ -61,12 +61,15 @@ function ProcessGhostNumbers() {
  * single-screen block regardless of how much copy any one step carries,
  * since only one step's panel is ever mounted at a time.
  *
- * Auto-advance runs on a plain `setInterval` that always keeps ticking;
- * clicking a step doesn't stop it, just tells it to *skip* ticks for the
- * next `CLICK_PAUSE_MS` via a timestamp ref (`pausedUntilRef`) — cheaper
- * than tearing down/recreating the interval on every click, and it means
- * resuming naturally continues forward from whatever step the user
- * clicked, with no separate "resume position" to track.
+ * Auto-advance only ticks while the section is on screen (IntersectionObserver
+ * below) — it holds in place off-screen rather than cycling somewhere
+ * unseen, and resets to step 01 on every re-entry rather than resuming
+ * wherever it was. Within that, clicking a step doesn't stop the interval,
+ * just tells it to *skip* ticks for the next `CLICK_PAUSE_MS` via a
+ * timestamp ref (`pausedUntilRef`) — cheaper than tearing down/recreating
+ * the interval on every click, and it means resuming naturally continues
+ * forward from whatever step the user clicked, with no separate "resume
+ * position" to track.
  *
  * Three animation layers work together on every step change, none of them
  * a generic opacity/translate fade:
@@ -88,14 +91,47 @@ export function Process() {
   const step = processSteps.steps[activeIndex];
   const fillPercent = total > 1 ? (activeIndex / (total - 1)) * 100 : 0;
   const pausedUntilRef = useRef(0);
+  const sectionRef = useRef<HTMLElement>(null);
 
+  // Auto-advance only runs while the section is actually on screen — off-
+  // screen, it holds in place rather than silently cycling somewhere the
+  // visitor can't see; scrolling back into view resets to step 01 and
+  // restarts, rather than resuming wherever it happened to be. threshold
+  // 0.3 (not "any pixel") so it doesn't flip on a sliver at the very edge
+  // of the viewport.
   useEffect(() => {
     if (reduced) return;
-    const id = window.setInterval(() => {
-      if (Date.now() < pausedUntilRef.current) return;
-      setActiveIndex((prev) => (prev + 1) % total);
-    }, AUTO_ADVANCE_MS);
-    return () => window.clearInterval(id);
+    const section = sectionRef.current;
+    if (!section) return;
+
+    let intervalId = 0;
+
+    function startInterval() {
+      window.clearInterval(intervalId);
+      intervalId = window.setInterval(() => {
+        if (Date.now() < pausedUntilRef.current) return;
+        setActiveIndex((prev) => (prev + 1) % total);
+      }, AUTO_ADVANCE_MS);
+    }
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          pausedUntilRef.current = 0;
+          setActiveIndex(0);
+          startInterval();
+        } else {
+          window.clearInterval(intervalId);
+        }
+      },
+      { threshold: 0.3 },
+    );
+    io.observe(section);
+
+    return () => {
+      io.disconnect();
+      window.clearInterval(intervalId);
+    };
   }, [reduced]);
 
   function selectStep(i: number) {
@@ -104,9 +140,14 @@ export function Process() {
   }
 
   return (
-    <section className="relative panel-blue border-t border-line">
+    <section ref={sectionRef} className="relative panel-blue border-t border-line">
       <ProcessGhostNumbers />
-      <div className="relative section-shell section-py-spacious">
+      {/* py-12/16/20 rather than the site's standard section-py-spacious
+         (a flat 7rem/112px both sides) — this section targets fitting in
+         one screen on any device, so its own vertical padding needs to
+         scale down on short viewports instead of eating a fixed chunk of
+         them regardless of available height. */}
+      <div className="relative section-shell py-12 sm:py-16 lg:py-20">
         <Reveal>
           <div className="flex flex-col items-center text-center">
             {/* .label-eyebrow hardcodes color: var(--blue) itself — the
@@ -126,7 +167,7 @@ export function Process() {
            threaded through each marker's center like the old small-circle
            version needed; decoupling the two means the numerals below can
            be as big as they want without fighting the rail's alignment. */}
-        <div className="relative mt-16 h-3 px-5">
+        <div className="relative mt-10 h-3 px-5">
           <div className="h-3 rounded-full bg-white/20" aria-hidden="true" />
           <motion.div
             className="absolute inset-y-0 left-5 rounded-full bg-magenta"
@@ -141,7 +182,7 @@ export function Process() {
         {/* Numeral row — the step numbers *are* the primary UI here, not
            a label under a small marker, per "more prominent Step 01,
            02..." feedback on the previous circle-based version. */}
-        <div className="relative mt-8 flex justify-between px-5" role="tablist" aria-label="Project process steps">
+        <div className="relative mt-6 flex justify-between px-5" role="tablist" aria-label="Project process steps">
           {processSteps.steps.map((s, i) => {
             const isActive = i === activeIndex;
             return (
@@ -192,7 +233,7 @@ export function Process() {
         </div>
 
         {/* Panel */}
-        <div className="relative mt-12">
+        <div className="relative mt-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={step.id}

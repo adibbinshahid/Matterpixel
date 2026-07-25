@@ -11,11 +11,19 @@ import { projects } from "@/content/projects";
 // (that's WorkGrid, used on /projects). Always the first 3 in content order.
 const featured = projects.slice(0, 3);
 
+/**
+ * A horizontal scroll-snap row, not a grid that wraps to 2 rows on
+ * mobile — a wrapping grid's height depends on viewport *width* (2 cols
+ * short, 4 cols shorter), so this section's total height varied by
+ * device. A single row is always one card tall regardless of viewport,
+ * which is what makes "Selected builds" fit comfortably in one screen on
+ * any device instead of needing a scroll on narrower ones.
+ */
 export function WorkTeaser() {
   return (
-    <RevealGroup className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+    <RevealGroup className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 lg:gap-6">
       {featured.map((project) => (
-        <RevealItem key={project.slug}>
+        <RevealItem key={project.slug} className="w-40 shrink-0 snap-start sm:w-56 lg:w-64">
           <Link
             href={`/projects/${project.slug}`}
             className="group hover-lift relative block aspect-square overflow-hidden rounded-[var(--mp-radius-md)] border border-line bg-paper-2"
@@ -50,7 +58,7 @@ export function WorkTeaser() {
         </RevealItem>
       ))}
 
-      <RevealItem>
+      <RevealItem className="w-40 shrink-0 snap-start sm:w-56 lg:w-64">
         <Link
           href="/projects"
           className="group hover-lift relative flex aspect-square flex-col items-center justify-center gap-3 overflow-hidden rounded-[var(--mp-radius-md)] border border-blue bg-blue text-paper"

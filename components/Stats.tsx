@@ -52,7 +52,11 @@ function StatTile({ stat }: { stat: (typeof stats)[number] }) {
   }, [num, reduced]);
 
   return (
-    <RevealItem className="glass-card overflow-hidden rounded-3xl p-6" duration={REVEAL_DURATION}>
+    // min-h matches the bottom row's own natural height (its longest desc,
+    // "Upfront Risk", wraps to 3 lines) — CSS grid sizes each row's height
+    // independently by default, so without this the shorter top-row descs
+    // left those cards visibly shorter than the row below.
+    <RevealItem className="glass-card min-h-[216px] overflow-hidden rounded-3xl p-6" duration={REVEAL_DURATION}>
       <div ref={ref} className="relative">
         <p className="whitespace-nowrap text-4xl font-bold leading-tight tracking-tight text-paper sm:text-5xl">
           {num === null ? stat.value : `${display}${suffix}`}

@@ -17,10 +17,20 @@ function isActive(pathname: string, href: string) {
 /** Apple "Liquid Glass" bevel — bright top rim, soft inner bottom shadow
  * (the convex lens edge), and an outer lift so it reads as a raised pane
  * rather than a flat tint. Shared by nav hover/active states. Values come
- * from the --glass-* tokens (app/globals.css). */
-const GLASS_PILL = "rounded-full bg-[var(--glass-bg)] shadow-[var(--glass-shadow)] backdrop-blur-lg backdrop-saturate-200";
-const GLASS_PILL_HOVER =
-  "hover:rounded-full hover:bg-[var(--glass-bg)] hover:shadow-[var(--glass-shadow)] hover:backdrop-blur-lg hover:backdrop-saturate-200";
+ * from the --glass-* tokens (app/globals.css); `nav-glass`/`nav-glass-hover`
+ * layer on the top-shine/bottom-glow specular pseudo-elements (same
+ * technique as .glass-card). Both rely on their usage site already being
+ * `absolute`/`relative` (positioning context for the pseudo-elements),
+ * not applying that themselves. No backdrop-blur/saturate — the material
+ * itself (--glass-bg*) is fully opaque, so there's nothing behind it to
+ * blur.
+ */
+const GLASS_PILL = "nav-glass rounded-full bg-[var(--glass-bg)] shadow-[var(--glass-shadow)]";
+// nav-glass-hover (app/globals.css) handles its own :hover-gated ::before/
+// ::after — Tailwind's `hover:` prefix can't apply to an arbitrary custom
+// class name, only to Tailwind's own utilities, so the specular pseudo-
+// elements' visibility is driven by a plain CSS :hover rule instead.
+const GLASS_PILL_HOVER = "nav-glass-hover hover:rounded-full hover:bg-[var(--glass-bg)] hover:shadow-[var(--glass-shadow)]";
 
 export function Nav() {
   const pathname = usePathname();
@@ -115,7 +125,7 @@ export function Nav() {
       <nav className="relative mx-auto flex h-[4.992rem] w-full max-w-[1400px] items-center justify-between overflow-visible rounded-full px-6 sm:px-8">
         <motion.div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 rounded-full border shadow-[var(--glass-shadow-strong)] backdrop-blur-[20px] backdrop-saturate-150"
+          className="nav-glass pointer-events-none absolute inset-0 rounded-full border shadow-[var(--glass-shadow-strong)]"
           style={{ borderColor: "var(--glass-border-strong)", background: "var(--glass-bg-strong)" }}
           initial={false}
           animate={{ opacity: scrolled ? 1 : 0 }}
@@ -126,7 +136,13 @@ export function Nav() {
           <Logo forceLight={lightNav} priority imgId="nav-logo-mark" imgClassName="h-[3.84rem] w-auto" />
         </Link>
 
-        <ul className="relative hidden items-center gap-5 lg:flex">
+        {/* Absolutely centered on the bar itself, not `justify-between`'s
+           middle slot — that centers this *between* the logo and the
+           CTA/hamburger group, which drift the links off-true-center
+           whenever those two flanking groups aren't the same width (they
+           aren't: the logo and the CTA+hamburger cluster are different
+           sizes). This is centered independent of either. */}
+        <ul className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-5 lg:flex">
           {nav.links.map((l) => {
             const active = isActive(pathname, l.href);
             return (

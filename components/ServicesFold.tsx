@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight } from "lucide-react";
 import { GiantHeading } from "@/components/GiantHeading";
+import { PixelFormationVisual } from "@/components/PixelFormationVisual";
 import { Reveal } from "@/components/Reveal";
 import { getLenis } from "@/components/SmoothScrollProvider";
 import { services } from "@/content/services";
@@ -59,7 +60,7 @@ function ServicesHeading() {
             {servicesIntro.eyebrow}
           </p>
           <h2>
-            <GiantHeading lines={servicesIntro.headingLines} />
+            <GiantHeading lines={servicesIntro.headingLines} highlight="pixel-perfect" />
           </h2>
         </Reveal>
       </div>
@@ -114,15 +115,20 @@ export function ServicesFold() {
          which reassigns exactly those tokens to their dark-mode values,
          flipping this "light text + white pill on blue" banner backwards
          into black text on blue with a black button. */}
-      <div className="relative overflow-hidden border-t border-line px-6 py-24 sm:px-8 lg:px-12">
+      <div className="relative flex h-[400px] flex-col justify-center overflow-hidden border-t border-line px-6 sm:px-8 lg:px-12">
         <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
-        <div className="relative mx-auto max-w-[1400px]">
-          <Reveal duration={DURATIONS.standard} delay={0.1}>
+        <div className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-10 lg:flex-row lg:items-center lg:justify-between">
+          <PixelFormationVisual />
+          <Reveal
+            duration={DURATIONS.standard}
+            delay={0.1}
+            className="flex flex-1 flex-col items-center text-center lg:items-end lg:text-right"
+          >
             <h3 className="max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-5xl">
               {servicesCta.heading}
             </h3>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/85">{servicesCta.body}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-6">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 lg:justify-end">
               <Link
                 href="/contact"
                 className="hover-lift font-avenir group inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 text-sm text-black hover:bg-black hover:text-white"

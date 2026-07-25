@@ -42,7 +42,18 @@ function servicesContainerWidth() {
   return Math.min(window.innerWidth - gutter * 2, SERVICES_MAX_WIDTH);
 }
 
-export function GiantHeading({ lines, sizeRef }: { lines: string[]; sizeRef?: string[] }) {
+export function GiantHeading({
+  lines,
+  sizeRef,
+  highlight,
+}: {
+  lines: string[];
+  sizeRef?: string[];
+  /** Exact substring to brand-color magenta wherever it appears — each
+   * heading names its own (e.g. "pixel-perfect", "custom codes"), not a
+   * single word hardcoded for every caller. */
+  highlight?: string;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState<number | null>(null);
   const measureLines = sizeRef ?? lines;
@@ -78,18 +89,20 @@ export function GiantHeading({ lines, sizeRef }: { lines: string[]; sizeRef?: st
           className="whitespace-nowrap font-extrabold leading-[0.94] tracking-tight text-ink"
           style={{ fontSize: fontSize ? `${fontSize}px` : "1px", opacity: fontSize ? 1 : 0 }}
         >
-          {highlightPixel(line)}
+          {highlight ? highlightSubstring(line, highlight) : line}
         </div>
       ))}
     </div>
   );
 }
 
-/** Brand-colors any occurrence of the word "pixel" — the one word this
- * heading should always call out, regardless of which line it lands on. */
-function highlightPixel(line: string) {
-  return line.split(/(pixel)/).map((part, i) =>
-    part === "pixel" ? (
+/** Brand-colors every occurrence of `needle` in `line`, exact substring
+ * match (the callers pass copy they wrote themselves, case already
+ * matching what's rendered). */
+function highlightSubstring(line: string, needle: string) {
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return line.split(new RegExp(`(${escaped})`)).map((part, i) =>
+    part === needle ? (
       <span key={i} className="text-magenta">
         {part}
       </span>

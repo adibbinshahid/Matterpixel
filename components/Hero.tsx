@@ -118,14 +118,26 @@ export function Hero() {
           variants={container}
           className="mx-auto flex max-w-5xl flex-col items-center text-center"
         >
+          {/* Same nav-glass opaque specular treatment as the nav capsule
+             (app/globals.css), not the old flat bg-blue pill — continues
+             that glass language onto the hero instead of a solid-color
+             block floating over the video. Text is an explicit dark hex,
+             not text-ink: this section is `panel-dark` (Hero.tsx's own
+             section className), which reassigns --ink to a *light* value
+             for the section's normal dark-on-dark content — on this new
+             light glass background that would render as light-on-light. */}
           <motion.p
             variants={item}
-            className="mb-6 inline-flex flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap rounded-full bg-blue px-4 py-2 shadow-[var(--shadow-lifted)]"
+            className="nav-glass relative mb-6 inline-flex flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap rounded-full border px-4 py-2 shadow-[var(--glass-shadow-strong)]"
+            style={{ background: "var(--glass-bg-strong)", borderColor: "var(--glass-border-strong)" }}
           >
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-magenta" aria-hidden="true" />
             {hero.eyebrow.split(" · ").map((phrase) => (
               <span key={phrase} className="inline-flex shrink-0 items-center gap-1.5">
-                <span className="text-[0.9375rem] font-extrabold uppercase tracking-[0.06em] text-white">
+                <span
+                  className="text-[0.9375rem] font-extrabold uppercase tracking-[0.06em]"
+                  style={{ color: "#16161c" }}
+                >
                   {phrase}
                 </span>
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-magenta" aria-hidden="true" />
@@ -142,8 +154,15 @@ export function Hero() {
             </motion.span>
           </h1>
 
-          <motion.p variants={item} className="mt-6 max-w-xl text-base leading-relaxed text-ink-soft sm:text-lg">
-            {hero.sub}
+          {/* Same wording as hero.sub (content/siteConfig) — hardcoded here
+             rather than rendering the field directly, same as the headline
+             above, so the line break can be placed deliberately at sm+
+             instead of wherever the container width happens to wrap it.
+             max-w-2xl (up from xl) so each half fits on its own line
+             instead of wrapping again within the forced break. */}
+          <motion.p variants={item} className="mt-6 max-w-2xl text-base leading-relaxed text-ink-soft sm:text-lg">
+            From premium websites and AI automation to content creation and digital growth,
+            <br className="hidden sm:block" /> we craft digital experiences that people trust, remember and choose.
           </motion.p>
 
           <motion.div variants={item} className="mt-10 flex flex-wrap items-center justify-center gap-4">

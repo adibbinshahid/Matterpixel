@@ -42,13 +42,7 @@ export const hero = {
  */
 export const trust = {
   eyebrow: "Built to a standard, not just a deadline",
-  badges: [
-    "90+ Google PageSpeed Score",
-    "Fiverr Top Rated Seller",
-    "NDA Friendly",
-    "On-time Delivery",
-    "Fixed Pricing",
-  ],
+  badges: ["90+ Google PageSpeed Score", "Fiverr Top Rated Seller", "NDA Friendly", "On-time Delivery"],
 };
 
 /**
@@ -62,8 +56,12 @@ export const stats = [
   { value: "100%", label: "Founder-Led", desc: "No bench, no juniors learning on your dime." },
   { value: "4.9", label: "Client Rating", desc: "Verified reviews across every project." },
   { value: "150+", label: "Projects Delivered", desc: "Real work, shipped and live." },
-  { value: "15+", label: "Industries Served", desc: "From FMCG to SaaS to eCommerce." },
-  { value: "0%", label: "Upfront Risk", desc: "Fixed pricing, no deposit required to get started." },
+  { value: "15+", label: "Industries Served", desc: "From solo entrepreneurs and SMEs to large corporations." },
+  {
+    value: "0%",
+    label: "Upfront Risk",
+    desc: "Fixed pricing with no unexpected price increases after the project begins.",
+  },
   { value: "24h", label: "Reply Guaranteed", desc: "Every inquiry gets a same-day reply, no exceptions." },
   { value: "7 Days", label: "Avg Turnaround", desc: "From kickoff to first delivery." },
   { value: "7+", label: "Years Experience", desc: "Senior craft, not junior guesswork." },
@@ -86,14 +84,14 @@ export const servicesCta = {
 
 export const workIntro = {
   eyebrow: "selected builds",
-  heading: "Real code. Production quality.",
+  heading: "real custom codes. production quality.",
   honestLine:
-    "A sample of what we build — real code, production-quality, built to demonstrate our craft. No client work yet — these are concept builds you can try live.",
+    "A collection of extraordinary, production-quality builds showcasing our approach to design, development, and performance. Every project is crafted with the same attention to detail, usability, and technical excellence that we bring to real-world digital products.",
 };
 
 export const processSteps = {
   eyebrow: "how we build",
-  heading: "Systems, not guesswork.",
+  heading: "proven workflow, not guesswork.",
   steps: [
     {
       id: "01",

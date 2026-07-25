@@ -32,9 +32,13 @@ export default function Home() {
                 {workIntro.eyebrow}
               </p>
               <h2>
-                <GiantHeading lines={[workIntro.heading]} sizeRef={servicesIntro.headingLines} />
+                <GiantHeading
+                  lines={[workIntro.heading]}
+                  sizeRef={servicesIntro.headingLines}
+                  highlight="custom codes"
+                />
               </h2>
-              <p className="mt-4 max-w-2xl leading-relaxed text-ink-soft">{workIntro.honestLine}</p>
+              <p className="mt-4 max-w-6xl leading-relaxed text-ink-soft">{workIntro.honestLine}</p>
             </div>
           </Reveal>
 
