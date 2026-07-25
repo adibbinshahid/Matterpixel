@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { GlobeHero } from "@/components/GlobeHero";
+import { ContactSplit } from "@/components/ContactSplit";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
-  return <GlobeHero />;
+  return <ContactSplit />;
 }

@@ -1,15 +1,12 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { inquirySchema } from "@/lib/schema";
+import { bookingSchema } from "@/lib/schema";
 import { logger } from "@/lib/logger";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
 const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "info@matterpixel.com";
 const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "Matterpixel <hello@matterpixel.com>";
 
-// Constructed lazily (only once we know the key exists) — the Resend
-// constructor throws synchronously on a missing key, which would otherwise
-// crash the route at module load instead of returning a clean 500.
 let resendClient: Resend | null = null;
 function getResendClient(): Resend {
   if (!resendClient) resendClient = new Resend(process.env.RESEND_API_KEY);
@@ -20,7 +17,7 @@ export async function POST(request: Request) {
   const ip = getClientIp(request);
 
   if (isRateLimited(ip)) {
-    logger.warn("contact.rate_limited", { ip });
+    logger.warn("book.rate_limited", { ip });
     return NextResponse.json(
       { ok: false, error: "Too many requests. Please try again in a few minutes." },
       { status: 429 },
@@ -28,10 +25,10 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
-  const parsed = inquirySchema.safeParse(body);
+  const parsed = bookingSchema.safeParse(body);
 
   if (!parsed.success) {
-    logger.warn("contact.validation_failed", { ip });
+    logger.warn("book.validation_failed", { ip });
     return NextResponse.json(
       { ok: false, errors: parsed.error.flatten().fieldErrors },
       { status: 400 },
@@ -41,14 +38,14 @@ export async function POST(request: Request) {
   const { hp, ...data } = parsed.data;
 
   // Honeypot tripped — pretend success so the bot doesn't learn to adapt,
-  // but never send mail or count this as a real inquiry.
+  // but never send mail or count this as a real request.
   if (hp) {
-    logger.warn("contact.honeypot_triggered", { ip });
+    logger.warn("book.honeypot_triggered", { ip });
     return NextResponse.json({ ok: true });
   }
 
   if (!process.env.RESEND_API_KEY) {
-    logger.error("contact.missing_api_key", { ip });
+    logger.error("book.missing_api_key", { ip });
     return NextResponse.json(
       { ok: false, error: "Something went wrong. Please try again shortly." },
       { status: 500 },
@@ -60,48 +57,38 @@ export async function POST(request: Request) {
     const notification = await resend.emails.send({
       from: FROM_EMAIL,
       to: TO_EMAIL,
-      replyTo: data.workEmail,
-      subject: `New project inquiry from ${data.fullName}`,
+      replyTo: data.email,
+      subject: `Discovery call request from ${data.fullName}`,
       text: [
         `Name: ${data.fullName}`,
-        `Email: ${data.workEmail}`,
-        data.company ? `Company: ${data.company}` : null,
-        data.website ? `Website: ${data.website}` : null,
-        `Budget: ${data.budget}`,
-        `Timeline: ${data.timeline}`,
-        `Services: ${data.serviceTypes.join(", ")}`,
-        "",
-        "Project details:",
-        data.projectDetails,
-      ]
-        .filter(Boolean)
-        .join("\n"),
+        `Email: ${data.email}`,
+        `Preferred date: ${data.preferredDate}`,
+        `Preferred time: ${data.preferredTime}`,
+        `Time zone: ${data.timeZone}`,
+      ].join("\n"),
     });
 
     if (notification.error) {
-      logger.error("contact.send_failed", { ip, error: notification.error.message });
+      logger.error("book.send_failed", { ip, error: notification.error.message });
       return NextResponse.json(
         { ok: false, error: "Something went wrong. Please try again shortly." },
         { status: 502 },
       );
     }
 
-    logger.info("contact.received", { ip, email: data.workEmail, messageId: notification.data?.id });
+    logger.info("book.received", { ip, email: data.email, messageId: notification.data?.id });
 
     const confirmation = await resend.emails.send({
       from: FROM_EMAIL,
-      to: data.workEmail,
-      subject: "We've got your message — Matterpixel",
+      to: data.email,
+      subject: "We've got your call request — Matterpixel",
       text: [
         `Hi ${data.fullName},`,
         "",
-        "Thanks for reaching out to Matterpixel. We've received your project details and will reply within 24 hours.",
+        "Thanks for requesting a discovery call. We've noted your preferred slot:",
+        `${data.preferredDate} at ${data.preferredTime} (${data.timeZone})`,
         "",
-        "Here's a copy of what you sent us:",
-        `Budget: ${data.budget}`,
-        `Timeline: ${data.timeline}`,
-        `Services: ${data.serviceTypes.join(", ")}`,
-        data.projectDetails,
+        "We'll confirm shortly and send over a Google Meet link.",
         "",
         "Talk soon,",
         "The Matterpixel team",
@@ -109,14 +96,12 @@ export async function POST(request: Request) {
     });
 
     if (confirmation.error) {
-      // Visitor's inquiry is already in — a failed courtesy email shouldn't
-      // surface as a submission failure.
-      logger.warn("contact.confirmation_failed", { ip, error: confirmation.error.message });
+      logger.warn("book.confirmation_failed", { ip, error: confirmation.error.message });
     }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    logger.error("contact.unexpected_error", {
+    logger.error("book.unexpected_error", {
       ip,
       error: error instanceof Error ? error.message : String(error),
     });
