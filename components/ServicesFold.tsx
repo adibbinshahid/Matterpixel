@@ -1,18 +1,40 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, type MutableRefObject } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { GiantHeading } from "@/components/GiantHeading";
 import { PixelFormationVisual } from "@/components/PixelFormationVisual";
-import { Reveal } from "@/components/Reveal";
+import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { getLenis } from "@/components/SmoothScrollProvider";
 import { services } from "@/content/services";
 import { bookingUrl, servicesIntro, servicesCta } from "@/content/siteConfig";
 import { DURATIONS } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
+
+/** Matches Nav's own mobile/desktop cutoff (its hamburger is `lg:hidden`)
+ * — below that width the pinned/scrubbed carousel is skipped entirely in
+ * favor of a plain stacked list (see MobileServicesList). The pin's scroll
+ * distance is proportional to the full unrolled track width regardless of
+ * viewport, so on a phone it demanded many screens' worth of pure vertical
+ * scrolling just to pan through six cards — most of the page was empty
+ * scroll-jacked space with nothing visibly changing. Defaults to `false`
+ * so SSR/first paint never renders the heavy pinned layout (worst case on
+ * a slow mobile connection); corrects up to `true` on mount wherever the
+ * viewport actually is desktop-width. */
+function useIsDesktop() {
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setIsDesktop(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isDesktop;
+}
 
 const ACTIVE_SCALE = 1.1; // scale of the centered card
 const REST_SCALE = 0.8; // scale of an unselected/off-center card — 20% smaller than the neutral 1x baseline
@@ -68,6 +90,53 @@ function ServicesHeading() {
   );
 }
 
+/**
+ * Mobile/tablet substitute for the pinned scrub carousel (see
+ * `useIsDesktop`) — a plain stacked list, each card a real link to its
+ * detail page (the desktop carousel's cards aren't clickable at all; this
+ * fixes that too). Reveal-animated on scroll-into-view like everything
+ * else on the page, not scroll-jacked.
+ */
+function MobileServicesList() {
+  return (
+    <>
+      <ServicesHeading />
+      <div className="relative px-4 pb-16 pt-6 sm:px-6">
+        <RevealGroup className="mx-auto flex max-w-md flex-col gap-5">
+          {services.map((service) => (
+            <RevealItem key={service.slug}>
+              <Link
+                href={`/services/${service.slug}`}
+                className="hover-lift group relative block overflow-hidden rounded-[2rem] bg-blue p-7 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.4),0_40px_80px_-28px_rgba(0,0,0,0.55)]"
+              >
+                <span
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-3 -top-6 select-none text-[5.5rem] font-black leading-none text-white/10"
+                >
+                  {service.id}
+                </span>
+                <div className="relative flex flex-col">
+                  <span className="inline-flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/70">
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue" aria-hidden="true" />[ {service.id} ]
+                  </span>
+                  <h3 className="mt-3 text-2xl font-black leading-[1.1] tracking-tight text-white">
+                    {service.title}
+                  </h3>
+                  <p className="mt-2 text-base leading-relaxed text-white/80">{service.shortDesc}</p>
+                  <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white">
+                    Learn more
+                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                  </span>
+                </div>
+              </Link>
+            </RevealItem>
+          ))}
+        </RevealGroup>
+      </div>
+    </>
+  );
+}
+
 /** Curved glow baseline the cards sit along — decorative only, sits
  * behind the row (earlier in DOM, no z-index needed). Shared by both
  * carousel modes below. */
@@ -114,8 +183,16 @@ export function ServicesFold() {
          tokens — this banner sits inside the outer panel-dark section,
          which reassigns exactly those tokens to their dark-mode values,
          flipping this "light text + white pill on blue" banner backwards
-         into black text on blue with a black button. */}
-      <div className="relative flex h-[400px] flex-col justify-center overflow-hidden border-t border-line px-6 sm:px-8 lg:px-12">
+         into black text on blue with a black button. No fixed h-[400px]
+         below `lg` — same bug as FinalCta.tsx had: the mobile flex-col
+         stack (visual + heading + paragraph + buttons) is taller than
+         400px on its own, and with `justify-center` centering that
+         overflow, `overflow-hidden` was clipping equally off the top
+         (chopping most of PixelFormationVisual) and bottom (chopping the
+         CTA buttons) instead of just one edge. Auto height + padding lets
+         it grow; only `lg`'s side-by-side row layout is compact enough
+         to hold to the fixed height. */}
+      <div className="relative flex flex-col justify-center overflow-hidden border-t border-line px-6 py-16 sm:px-8 lg:h-[400px] lg:px-12 lg:py-0">
         <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
         <div className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-10 lg:flex-row lg:items-center lg:justify-between">
           <PixelFormationVisual />
@@ -466,8 +543,11 @@ function PinnedCarouselRow({ cardRefs, glowRingRefs }: { cardRefs: CardRefs; glo
 
 function ServicesCarousel() {
   const reduced = useReducedMotion();
+  const isDesktop = useIsDesktop();
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const glowRingRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  if (!isDesktop) return <MobileServicesList />;
 
   return reduced ? (
     <NativeCarouselRow cardRefs={cardRefs} glowRingRefs={glowRingRefs} />

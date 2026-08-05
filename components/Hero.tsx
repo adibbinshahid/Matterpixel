@@ -84,7 +84,12 @@ export function Hero() {
       data-nav-scrim="light"
       className="panel-dark relative isolate flex min-h-[100svh] items-center overflow-hidden"
     >
-      <div className="absolute inset-0 -z-10">
+      {/* bg-[#0b0b0d] here — not just on the scrim below — so a device
+         that fails to autoplay/load the video (weak connection,
+         data-saver, autoplay blocked) still gets the section's intended
+         dark backdrop instead of falling through to the page's light
+         `bg-paper`, which read as a broken/blank hero. */}
+      <div className="absolute inset-0 -z-10 bg-[#0b0b0d]">
         <video
           ref={videoRef}
           autoPlay
@@ -111,7 +116,7 @@ export function Hero() {
          any screen, with this content block vertically centered inside it —
          instead of the section's height being purely a function of its own
          content/fixed rem padding. py-28 is breathing room, not sizing. */}
-      <div className="section-shell relative w-full py-28">
+      <div className="section-shell relative w-full py-16 sm:py-28">
         <motion.div
           initial="hidden"
           animate="visible"
@@ -126,16 +131,20 @@ export function Hero() {
              section className), which reassigns --ink to a *light* value
              for the section's normal dark-on-dark content — on this new
              light glass background that would render as light-on-light. */}
+          {/* Single static line at every width, no scroll/marquee — font
+             size below `sm` is `vw`-driven (not a fixed rem step) so it
+             scales down continuously with the viewport instead of
+             wrapping or overflowing on narrower phones. */}
           <motion.p
             variants={item}
-            className="nav-glass relative mb-6 inline-flex flex-nowrap items-center gap-1.5 overflow-x-auto whitespace-nowrap rounded-full border px-4 py-2 shadow-[var(--glass-shadow-strong)]"
+            className="nav-glass relative mb-4 flex max-w-full flex-nowrap items-center justify-center gap-x-0.5 whitespace-nowrap rounded-full border px-2 py-1.5 shadow-[var(--glass-shadow-strong)] sm:mb-6 sm:gap-x-1.5 sm:px-4 sm:py-2.5"
             style={{ background: "var(--glass-bg-strong)", borderColor: "var(--glass-border-strong)" }}
           >
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-magenta" aria-hidden="true" />
             {hero.eyebrow.split(" · ").map((phrase) => (
-              <span key={phrase} className="inline-flex shrink-0 items-center gap-1.5">
+              <span key={phrase} className="inline-flex shrink-0 items-center gap-1 sm:gap-1.5">
                 <span
-                  className="text-[0.9375rem] font-extrabold uppercase tracking-[0.06em]"
+                  className="text-[1.55vw] font-extrabold uppercase tracking-[0.01em] sm:text-[0.9375rem] sm:tracking-[0.06em]"
                   style={{ color: "#16161c" }}
                 >
                   {phrase}
@@ -160,12 +169,12 @@ export function Hero() {
              instead of wherever the container width happens to wrap it.
              max-w-2xl (up from xl) so each half fits on its own line
              instead of wrapping again within the forced break. */}
-          <motion.p variants={item} className="mt-6 max-w-2xl text-base leading-relaxed text-ink-soft sm:text-lg">
+          <motion.p variants={item} className="mt-4 max-w-2xl text-base leading-relaxed text-ink-soft sm:mt-6 sm:text-lg">
             From premium websites and AI automation to content creation and digital growth,
             <br className="hidden sm:block" /> we craft digital experiences that people trust, remember and choose.
           </motion.p>
 
-          <motion.div variants={item} className="mt-10 flex flex-wrap items-center justify-center gap-4">
+          <motion.div variants={item} className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:mt-10">
             <Link href="/contact#email" data-nav-cta-anchor className="btn-primary group">
               {hero.ctaPrimary}
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -181,29 +190,31 @@ export function Hero() {
              duplicated loop-copy) since the hero column is too narrow for
              a marquee to read as anything but cramped. All 13 fit this
              column's own width (max-w-3xl, inherited from the parent) on
-             one line at any desktop size; `flex-wrap` is just the safety
-             fallback for genuinely narrow (mobile) viewports. */}
+             one line at any desktop size; below `sm` the icons/gaps shrink
+             instead of wrapping so all 13 still fit one line on a phone. */}
           <motion.div
             variants={item}
-            className="mt-14 flex w-full flex-wrap items-center justify-center gap-6 border-t border-line pt-6"
+            className="mt-10 flex w-full flex-nowrap items-center justify-center gap-0.5 border-t border-line pt-6 sm:mt-14 sm:gap-6"
           >
             {WEB_STACK.map(({ name, Icon }) => (
               <Icon
                 key={name}
                 title={name}
-                className="h-6 w-6 shrink-0 grayscale"
+                className="h-3 w-3 shrink-0 grayscale sm:h-6 sm:w-6"
                 style={{ color: "var(--ink-soft)", opacity: 0.5 }}
               />
             ))}
           </motion.div>
 
           {/* Credentials — same badges as Trust.tsx (content/siteConfig's
-             trust.badges), reused rather than re-declared. */}
-          <motion.div variants={item} className="mt-6 flex flex-wrap items-center justify-center gap-3">
+             trust.badges), reused rather than re-declared. flex-nowrap +
+             shrunk text/padding below `sm` so all four badges hold to one
+             line on a phone instead of wrapping. */}
+          <motion.div variants={item} className="mt-6 flex flex-nowrap items-center justify-center gap-1 sm:gap-3">
             {trust.badges.map((badge) => (
               <span
                 key={badge}
-                className="inline-flex items-center whitespace-nowrap rounded-full border border-line bg-paper-2 px-4 py-2 text-sm font-semibold text-ink-soft"
+                className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-line bg-paper-2 px-1 py-1 text-[0.34rem] font-semibold text-ink-soft sm:px-4 sm:py-2 sm:text-sm"
               >
                 {badge}
               </span>

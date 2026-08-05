@@ -103,8 +103,13 @@ export function ContactSplit() {
   return (
     <section
       data-nav-scrim="light"
-      className="relative flex min-h-[100svh] flex-col justify-center overflow-hidden bg-paper px-6 pb-10 pt-32 sm:px-8 lg:px-12"
+      className="relative flex min-h-[100svh] flex-col justify-center overflow-hidden bg-[#0b0b0d] px-6 pb-10 pt-32 sm:px-8 lg:px-12"
     >
+      {/* bg-[#0b0b0d] on the section (not just bg-paper) — the headline
+         and nav are styled white assuming a dark backdrop; a device that
+         fails to autoplay/load the video (weak connection, data-saver,
+         autoplay blocked) needs that same dark fallback or the text goes
+         white-on-light and the whole section reads as broken. */}
       <video
         ref={videoRef}
         className="absolute inset-x-0 top-0 h-[100svh] w-full object-cover"

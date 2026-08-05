@@ -13,7 +13,13 @@ import { bookingUrl } from "@/content/siteConfig";
  */
 export function FinalCta() {
   return (
-    <section className="relative flex h-[400px] flex-col justify-center overflow-hidden px-6 sm:px-8 lg:px-12">
+    // No fixed h-[400px] below `lg` — at that width the text block alone
+    // (heading + paragraph + buttons) can exceed 400px on its own before
+    // the visual even stacks below it, and `overflow-hidden` was silently
+    // clipping the visual clean off. Auto height + vertical padding lets
+    // it grow to fit; only `lg`'s side-by-side row layout is compact
+    // enough to hold to the fixed height.
+    <section className="relative flex flex-col justify-center overflow-hidden px-6 py-16 sm:px-8 lg:h-[400px] lg:px-12 lg:py-0">
       <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
       <div className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-10 lg:flex-row lg:items-center lg:justify-between">
         <Reveal className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">

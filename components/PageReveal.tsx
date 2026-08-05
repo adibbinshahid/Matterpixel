@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { EASE } from "@/lib/utils";
 
@@ -24,6 +24,20 @@ const REVEAL_DURATION = 0.5;
  */
 export function PageReveal({ children }: { children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
+
+  // Backstop for `onAnimationComplete` below — it can be silently dropped
+  // (tab backgrounded/throttled mid-load, animation interrupted before it
+  // settles) which leaves the inline `filter` stuck forever, permanently
+  // breaking every pinned ScrollTrigger section on the page (this is what
+  // was making the homepage services carousel vanish intermittently). A
+  // plain timer fires even when rAF is paused, so it clears the filter
+  // regardless of whether the primary path ever ran.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (ref.current) ref.current.style.filter = "";
+    }, REVEAL_DURATION * 1000 + 300);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <motion.div

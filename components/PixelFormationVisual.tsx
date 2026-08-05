@@ -306,12 +306,37 @@ export function PixelFormationVisual() {
       mouse.active = false;
     }
 
-    resize();
-    const resizeObserver = new ResizeObserver(resize);
+    // Below `sm`, skip the scroll-triggered replay entirely and just show
+    // the finished card. The replay-on-(re)entry behavior below assumes a
+    // scroll dwell long enough for the ~3.5s formation to complete before
+    // the box scrolls back out of the 0.3 threshold — on a phone, normal
+    // scroll momentum crosses that threshold in well under a second, so
+    // the animation was constantly getting cancelAnimationFrame'd mid-
+    // flight and restarting from noise on the way back, which read as the
+    // visual being permanently unfinished/"cut off" rather than a formed
+    // card with a nice reveal.
+    const isMobile = window.matchMedia("(max-width: 639px)").matches;
+    const isStaticMode = reduced || isMobile;
+
+    // Assigning to a canvas's `.width`/`.height` clears its bitmap even
+    // when the value doesn't change — `resize()` does exactly that on
+    // every call. The animated path below never notices because its own
+    // rAF loop repaints every frame regardless; this static path only
+    // ever paints once, so ResizeObserver's own queued first callback
+    // (most browsers fire one right after `.observe()`, even with no
+    // actual size change) was wiping the canvas back to blank moments
+    // after the one render that was supposed to be permanent. Redraw
+    // after every resize, not just the first one, so it can't happen.
+    function handleResize() {
+      resize();
+      if (isStaticMode) renderFrame(CONVERGE_MS + FILL_MS, true);
+    }
+
+    handleResize();
+    const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(wr);
 
-    if (reduced) {
-      renderFrame(CONVERGE_MS + FILL_MS, true);
+    if (isStaticMode) {
       return () => resizeObserver.disconnect();
     }
 

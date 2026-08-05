@@ -56,7 +56,24 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     // with a scroll-triggered section yet.
     document.fonts?.ready.then(() => ScrollTrigger.refresh());
 
+    // Pinned sections (services carousel, process stepper) compute their
+    // scroll distance from layout measured at a point in time — a
+    // backgrounded tab or a bfcache restore (`pageshow` with `persisted`)
+    // can leave those measurements stale, which reads as "the pinned
+    // section vanished." A refresh on regaining visibility is cheap
+    // insurance against that class of bug.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") ScrollTrigger.refresh();
+    };
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) ScrollTrigger.refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("pageshow", onPageShow);
+
     return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("pageshow", onPageShow);
       gsap.ticker.remove(tick);
       lenis.destroy();
       lenisRef.current = null;
