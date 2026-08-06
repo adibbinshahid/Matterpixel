@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowUpRight, Check } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { Process } from "@/components/Process";
-import { founder, foundingOffer, bookingUrl } from "@/content/siteConfig";
+import { founder, foundingOffer } from "@/content/siteConfig";
 
 export const metadata: Metadata = {
   title: "About",
@@ -77,20 +77,12 @@ export default function AboutPage() {
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-6">
               <Link
-                href="/contact"
+                href="/contact?tab=booking"
                 className="hover-lift font-avenir group inline-flex items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink hover:bg-ink hover:text-paper"
               >
-                Start a Project
+                Get a Free Audit
                 <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
               </Link>
-              <a
-                href={bookingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block w-fit origin-left text-sm font-semibold text-paper underline-offset-4 transition-transform duration-300 hover:scale-105 hover:underline"
-              >
-                Book a 15-min intro call
-              </a>
             </div>
           </Reveal>
         </div>

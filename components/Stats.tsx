@@ -1,82 +1,83 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { animate } from "motion";
-import { RevealGroup, RevealItem } from "@/components/Reveal";
 import { stats } from "@/content/siteConfig";
 import { useReducedMotion } from "@/lib/useReducedMotion";
-import { DURATIONS, EASE } from "@/lib/utils";
 
-const REVEAL_DURATION = DURATIONS.standard;
-const COUNT_UP_DURATION = 2.2;
-
-/** Splits "90+" / "100%" / "24h" into an animatable number + trailing
- * suffix; non-numeric values ("NDA") count-up as a no-op and just render. */
-function parseStat(value: string): { num: number | null; suffix: string } {
-  const match = value.match(/^(\d+)(.*)$/);
-  if (!match) return { num: null, suffix: "" };
-  return { num: Number(match[1]), suffix: match[2] };
+/**
+ * Bottom seam (Stats -> ServicesFold): the same hairline grid texture
+ * ServicesFold draws behind its own cards, mask-faded to transparent
+ * going up — its actual pattern bleeding into this section, not a flat
+ * color standing in for it.
+ */
+function ServicesBleed() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-x-0 bottom-0 h-32 overflow-hidden"
+      style={{ maskImage: "linear-gradient(to top, black, transparent)", WebkitMaskImage: "linear-gradient(to top, black, transparent)" }}
+      aria-hidden="true"
+    >
+      <div className="absolute inset-0 bg-[#0b0b0d]/70" />
+      <div className="services-grid-bg absolute inset-0 opacity-70" />
+    </div>
+  );
 }
 
-function StatTile({ stat }: { stat: (typeof stats)[number] }) {
-  const reduced = useReducedMotion();
-  const ref = useRef<HTMLDivElement>(null);
-  const { num, suffix } = parseStat(stat.value);
-  const [display, setDisplay] = useState(reduced || num === null ? num ?? 0 : 0);
-  const controlsRef = useRef<ReturnType<typeof animate> | null>(null);
-
-  // Re-plays every time the tile re-enters view (scroll away and back
-  // replays the count-up), not just once — no `once`/"already animated"
-  // guard, unlike most reveals on this site.
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || num === null || reduced) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        controlsRef.current?.stop();
-        setDisplay(0);
-        controlsRef.current = animate(0, num, {
-          duration: COUNT_UP_DURATION,
-          ease: EASE,
-          onUpdate: (latest) => setDisplay(Math.round(latest)),
-        });
-      },
-      { threshold: 0.4 },
-    );
-    io.observe(el);
-    return () => {
-      io.disconnect();
-      controlsRef.current?.stop();
-    };
-  }, [num, reduced]);
-
+/** Compact chip, not the old tall card — number + label side by side, no
+ * desc paragraph (a marquee's items are read at a glance while passing by,
+ * not lingered on). */
+function StatChip({ stat }: { stat: (typeof stats)[number] }) {
   return (
-    // min-h matches the bottom row's own natural height (its longest desc,
-    // "Upfront Risk", wraps to 3 lines) — CSS grid sizes each row's height
-    // independently by default, so without this the shorter top-row descs
-    // left those cards visibly shorter than the row below.
-    <RevealItem className="glass-card min-h-[216px] overflow-hidden rounded-3xl p-6" duration={REVEAL_DURATION}>
-      <div ref={ref} className="relative">
-        <p className="whitespace-nowrap text-4xl font-bold leading-tight tracking-tight text-paper sm:text-5xl">
-          {num === null ? stat.value : `${display}${suffix}`}
-        </p>
-        <p className="mt-3 text-sm font-semibold uppercase tracking-[0.08em] text-paper">{stat.label}</p>
-        <p className="mt-2 max-w-xs text-sm leading-relaxed text-paper/75">{stat.desc}</p>
+    <div className="glass-card flex shrink-0 items-center gap-3 whitespace-nowrap rounded-2xl px-5 py-3">
+      <span className="text-2xl font-bold leading-none tracking-tight text-paper sm:text-3xl">{stat.value}</span>
+      <span className="text-xs font-semibold uppercase leading-tight tracking-[0.08em] text-paper/75">
+        {stat.label}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Infinite marquee row — the track renders the stat list twice back to
+ * back and animates `translateX(0 -> -50%)` (see `marquee` keyframes,
+ * app/globals.css): since both halves are identical, the moment the first
+ * half has scrolled fully offscreen the second half is sitting exactly
+ * where the first one started, so the loop point is invisible. `reverse`
+ * just flips the same keyframes' playback direction (-50% -> 0) rather
+ * than needing a second keyframe — that's the row that reads right-to-left
+ * vs its neighbor's left-to-right.
+ */
+function MarqueeRow({ reverse, duration }: { reverse?: boolean; duration: number }) {
+  const reduced = useReducedMotion();
+  return (
+    <div
+      className="overflow-hidden"
+      style={{
+        maskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+        WebkitMaskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+      }}
+    >
+      <div
+        className="flex w-max shrink-0 gap-4"
+        style={reduced ? undefined : { animation: `marquee ${duration}s linear infinite${reverse ? " reverse" : ""}` }}
+      >
+        {[...stats, ...stats].map((stat, i) => (
+          <StatChip key={i} stat={stat} />
+        ))}
       </div>
-    </RevealItem>
+    </div>
   );
 }
 
 export function Stats() {
   return (
-    <section className="bg-blue">
-      <div className="section-shell section-py-standard">
-        <RevealGroup className="grid grid-cols-2 gap-x-8 gap-y-12 sm:grid-cols-3 lg:grid-cols-5">
-          {stats.map((stat) => (
-            <StatTile key={stat.label} stat={stat} />
-          ))}
-        </RevealGroup>
+    <section className="relative overflow-hidden bg-blue py-10 sm:py-12" data-nav-scrim="light">
+      {/* Softens the hard cut on the bottom edge of this solid blue section —
+         ServicesFold's own actual grid graphic crossfading inward, not a
+         flat color standing in for it. */}
+      <ServicesBleed />
+      <div className="flex flex-col gap-4">
+        <MarqueeRow duration={38} />
+        <MarqueeRow duration={34} reverse />
       </div>
     </section>
   );

@@ -5,11 +5,12 @@ import Link from "next/link";
 import { motion, type Variants } from "motion/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowUpRight, ArrowRight } from "lucide-react";
+import { ArrowUpRight, ArrowRight, ChevronDown } from "lucide-react";
 import { hero, trust } from "@/content/siteConfig";
 import { WEB_STACK } from "@/components/TechMarquee";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { DURATIONS, EASE } from "@/lib/utils";
+import { setHeroVideo } from "@/lib/heroVideoRef";
 
 /**
  * Text Reveal System (see Reveal.tsx) — the same blur-to-sharp + upward-
@@ -78,6 +79,14 @@ export function Hero() {
     videoRef.current.pause();
   }, [reduced]);
 
+  // Registers this element so Stats' top-seam bleed can mirror its live
+  // frame via canvas instead of running a second, inevitably out-of-sync
+  // <video> loop of the same clip (see lib/heroVideoRef.ts).
+  useEffect(() => {
+    setHeroVideo(videoRef.current);
+    return () => setHeroVideo(null);
+  }, []);
+
   return (
     <section
       id="hero"
@@ -123,29 +132,30 @@ export function Hero() {
           variants={container}
           className="mx-auto flex max-w-5xl flex-col items-center text-center"
         >
-          {/* Same nav-glass opaque specular treatment as the nav capsule
-             (app/globals.css), not the old flat bg-blue pill — continues
-             that glass language onto the hero instead of a solid-color
-             block floating over the video. Text is an explicit dark hex,
-             not text-ink: this section is `panel-dark` (Hero.tsx's own
-             section className), which reassigns --ink to a *light* value
-             for the section's normal dark-on-dark content — on this new
-             light glass background that would render as light-on-light. */}
+          {/* Flat translucent label, not glass-button styling — no
+             border, no shadow, no specular sheen (dropped `.nav-glass`
+             and its ::before/::after highlight pseudo-elements). The
+             CTA buttons below use that exact same rounded-full + border +
+             layered-shadow language, so this eyebrow badge was reading as
+             a third, non-functional button sitting above them rather
+             than a plain kicker label. Backdrop-blur + a soft translucent
+             fill are enough to keep it feeling like glass without the
+             depth cues that imply "press me". */}
           {/* Single static line at every width, no scroll/marquee — font
              size below `sm` is `vw`-driven (not a fixed rem step) so it
              scales down continuously with the viewport instead of
              wrapping or overflowing on narrower phones. */}
           <motion.p
             variants={item}
-            className="nav-glass relative mb-4 flex max-w-full flex-nowrap items-center justify-center gap-x-0.5 whitespace-nowrap rounded-full border px-2 py-1.5 shadow-[var(--glass-shadow-strong)] sm:mb-6 sm:gap-x-1.5 sm:px-4 sm:py-2.5"
-            style={{ background: "var(--glass-bg-strong)", borderColor: "var(--glass-border-strong)" }}
+            className="relative mb-4 flex max-w-full flex-nowrap items-center justify-center gap-x-0.5 whitespace-nowrap rounded-full px-2 py-1.5 backdrop-blur-xl backdrop-saturate-150 sm:mb-6 sm:gap-x-1.5 sm:px-4 sm:py-2.5"
+            style={{ background: "rgba(255,255,255,0.1)" }}
           >
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-magenta" aria-hidden="true" />
             {hero.eyebrow.split(" · ").map((phrase) => (
               <span key={phrase} className="inline-flex shrink-0 items-center gap-1 sm:gap-1.5">
                 <span
-                  className="text-[1.55vw] font-extrabold uppercase tracking-[0.01em] sm:text-[0.9375rem] sm:tracking-[0.06em]"
-                  style={{ color: "#16161c" }}
+                  className="text-[1.55vw] font-extrabold uppercase tracking-[0.01em] text-white sm:text-[0.9375rem] sm:tracking-[0.06em]"
+                  style={{ textShadow: "0 1px 6px rgba(0,0,0,0.45)" }}
                 >
                   {phrase}
                 </span>
@@ -175,7 +185,7 @@ export function Hero() {
           </motion.p>
 
           <motion.div variants={item} className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:mt-10">
-            <Link href="/contact#email" data-nav-cta-anchor className="btn-primary group">
+            <Link href="/contact?tab=booking" className="btn-primary group">
               {hero.ctaPrimary}
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
@@ -214,11 +224,30 @@ export function Hero() {
             {trust.badges.map((badge) => (
               <span
                 key={badge}
-                className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full border border-line bg-paper-2 px-1 py-1 text-[0.34rem] font-semibold text-ink-soft sm:px-4 sm:py-2 sm:text-sm"
+                className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-paper-2 px-1 py-1 text-[0.34rem] font-semibold text-ink-soft sm:px-4 sm:py-2 sm:text-sm"
               >
                 {badge}
               </span>
             ))}
+          </motion.div>
+
+          {/* Scroll cue — mirrored yoyo (not a 3-keyframe loop resetting
+             abruptly at each cycle) so the chevron eases down and back up
+             smoothly both directions, read as a slow breathing motion
+             rather than a bounce. Purely a visual hint, not a link/button
+             — nothing to click, so no interactive semantics needed. */}
+          <motion.div
+            variants={item}
+            className="mt-10 flex flex-col items-center gap-2 text-white/50"
+            aria-hidden="true"
+          >
+            <span className="text-[0.65rem] font-semibold uppercase tracking-[0.22em]">Scroll to explore</span>
+            <motion.div
+              animate={{ y: [0, 7], opacity: [0.35, 0.9] }}
+              transition={{ duration: 1.5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
+            >
+              <ChevronDown className="h-4 w-4" />
+            </motion.div>
           </motion.div>
         </motion.div>
       </div>

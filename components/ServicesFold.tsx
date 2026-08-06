@@ -6,11 +6,10 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { GiantHeading } from "@/components/GiantHeading";
-import { PixelFormationVisual } from "@/components/PixelFormationVisual";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { getLenis } from "@/components/SmoothScrollProvider";
 import { services } from "@/content/services";
-import { bookingUrl, servicesIntro, servicesCta } from "@/content/siteConfig";
+import { servicesIntro, servicesCta } from "@/content/siteConfig";
 import { DURATIONS } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
@@ -60,6 +59,28 @@ function ServicesBgGrid() {
         WebkitMaskImage: "radial-gradient(ellipse at center, black 0%, transparent 90%)",
       }}
     />
+  );
+}
+
+/**
+ * Left/right edge vignette — same technique as Stats' own `EdgeFade`, on
+ * this section's dark `panel-dark` base instead of blue, so both sections
+ * fade their outermost content the same way.
+ */
+function ServicesEdgeFade() {
+  return (
+    <>
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 sm:w-32"
+        style={{ background: "linear-gradient(to right, #121214, transparent)" }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 sm:w-32"
+        style={{ background: "linear-gradient(to left, #121214, transparent)" }}
+        aria-hidden="true"
+      />
+    </>
   );
 }
 
@@ -171,59 +192,55 @@ function ServicesArcGlow() {
 
 export function ServicesFold() {
   return (
-    <section id="services" className="panel-dark relative border-t border-line">
-      <ServicesBgGrid />
+    <section id="services" className="panel-dark relative">
+      {/* `data-nav-scrim="light"` scoped to just the dark carousel part
+         (bg grid + cards), not the whole section — the closing CTA banner
+         below is a bright magenta panel that reads better with the nav's
+         light theme (dark text), so it deliberately falls outside this
+         wrapper and lets the nav switch back once it scrolls into view.
+         Needs its own `relative` (a positioning context) — without it,
+         `ServicesEdgeFade`'s `inset-y-0` was resolving against the outer
+         `<section>` instead (the next positioned ancestor up), so its
+         left/right fade stretched down the *section's* full height and
+         bled across the CTA banner below instead of stopping at the
+         carousel's own bottom edge. */}
+      <div data-nav-scrim="light" className="relative">
+        {/* The Stats -> ServicesFold seam's gradient fade is owned by
+           Stats.tsx (its own bottom edge), not here — keeps both of Stats'
+           seams (top into Hero, bottom into this section) on one side for
+           consistency, rather than split across two components. */}
+        <ServicesBgGrid />
+        <ServicesEdgeFade />
 
-      <ServicesCarousel />
+        <ServicesCarousel />
+      </div>
 
-      {/* Same structure/style as FinalCta.tsx's closing banner — flat
-         single-color heading, one body paragraph, a primary pill link plus
-         a plain-text secondary link, no badges row, no corner decoration.
-         Explicit white/black here rather than the text-paper/bg-paper
+      {/* Same structure/style as FinalCta.tsx's closing banner, sides
+         swapped: copy right, button left there vs. copy left, button right
+         here. Explicit white/black here rather than the text-paper/bg-paper
          tokens — this banner sits inside the outer panel-dark section,
          which reassigns exactly those tokens to their dark-mode values,
          flipping this "light text + white pill on blue" banner backwards
-         into black text on blue with a black button. No fixed h-[400px]
-         below `lg` — same bug as FinalCta.tsx had: the mobile flex-col
-         stack (visual + heading + paragraph + buttons) is taller than
-         400px on its own, and with `justify-center` centering that
-         overflow, `overflow-hidden` was clipping equally off the top
-         (chopping most of PixelFormationVisual) and bottom (chopping the
-         CTA buttons) instead of just one edge. Auto height + padding lets
-         it grow; only `lg`'s side-by-side row layout is compact enough
-         to hold to the fixed height. */}
-      <div className="relative flex flex-col justify-center overflow-hidden border-t border-line px-6 py-16 sm:px-8 lg:h-[400px] lg:px-12 lg:py-0">
+         into black text on blue with a black button. */}
+      <div className="relative overflow-hidden border-t border-line px-6 py-6 sm:px-8 lg:px-12">
         <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
-        <div className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-10 lg:flex-row lg:items-center lg:justify-between">
-          <PixelFormationVisual />
-          <Reveal
-            duration={DURATIONS.standard}
-            delay={0.1}
-            className="flex flex-1 flex-col items-center text-center lg:items-end lg:text-right"
+        <Reveal
+          duration={DURATIONS.standard}
+          delay={0.1}
+          className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-5 lg:flex-row lg:items-center lg:justify-between"
+        >
+          <p className="max-w-2xl text-center leading-snug text-white lg:text-left">
+            <span className="block text-2xl font-bold sm:text-3xl">{servicesCta.heading}</span>
+            <span className="mt-1 block text-sm text-white/85 sm:text-base">{servicesCta.body}</span>
+          </p>
+          <Link
+            href="/contact?tab=booking"
+            className="hover-lift font-avenir group inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-7 py-4 text-sm text-black hover:bg-black hover:text-white"
           >
-            <h3 className="max-w-2xl text-3xl font-bold tracking-tight text-white sm:text-5xl">
-              {servicesCta.heading}
-            </h3>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-white/85">{servicesCta.body}</p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-6 lg:justify-end">
-              <Link
-                href="/contact"
-                className="hover-lift font-avenir group inline-flex items-center gap-2 rounded-full bg-white px-7 py-4 text-sm text-black hover:bg-black hover:text-white"
-              >
-                {servicesCta.button}
-                <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
-              <a
-                href={bookingUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block w-fit origin-left text-sm font-semibold text-white underline-offset-4 transition-transform duration-300 hover:scale-105 hover:underline"
-              >
-                Book a 15-min intro call
-              </a>
-            </div>
-          </Reveal>
-        </div>
+            {servicesCta.button}
+            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
+        </Reveal>
       </div>
     </section>
   );
@@ -498,7 +515,28 @@ function PinnedCarouselRow({ cardRefs, glowRingRefs }: { cardRefs: CardRefs; glo
     updateCards();
     ScrollTrigger.refresh();
 
+    // The track's x is otherwise driven only by vertical scroll progress
+    // (the scrub above) — a trackpad's horizontal swipe (or shift+wheel)
+    // has no effect by default even though the row visually reads as a
+    // horizontal carousel. Redirect horizontal wheel input into the page's
+    // vertical scroll position while this row is actively pinned, so it
+    // drives the same scrub the vertical axis does; only while pinned
+    // (`st.isActive`) so it doesn't hijack horizontal gestures anywhere
+    // else on the page before/after this section is engaged.
+    function onWheel(e: WheelEvent) {
+      const st = tween.scrollTrigger;
+      if (!st || !st.isActive) return;
+      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      const target = window.scrollY + e.deltaX;
+      const lenis = getLenis();
+      if (lenis) lenis.scrollTo(target, { immediate: true });
+      else window.scrollTo(0, target);
+    }
+    pinEl.addEventListener("wheel", onWheel, { passive: false });
+
     return () => {
+      pinEl.removeEventListener("wheel", onWheel);
       tween.scrollTrigger?.kill();
       tween.kill();
     };

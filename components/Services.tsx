@@ -86,7 +86,7 @@ export function Services({ showHeading = true }: { showHeading?: boolean }) {
               </div>
 
               <Link
-                href="/contact"
+                href="/contact?tab=booking"
                 className="hover-lift font-avenir group inline-flex w-fit items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink"
               >
                 {servicesCta.button}

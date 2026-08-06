@@ -23,14 +23,14 @@ export const nav = {
     { label: "Insights", href: "/insights" },
     { label: "Contact", href: "/contact" },
   ],
-  cta: "Book a Free Expert Discussion",
+  cta: "Get a Free Audit",
 };
 
 export const hero = {
   eyebrow: "Web Development · AI Automation · AI Content · Digital Marketing",
   headline: "We build what matters. Down to the pixel.",
   sub: "From premium websites and AI automation to content creation and digital growth, we craft digital experiences that people trust, remember and choose.",
-  ctaPrimary: "Book a Free Expert Discussion",
+  ctaPrimary: "Get a Free Audit",
 };
 
 /**
@@ -42,7 +42,13 @@ export const hero = {
  */
 export const trust = {
   eyebrow: "Built to a standard, not just a deadline",
-  badges: ["90+ Google PageSpeed Score", "Fiverr Top Rated Seller", "NDA Friendly", "On-time Delivery"],
+  badges: [
+    "90+ Google PageSpeed Score",
+    "Fiverr Top Rated Seller",
+    "NDA Friendly",
+    "No Surprise Budget Increase",
+    "UK Registered, Global Team",
+  ],
 };
 
 /**
@@ -75,11 +81,11 @@ export const servicesIntro = {
 };
 
 export const servicesCta = {
-  heading: "Ready to build something amazing together?",
-  headingHighlight: "together?",
-  body: "Let's create digital experiences that perform, convert and leave a lasting impact.",
+  heading: "Built with intent. Backed by results.",
+  headingHighlight: "results.",
+  body: "Every project starts with strategy, not templates, specifically based on your business problem — so what we ship actually moves the growth wheel for your business.",
   badges: ["NDA Friendly", "On-time Delivery", "Fixed Pricing"],
-  button: "Let's Talk",
+  button: "Get a Free Audit",
 };
 
 export const workIntro = {
@@ -161,9 +167,6 @@ export const foundingOffer = {
   heading: "Now taking a select few founding clients.",
   body: "New studio, senior attention. Founding clients get priority scheduling, direct access to the person actually building your product, and founding-client pricing that won't be repeated once the roster fills up.",
 };
-
-// TODO(booking): replace with real Calendly (or Cal.com) link once set up.
-export const bookingUrl = "https://calendly.com/matterpixel/intro-call";
 
 export const footer = {
   links: nav.links,

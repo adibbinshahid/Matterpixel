@@ -8,7 +8,7 @@ import { processSteps, servicesIntro } from "@/content/siteConfig";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { EASE } from "@/lib/utils";
 
-const AUTO_ADVANCE_MS = 1000;
+const AUTO_ADVANCE_MS = 2500;
 const CLICK_PAUSE_MS = 5000;
 
 const total = processSteps.steps.length;

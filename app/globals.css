@@ -40,6 +40,40 @@
     0 2px 8px -2px rgba(22, 22, 28, 0.14),
     0 20px 48px -14px rgba(22, 22, 28, 0.24);
 
+  /* Dark Apple-style nav bar — genuinely translucent (real backdrop-filter,
+     not the opaque --glass-bg-strong material above), so it's scoped to
+     Nav.tsx only rather than folded into the shared --glass-* tokens other
+     components (HeroFilmstrip, glass-card) also read. Two intensities: a
+     near-see-through resting state and a slightly denser one once
+     scrolled, for legibility over busy content. */
+  --nav-bar-bg: rgba(10, 10, 14, 0.38);
+  --nav-bar-bg-scrolled: rgba(10, 10, 14, 0.62);
+  --nav-bar-blur: blur(28px) saturate(180%);
+  --nav-bar-blur-scrolled: blur(38px) saturate(190%);
+  --nav-bar-border: rgba(255, 255, 255, 0.1);
+  /* Top hairline highlight (edge "catching light", the detail every real
+     Apple glass surface has) + a soft ambient shadow underneath so the bar
+     reads as a lifted pane separated from the page, not a flat overlay. */
+  --nav-bar-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.14),
+    0 8px 32px -12px rgba(0, 0, 0, 0.55);
+  /* Translucent pill for nav links (active state + hover) against the dark
+     bar — same bright-rim-top/dark-rim-bottom bevel language as
+     --glass-shadow, re-tuned for a light-on-dark material instead of the
+     opaque white one. */
+  --nav-pill-bg: rgba(255, 255, 255, 0.12);
+  --nav-pill-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.25),
+    0 4px 14px -4px rgba(0, 0, 0, 0.4);
+  --nav-text: rgba(245, 243, 238, 0.8);
+  --nav-text-hover: rgba(245, 243, 238, 1);
+  /* Only needed on the dark (light-text) theme — light text over a busy,
+     bright backdrop washes out without it. Cleared to "none" on the
+     light-on-light theme below, where dark text over light glass never
+     needs it. */
+  --nav-text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+
   --ease-site: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* Tailwind's own override point (see tailwindcss/theme.css) for every
@@ -52,6 +86,43 @@
      down every hover: className across the codebase — makes every button/
      link/card hover site-wide use the same curve in one place. */
   --default-transition-timing-function: var(--ease-site);
+}
+
+/* Nav bar's light theme — swapped in (see .nav-bar[data-nav-theme] in
+   Nav.tsx) whenever the content currently behind the bar isn't dark. Same
+   token names as the :root defaults above (which are the dark theme, light
+   text on dark glass), just re-tinted: dark text on light glass. Scoped to
+   `.nav-bar` so it only overrides the nav's own tokens, not --glass-*
+   elsewhere on the page. */
+.nav-bar[data-nav-theme="light"] {
+  /* macOS-style light glass — genuinely see-through, not a light tint.
+     White still masks backdrop color more than dark does at equal alpha,
+     so this stays lower than it looks like it "should" be relative to the
+     dark theme's 0.38/0.62, and leans on a heavier saturate boost to keep
+     blurred color actually showing through instead of washing to white. */
+  --nav-bar-bg: rgba(255, 255, 255, 0.16);
+  --nav-bar-bg-scrolled: rgba(255, 255, 255, 0.4);
+  --nav-bar-blur: blur(18px) saturate(240%);
+  --nav-bar-blur-scrolled: blur(26px) saturate(250%);
+  --nav-bar-border: rgba(22, 22, 28, 0.07);
+  --nav-grain-opacity: 0.025;
+  --nav-bar-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+    0 8px 32px -12px rgba(22, 22, 28, 0.18);
+  --nav-pill-bg: rgba(22, 22, 28, 0.06);
+  --nav-pill-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.06),
+    0 4px 14px -4px rgba(22, 22, 28, 0.14);
+  --nav-text: var(--ink-soft);
+  --nav-text-hover: var(--ink);
+  --nav-text-shadow: none;
+  /* .nav-glass's specular rim (app/globals.css, ::before/::after) is a
+     bright-white highlight tuned for a dark pane — stacked on an already-
+     light bg it was the main reason this theme read as a flat, milky-solid
+     panel instead of translucent glass. Dimmed way down here. */
+  --nav-glass-highlight-1: rgba(255, 255, 255, 0.35);
+  --nav-glass-highlight-2: rgba(255, 255, 255, 0.1);
 }
 
 @supports (color: color(display-p3 1 1 1)) {
@@ -110,6 +181,31 @@
       0 0 0 14px rgba(44, 75, 255, 0),
       0 0 54px 18px rgba(255, 46, 147, 0.6),
       0 0 100px 30px rgba(44, 75, 255, 0.32);
+  }
+}
+
+/* Hero primary CTA idle attention cue — a soft blob of color drifting
+   through the pill on an irregular path (uneven keyframe spacing/offsets,
+   not a smooth circular orbit) so it reads as liquid movement. See
+   .btn-primary::before in the button system further down. */
+@keyframes btn-liquid-drift {
+  0% {
+    transform: translate(-18%, -12%) scale(1);
+  }
+  22% {
+    transform: translate(14%, 8%) scale(1.2);
+  }
+  41% {
+    transform: translate(-6%, 18%) scale(0.85);
+  }
+  63% {
+    transform: translate(16%, -14%) scale(1.1);
+  }
+  79% {
+    transform: translate(-16%, 2%) scale(0.95);
+  }
+  100% {
+    transform: translate(-18%, -12%) scale(1);
   }
 }
 
@@ -176,10 +272,19 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Selection */
+/* Selection — brand blue by default (reads on both white and magenta
+   backgrounds); inverted to magenta wherever the section itself is already
+   brand blue (Stats' `bg-blue` marquee, Process' `.panel-blue`), since
+   blue-on-blue selection would be invisible. */
 ::selection {
   background: var(--blue);
   color: var(--paper);
+}
+
+.panel-blue ::selection,
+[class~="bg-blue"] ::selection {
+  background: var(--magenta);
+  color: #fff;
 }
 
 /* Focus ring — brand-colored, always visible for keyboard nav */
@@ -249,7 +354,7 @@ body {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(60% 160% at 12% -40%, rgba(255, 255, 255, 0.6), transparent 55%);
+  background: radial-gradient(60% 160% at 12% -40%, var(--nav-glass-highlight-1, rgba(255, 255, 255, 0.6)), transparent 55%);
 }
 .nav-glass::after {
   content: "";
@@ -257,7 +362,24 @@ body {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(50% 140% at 88% 150%, rgba(255, 255, 255, 0.2), transparent 60%);
+  background: radial-gradient(50% 140% at 88% 150%, var(--nav-glass-highlight-2, rgba(255, 255, 255, 0.2)), transparent 60%);
+}
+
+/* Fine frosted-glass grain — every real translucent Apple material (menu
+   bar, Control Center, sidebar) carries a faint noise texture; without it
+   a blurred/tinted panel reads as a flat CSS overlay instead of actual
+   textured glass. `overlay` blend so it modulates the material underneath
+   rather than sitting on top as a visible haze; kept in its own layer
+   (not folded into .nav-glass::before/::after) so it can sit on the bar
+   itself while those two stay on the border-radius-aware specular pair. */
+.nav-grain {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--nav-grain-opacity, 0.05);
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Same specular pair as .nav-glass, for the smaller per-link hover/active
@@ -507,62 +629,112 @@ html.lenis body {
   line-height: 1.2;
 }
 
-/* Button system — copied verbatim from ContactForm's submit button
-   (primary) and app/page.tsx's "View all work" link (secondary). */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: var(--mp-radius-full);
-  background: var(--ink);
-  color: var(--paper);
-  padding: 0.875rem 2rem;
-  font-family: var(--font-avenir), sans-serif;
-  font-weight: 700;
-  font-size: 0.875rem;
-  transition:
-    transform 0.3s var(--ease-site),
-    background-color 0.3s var(--ease-site),
-    box-shadow 0.3s var(--ease-site);
-}
-.btn-primary:hover {
-  transform: translateY(-2px) scale(1.03);
-  background: var(--blue);
-  box-shadow: var(--shadow-lifted);
-}
-.btn-primary:active {
-  transform: translateY(0) scale(1.01);
-}
-.btn-primary:disabled {
-  opacity: 0.6;
-}
+/* Button system — Hero-only (its two CTAs are the sole consumers), styled
+   as 3D glassmorphic pills against Hero's dark video backdrop, electric-
+   blue + black. Deliberately asymmetric at rest now: primary carries a
+   subtle animated liquid tint (its ::before below) and a faint glow;
+   outline sits flat with no outer glow at all, so it reads as the quieter
+   second action. Both still bloom to the same bright glow on hover — the
+   asymmetry is a rest-state cue, not a permanent style difference. Depth
+   on both comes from stacking: a bright top sheen (inset, catching light
+   like a glass edge), a dark inner shadow low in the pill (concave glass
+   thickness), and an ambient drop shadow underneath (physical lift off
+   the page). */
+.btn-primary,
 .btn-outline {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  overflow: hidden;
   border-radius: var(--mp-radius-full);
-  border: 1px solid var(--line);
-  color: var(--ink);
+  border: 1px solid rgba(44, 75, 255, 0.4);
+  color: #fff;
   padding: 0.875rem 2rem;
   font-family: var(--font-avenir), sans-serif;
   font-weight: 700;
   font-size: 0.875rem;
+  backdrop-filter: blur(14px) saturate(160%);
   transition:
     transform 0.3s var(--ease-site),
     border-color 0.3s var(--ease-site),
     background-color 0.3s var(--ease-site),
     box-shadow 0.3s var(--ease-site);
 }
+.btn-primary {
+  background: linear-gradient(
+    180deg,
+    rgba(20, 27, 56, 0.55) 0%,
+    rgba(15, 21, 46, 0.6) 55%,
+    rgba(24, 38, 87, 0.6) 100%
+  );
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -8px 12px -8px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 10px 24px -10px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(44, 75, 255, 0.12),
+    0 0 10px 0px rgba(44, 75, 255, 0.2);
+}
+/* Liquid tint — a soft, blurred blob of brand blue drifting through the
+   pill on an organic, irregular path (several unevenly-timed keyframe
+   stops rather than a smooth circle) so it reads as fluid movement, not
+   a spinning gradient. Single hue family (brand blue, lightened for the
+   core / at full saturation for the outer falloff) rather than mixing in
+   magenta, so the tint reads as "the brand blue" both at rest and on
+   hover, not a different color at each state. Clipped to the pill by the
+   parent's `overflow: hidden`; sits behind the button's own text
+   (generated content is first-in-tree, so real DOM children paint over
+   it) at low opacity — a detail you notice, not a distraction. */
+.btn-primary::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(40% 48% at 50% 50%, rgba(120, 155, 255, 0.9), transparent 68%),
+    radial-gradient(30% 36% at 50% 50%, rgba(44, 75, 255, 0.55), transparent 72%);
+  filter: blur(16px);
+  opacity: 0.85;
+  animation: btn-liquid-drift 11s ease-in-out infinite;
+  pointer-events: none;
+}
+.btn-outline {
+  /* No border, no shadow, no glow at rest — just the translucent glass
+     fill (background + backdrop-filter, both from the shared base rule)
+     so it reads as the quiet second action. `border-color: transparent`
+     (not removing the shared 1px border) keeps the button's box size
+     identical to :hover's, which does draw a real border — otherwise
+     hovering would shift the layout by 2px. */
+  border-color: transparent;
+  background: rgba(24, 26, 36, 0.4);
+  box-shadow: none;
+}
+.btn-primary:hover,
 .btn-outline:hover {
   transform: translateY(-2px) scale(1.03);
-  border-color: var(--blue);
-  background: var(--paper-2);
-  box-shadow: var(--shadow-lifted);
+  border-color: rgba(44, 75, 255, 0.8);
+  box-shadow:
+    inset 0 1px 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -8px 12px -8px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 14px 28px -10px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(44, 75, 255, 0.7),
+    0 0 26px 3px rgba(44, 75, 255, 0.55),
+    0 0 52px 10px rgba(44, 75, 255, 0.3);
 }
+.btn-primary:hover {
+  background: linear-gradient(180deg, #0a0e1f 0%, #0d1230 45%, var(--blue) 100%);
+}
+.btn-outline:hover {
+  background: rgba(20, 20, 28, 0.65);
+}
+.btn-primary:active,
 .btn-outline:active {
   transform: translateY(0) scale(1.01);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
 }
 .btn-secondary {
   display: inline-flex;

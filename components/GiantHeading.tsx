@@ -46,6 +46,7 @@ export function GiantHeading({
   lines,
   sizeRef,
   highlight,
+  highlightGradient,
   maxFontSize,
 }: {
   lines: string[];
@@ -54,6 +55,9 @@ export function GiantHeading({
    * heading names its own (e.g. "pixel-perfect", "custom codes"), not a
    * single word hardcoded for every caller. */
   highlight?: string;
+  /** Renders `highlight` as a blue-to-magenta gradient fill instead of
+   * solid magenta — opt-in so existing solid-magenta callers are unaffected. */
+  highlightGradient?: boolean;
   /** Caps the fitted size (px) — for callers that want "shrink to fit on
    * narrow viewports" without also growing to a full edge-to-edge giant
    * headline on wide ones (e.g. a page hero's h1, not a section giant
@@ -96,7 +100,7 @@ export function GiantHeading({
           className="whitespace-nowrap font-extrabold leading-[0.94] tracking-tight text-ink"
           style={{ fontSize: fontSize ? `${fontSize}px` : "1px", opacity: fontSize ? 1 : 0 }}
         >
-          {highlight ? highlightSubstring(line, highlight) : line}
+          {highlight ? highlightSubstring(line, highlight, highlightGradient) : line}
         </div>
       ))}
     </div>
@@ -106,11 +110,15 @@ export function GiantHeading({
 /** Brand-colors every occurrence of `needle` in `line`, exact substring
  * match (the callers pass copy they wrote themselves, case already
  * matching what's rendered). */
-function highlightSubstring(line: string, needle: string) {
+function highlightSubstring(line: string, needle: string, gradient?: boolean) {
   const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return line.split(new RegExp(`(${escaped})`)).map((part, i) =>
     part === needle ? (
-      <span key={i} className="text-magenta">
+      <span
+        key={i}
+        className={gradient ? "bg-clip-text text-transparent" : "text-magenta"}
+        style={gradient ? { backgroundImage: "linear-gradient(90deg, var(--blue), var(--magenta))" } : undefined}
+      >
         {part}
       </span>
     ) : (

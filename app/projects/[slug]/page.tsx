@@ -205,10 +205,10 @@ export default async function CaseStudyPage({
               Want something like this? Let&rsquo;s build it.
             </h2>
             <Link
-              href="/contact"
+              href="/contact?tab=booking"
               className="hover-lift font-avenir group mt-8 inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-7 py-4 text-sm text-paper animate-gradient-shift"
             >
-              Start a Project
+              Get a Free Audit
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
           </Reveal>

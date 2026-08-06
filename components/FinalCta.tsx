@@ -1,57 +1,34 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
-import { PixelFormationVisual } from "@/components/PixelFormationVisual";
 import { Reveal } from "@/components/Reveal";
-import { bookingUrl } from "@/content/siteConfig";
 
 /**
- * The homepage's closing statement — its own heading/body, distinct from
- * the founding-client CTA block on /about (that one still uses
- * foundingOffer.heading/.body verbatim), since this is the page's actual
- * final word, not a mid-flow nudge like Services.tsx's own baked-in CTA
- * banner earlier in the homepage flow.
+ * The homepage's closing statement — distinct from the founding-client CTA
+ * block on /about (that one still uses foundingOffer.heading/.body
+ * verbatim), since this is the page's actual final word, not a mid-flow
+ * nudge like ServicesFold.tsx's own baked-in CTA banner earlier in the
+ * homepage flow. Mirrors that banner's layout with copy/button sides
+ * swapped: copy left, button right there vs. button left, copy right here.
  */
 export function FinalCta() {
   return (
-    // No fixed h-[400px] below `lg` — at that width the text block alone
-    // (heading + paragraph + buttons) can exceed 400px on its own before
-    // the visual even stacks below it, and `overflow-hidden` was silently
-    // clipping the visual clean off. Auto height + vertical padding lets
-    // it grow to fit; only `lg`'s side-by-side row layout is compact
-    // enough to hold to the fixed height.
-    <section className="relative flex flex-col justify-center overflow-hidden px-6 py-16 sm:px-8 lg:h-[400px] lg:px-12 lg:py-0">
+    <section className="relative overflow-hidden px-6 py-6 sm:px-8 lg:px-12">
       <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
-      <div className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-10 lg:flex-row lg:items-center lg:justify-between">
-        <Reveal className="flex flex-1 flex-col items-center text-center lg:items-start lg:text-left">
-          <h2 className="max-w-2xl text-3xl font-bold tracking-tight text-paper sm:text-5xl">
-            Reveal what matters.
-            <br /> Build what lasts.
-          </h2>
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-paper/85">
-            We partner with ambitious businesses to design and build digital experiences that are purposeful,
-            high-performing, and built to scale. Every project is led with senior-level attention from strategy
-            through launch.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-6 lg:justify-start">
-            <Link
-              href="/contact#email"
-              className="hover-lift font-avenir group inline-flex items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink hover:bg-ink hover:text-paper"
-            >
-              Start a Project
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
-            <a
-              href={bookingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block w-fit origin-left text-sm font-semibold text-paper underline-offset-4 transition-transform duration-300 hover:scale-105 hover:underline"
-            >
-              Book a 15-min intro call
-            </a>
-          </div>
-        </Reveal>
-        <PixelFormationVisual />
-      </div>
+      <Reveal className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <Link
+          href="/contact?tab=booking"
+          className="hover-lift font-avenir group inline-flex shrink-0 items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink hover:bg-ink hover:text-paper"
+        >
+          Get a Free Audit
+          <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </Link>
+        <p className="max-w-2xl text-center leading-snug text-paper lg:text-right">
+          <span className="block text-2xl font-bold sm:text-3xl">Let&rsquo;s build your next win.</span>
+          <span className="mt-1 block text-sm text-paper/85 sm:text-base">
+            Claim your free audit and allow us to see exactly what&rsquo;s holding your growth back.
+          </span>
+        </p>
+      </Reveal>
     </section>
   );
 }

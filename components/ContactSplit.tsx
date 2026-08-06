@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence, type Variants } from "motion/react";
@@ -61,7 +63,7 @@ const TABS = [
   },
   {
     id: "booking",
-    label: "Book a Discovery Call",
+    label: "Book a Free Audit Call",
     blurb: "15-min intro, on the calendar",
     icon: Calendar,
   },
@@ -75,6 +77,17 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
+const TAB_IDS = TABS.map((t) => t.id);
+const DEFAULT_TAB: TabId = "inquiry";
+
+/** Validates an arbitrary string (e.g. a URL search param) against the
+ * known tab ids — every option here is driven off `TABS`, so a future
+ * fourth entry (say `id: "referral"`) automatically gets a working
+ * `/contact?tab=referral` deep link with zero other changes needed. */
+function isTabId(value: string | undefined): value is TabId {
+  return !!value && (TAB_IDS as string[]).includes(value);
+}
+
 const panelVariants: Variants = {
   initial: { opacity: 0, x: 24 },
   animate: { opacity: 1, x: 0, transition: { duration: DURATIONS.quick, ease: EASE } },
@@ -87,9 +100,17 @@ const panelVariants: Variants = {
  * Sized to fit a single laptop viewport (no internal-flow scroll needed
  * on ~1440x900+; the right pane falls back to its own scroll on shorter
  * screens rather than growing the page).
+ *
+ * Each mode is independently linkable via `?tab=<id>` (e.g.
+ * `/contact?tab=booking`) — `initialTab` comes from the server (the page
+ * reads `searchParams` so the right panel is already correct on first
+ * paint, no client-side flash), and picking a tab updates the URL via
+ * `router.replace` so the link stays shareable/bookmarkable after
+ * interacting too, not just on load.
  */
-export function ContactSplit() {
-  const [active, setActive] = useState<TabId>("inquiry");
+export function ContactSplit({ initialTab }: { initialTab?: string }) {
+  const [active, setActive] = useState<TabId>(isTabId(initialTab) ? initialTab : DEFAULT_TAB);
+  const router = useRouter();
   const reduced = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -99,6 +120,11 @@ export function ContactSplit() {
     if (reduced) video.pause();
     else video.play().catch(() => {});
   }, [reduced]);
+
+  const selectTab = (id: TabId) => {
+    setActive(id);
+    router.replace(`/contact?tab=${id}`, { scroll: false });
+  };
 
   return (
     <section
@@ -144,7 +170,7 @@ export function ContactSplit() {
           className="rounded-[2.25rem] bg-white/20 p-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6),inset_0_0_0_1px_rgba(255,255,255,0.25),0_45px_100px_-25px_rgba(0,0,0,0.6),0_15px_40px_-15px_rgba(0,0,0,0.4)] backdrop-blur-xl backdrop-saturate-150 lg:h-[calc(100svh-19rem)] lg:max-h-[37rem] lg:min-h-[27rem]"
         >
           <div className="grid h-full grid-cols-1 overflow-hidden rounded-[1.875rem] border border-line bg-paper-2 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.9)] lg:grid-cols-[300px_1fr]">
-            <TabNav active={active} onSelect={setActive} />
+            <TabNav active={active} onSelect={selectTab} />
 
             <div className="relative overflow-y-auto bg-paper p-6 sm:p-7 lg:p-8">
               <AnimatePresence mode="wait">
@@ -186,10 +212,19 @@ function TabNav({ active, onSelect }: { active: TabId; onSelect: (id: TabId) => 
         const Icon = tab.icon;
         const isActive = tab.id === active;
         return (
-          <button
+          <Link
             key={tab.id}
-            type="button"
-            onClick={() => onSelect(tab.id)}
+            href={`/contact?tab=${tab.id}`}
+            scroll={false}
+            onClick={(e) => {
+              // Same route, search-param-only change — handle it
+              // ourselves (instant, no router round-trip) rather than
+              // Link's own navigation, which still exists so the href is
+              // right-click-copyable/open-in-new-tab-able and works with
+              // JS disabled.
+              e.preventDefault();
+              onSelect(tab.id);
+            }}
             aria-current={isActive}
             className={cn(
               "group relative flex items-center gap-3 rounded-2xl px-3.5 py-3 text-left transition-colors duration-300",
@@ -215,7 +250,7 @@ function TabNav({ active, onSelect }: { active: TabId; onSelect: (id: TabId) => 
               <span className="text-sm font-bold leading-tight">{tab.label}</span>
               <span className="text-xs text-ink-soft">{tab.blurb}</span>
             </span>
-          </button>
+          </Link>
         );
       })}
     </nav>

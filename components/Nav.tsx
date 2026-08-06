@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowUpRight, Menu, X } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Menu, X } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { nav } from "@/content/siteConfig";
 import { EASE } from "@/lib/utils";
@@ -17,38 +17,32 @@ function isActive(pathname: string, href: string) {
 /** Apple "Liquid Glass" bevel — bright top rim, soft inner bottom shadow
  * (the convex lens edge), and an outer lift so it reads as a raised pane
  * rather than a flat tint. Shared by nav hover/active states. Values come
- * from the --glass-* tokens (app/globals.css); `nav-glass`/`nav-glass-hover`
- * layer on the top-shine/bottom-glow specular pseudo-elements (same
- * technique as .glass-card). Both rely on their usage site already being
+ * from the --nav-pill-* tokens (app/globals.css) — a light, translucent
+ * pill against the dark bar; `nav-glass`/`nav-glass-hover` layer on the
+ * top-shine/bottom-glow specular pseudo-elements (same technique as
+ * .glass-card). Both rely on their usage site already being
  * `absolute`/`relative` (positioning context for the pseudo-elements),
- * not applying that themselves. No backdrop-blur/saturate — the material
- * itself (--glass-bg*) is fully opaque, so there's nothing behind it to
- * blur.
+ * not applying that themselves.
  */
-const GLASS_PILL = "nav-glass rounded-full bg-[var(--glass-bg)] shadow-[var(--glass-shadow)]";
+const GLASS_PILL = "nav-glass rounded-full bg-[var(--nav-pill-bg)] shadow-[var(--nav-pill-shadow)]";
 // nav-glass-hover (app/globals.css) handles its own :hover-gated ::before/
 // ::after — Tailwind's `hover:` prefix can't apply to an arbitrary custom
 // class name, only to Tailwind's own utilities, so the specular pseudo-
 // elements' visibility is driven by a plain CSS :hover rule instead.
-const GLASS_PILL_HOVER = "nav-glass-hover hover:rounded-full hover:bg-[var(--glass-bg)] hover:shadow-[var(--glass-shadow)]";
+const GLASS_PILL_HOVER =
+  "nav-glass-hover hover:rounded-full hover:bg-[var(--nav-pill-bg)] hover:shadow-[var(--nav-pill-shadow)]";
 
 export function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  // Starts false to match the server-rendered markup exactly (no
-  // `document` at SSR time) — the IntersectionObserver effect below
-  // corrects it client-side right after mount, before the visitor has a
-  // realistic chance to see the brief pre-correction frame.
+  // Whether whatever currently sits behind the (translucent) nav is dark —
+  // any section that needs the bar to switch to its light-text/dark-glass
+  // theme marks itself with `data-nav-scrim="light"` (see Hero.tsx,
+  // ContactSplit.tsx). Starts false to match the server-rendered markup (no
+  // `document` at SSR time); the IntersectionObserver effect below corrects
+  // it client-side right after mount.
   const [overDarkHero, setOverDarkHero] = useState(false);
-  // Separate from overDarkHero above — that one's about nav text/logo
-  // *color* (is the backdrop dark), this one's about whether the *nav's
-  // own CTA duplicate* should show. They're related but not the same
-  // moment: the hero can still be dark and on-screen well after its own
-  // "Book a Free Expert Discussion" button has scrolled past, and that's
-  // the point the nav's copy should take over — not "the whole hero is
-  // gone." Starts false to match SSR, same reasoning as overDarkHero.
-  const [heroCtaVisible, setHeroCtaVisible] = useState(false);
 
   useEffect(() => {
     document.documentElement.style.overflow = open ? "hidden" : "";
@@ -61,10 +55,10 @@ export function Nav() {
     setOpen(false);
   }, [pathname]);
 
-  // No capsule at the very top of the page — it fades in only once the
-  // visitor has scrolled a deliberate amount (not the first few px of
-  // wheel/trackpad drift), so the glass pane reads as a real response to
-  // scrolling rather than something that was always almost there.
+  // The bar is present (dark glass) from the very top of the page — only
+  // its density (background opacity/blur strength) steps up once the
+  // visitor has scrolled a deliberate amount, for legibility over busy
+  // content further down the page.
   const SCROLL_THRESHOLD = 120;
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > SCROLL_THRESHOLD);
@@ -73,67 +67,68 @@ export function Nav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Whether whatever currently sits behind the (still-transparent) nav is
-  // dark — any section that needs this marks itself with
-  // `data-nav-scrim="light"` (see Hero.tsx). rootMargin shrinks the
-  // observed root to a thin band at the very top of the viewport, roughly
-  // where the nav itself sits, so this reflects what's directly behind the
-  // bar rather than the whole page's scroll position.
+  // rootMargin shrinks the observed root to a thin band at the very top of
+  // the viewport, roughly where the nav itself sits, so this reflects what's
+  // directly behind the bar rather than the whole page's scroll position.
   useEffect(() => {
-    const target = document.querySelector('[data-nav-scrim="light"]');
-    if (!target) {
+    const targets = document.querySelectorAll('[data-nav-scrim="light"]');
+    if (targets.length === 0) {
       setOverDarkHero(false);
       return;
     }
-    const io = new IntersectionObserver(([entry]) => setOverDarkHero(entry.isIntersecting), {
-      rootMargin: "0px 0px -90% 0px",
-      threshold: 0,
-    });
-    io.observe(target);
+    // Multiple sections on one page (Hero, ServicesFold, ContactSplit) can
+    // each carry this marker — a plain single-`querySelector` observer only
+    // ever watched the first of them, so the nav silently went back to its
+    // light theme over every dark section past the first. Tracks each
+    // target's own intersecting state and ORs them together, so the bar
+    // stays dark-themed if *any* marked section is behind it.
+    const intersecting = new Set<Element>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) intersecting.add(entry.target);
+          else intersecting.delete(entry.target);
+        }
+        setOverDarkHero(intersecting.size > 0);
+      },
+      { rootMargin: "0px 0px -90% 0px", threshold: 0 },
+    );
+    targets.forEach((target) => io.observe(target));
     return () => io.disconnect();
   }, [pathname]);
 
-  // Whether the hero's own primary CTA (see Hero.tsx's
-  // `data-nav-cta-anchor`) is currently on screen at all — plain full-
-  // viewport intersection, no rootMargin shrinking, so this flips the
-  // instant that specific button scrolls out of view, regardless of how
-  // much of the rest of the hero is still visible above it.
-  useEffect(() => {
-    const target = document.querySelector("[data-nav-cta-anchor]");
-    if (!target) {
-      setHeroCtaVisible(false);
-      return;
-    }
-    const io = new IntersectionObserver(([entry]) => setHeroCtaVisible(entry.isIntersecting), {
-      threshold: 0,
-    });
-    io.observe(target);
-    return () => io.disconnect();
-  }, [pathname]);
-
-  // Only matters while the capsule itself is invisible — once it's
-  // present, its own opaque/blurred background already guarantees contrast
-  // regardless of what's underneath.
-  const lightNav = overDarkHero && !scrolled;
-  // The nav's CTA duplicate hides only while the hero's own is reachable
-  // on screen; as soon as that scrolls away, the nav's takes over —
-  // independent of overDarkHero/lightNav above.
-  const hideNavCta = heroCtaVisible;
+  const navTheme = overDarkHero ? "dark" : "light";
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-4 sm:px-6">
-      <nav className="relative mx-auto flex h-[4.992rem] w-full max-w-[1400px] items-center justify-between overflow-visible rounded-full px-6 sm:px-8">
-        <motion.div
+    <header className="fixed inset-x-0 top-0 z-50">
+      <nav
+        data-nav-theme={navTheme}
+        className="nav-bar relative flex h-[4.992rem] w-full items-center justify-between px-4 transition-colors duration-500 sm:px-8"
+      >
+        {/* Apple-glass bar — genuinely translucent (real backdrop-filter,
+           not the opaque --glass-bg-strong material used elsewhere): blur +
+           saturate boost, true Apple vibrancy (not desaturated) on whatever
+           scrolls underneath. Two axes of variation, both driven by the
+           nav-bar/nav-pill/nav-text tokens (app/globals.css):
+           `data-nav-theme` above swaps light-glass/dark-text vs
+           dark-glass/light-text to match whatever's behind the bar, and
+           `scrolled` below steps up density (bg opacity + blur strength)
+           for legibility once the visitor's scrolled past the top. */}
+        <div
           aria-hidden="true"
-          className="nav-glass pointer-events-none absolute inset-0 rounded-full border shadow-[var(--glass-shadow-strong)]"
-          style={{ borderColor: "var(--glass-border-strong)", background: "var(--glass-bg-strong)" }}
-          initial={false}
-          animate={{ opacity: scrolled ? 1 : 0 }}
-          transition={{ duration: 0.4, ease: EASE }}
-        />
+          className="nav-glass pointer-events-none absolute inset-0 border-b shadow-[var(--nav-bar-shadow)] transition-[background-color,backdrop-filter] duration-500"
+          style={{
+            borderColor: "var(--nav-bar-border)",
+            background: scrolled ? "var(--nav-bar-bg-scrolled)" : "var(--nav-bar-bg)",
+            backdropFilter: scrolled ? "var(--nav-bar-blur-scrolled)" : "var(--nav-bar-blur)",
+            WebkitBackdropFilter: scrolled ? "var(--nav-bar-blur-scrolled)" : "var(--nav-bar-blur)",
+          }}
+        >
+          <div className="nav-grain" />
+        </div>
 
         <Link href="/" className="relative flex items-center">
-          <Logo forceLight={lightNav} priority imgId="nav-logo-mark" imgClassName="h-[3.84rem] w-auto" />
+          <Logo forceLight={overDarkHero} priority imgId="nav-logo-mark" imgClassName="h-[3.84rem] w-auto" />
         </Link>
 
         {/* Absolutely centered on the bar itself, not `justify-between`'s
@@ -159,12 +154,10 @@ export function Nav() {
                 )}
                 <Link
                   href={l.href}
-                  className={`font-avenir relative inline-block rounded-full px-4 py-2 text-sm uppercase transition-colors duration-300 ${
+                  className={`font-avenir relative inline-block rounded-full px-4 py-2 text-sm uppercase [text-shadow:var(--nav-text-shadow)] transition-colors duration-300 ${
                     active
                       ? "text-magenta"
-                      : lightNav
-                        ? "text-[#f5f3ee]/85 hover:text-[#f5f3ee]"
-                        : `text-ink-soft hover:text-ink ${GLASS_PILL_HOVER}`
+                      : `text-[var(--nav-text)] hover:text-[var(--nav-text-hover)] ${GLASS_PILL_HOVER}`
                   }`}
                 >
                   {l.label}
@@ -175,57 +168,22 @@ export function Nav() {
         </ul>
 
         <div className="relative flex items-center gap-3">
-          <div className="relative hidden lg:block">
-            {/* Hidden over the hero itself (duplicate of the hero's own
-               primary CTA), shown everywhere else — but always mounted at
-               its full size, so neither this nor its neighbors (toggle,
-               hamburger) ever shift position. What changes is purely
-               visual: the site's signature pixel-mosaic resolve (see
-               PixelResolve.tsx) plays the button in/out instead of a plain
-               fade, so appearing/disappearing reads as an intentional
-               brand moment, not a layout pop. */}
-            <motion.div
-              animate={{ filter: hideNavCta ? "blur(6px)" : "blur(0px)", opacity: hideNavCta ? 0 : 1 }}
-              transition={{ duration: 0.4, ease: EASE }}
-            >
-              <Link
-                href="/contact#email"
-                aria-hidden={hideNavCta}
-                tabIndex={hideNavCta ? -1 : undefined}
-                className={`hover-lift font-avenir group inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-5 py-2.5 text-sm text-paper animate-gradient-shift ${hideNavCta ? "pointer-events-none" : ""}`}
-              >
-                {nav.cta}
-                <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
-            </motion.div>
-            {/* Keyed on hideNavCta so each flip mounts a fresh instance —
-               a one-shot pop-in/dissolve-out, not a steady-state layer, so
-               it always settles back to fully invisible instead of sitting
-               there as a permanent pixelated placeholder. */}
-            <motion.div
-              key={hideNavCta ? "hide" : "show"}
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 rounded-full"
-              style={{
-                backgroundImage:
-                  "linear-gradient(45deg, var(--blue) 25%, transparent 25%, transparent 75%, var(--blue) 75%), linear-gradient(45deg, var(--magenta) 25%, transparent 25%, transparent 75%, var(--magenta) 75%)",
-                backgroundSize: "8px 8px",
-                backgroundPosition: "0 0, 4px 4px",
-              }}
-              initial={{ opacity: 0, scale: 1.3 }}
-              animate={{ opacity: [0, 0.95, 0], scale: [1.3, 1, 1.25] }}
-              transition={{ duration: 0.55, times: [0, 0.35, 1], ease: EASE }}
-            />
-          </div>
+          <Link
+            href="/contact?tab=booking"
+            className="hover-lift font-avenir group hidden items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-5 py-2.5 text-sm text-paper animate-gradient-shift lg:inline-flex"
+          >
+            {nav.cta}
+            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </Link>
 
           <button
             type="button"
-            onClick={() => setOpen(true)}
+            onClick={() => setOpen((v) => !v)}
             className="hover-lift flex h-11 w-11 items-center justify-center rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue text-paper animate-gradient-shift lg:hidden"
-            aria-label="Open menu"
+            aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
           >
-            <Menu className="h-5 w-5" />
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </nav>
@@ -235,66 +193,82 @@ export function Nav() {
   );
 }
 
+/**
+ * Compact glassmorphic dropdown anchored under the nav pill — not a
+ * full-screen takeover. Backdrop dimmer + click-outside close, panel
+ * itself is real frosted glass (translucent white, heavy backdrop-blur/
+ * saturate, layered top-sheen + ambient shadow) rather than the nav
+ * pill's own opaque --glass-bg tokens, since the ask here is specifically
+ * "super glassmorphism" — content behind should actually show through.
+ */
 function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <AnimatePresence>
       {open && (
-        <motion.div
-          className="fixed inset-0 z-[90] bg-paper"
-          initial={{ clipPath: "circle(0% at 92% 5%)" }}
-          animate={{ clipPath: "circle(150% at 92% 5%)" }}
-          exit={{ clipPath: "circle(0% at 92% 5%)" }}
-          transition={{ duration: 0.6, ease: EASE }}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Site menu"
-        >
-          <div className="flex items-center justify-between px-6 py-6">
-            <Logo imgClassName="h-[4.8rem] w-auto" />
-            <button
-              type="button"
-              onClick={onClose}
-              className="hover-lift flex h-11 w-11 items-center justify-center rounded-full border border-line"
-              aria-label="Close menu"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          <ul className="flex flex-col gap-2 px-6 py-8">
-            {nav.links.map((l, i) => (
-              <motion.li
-                key={l.href}
-                initial={{ opacity: 0, y: 24 }}
+        <>
+          <motion.div
+            className="fixed inset-0 z-[85] bg-ink/20 lg:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: EASE }}
+            onClick={onClose}
+            aria-hidden="true"
+          />
+          <motion.div
+            className="fixed inset-x-4 top-[6.25rem] z-[90] overflow-hidden rounded-[2rem] border border-white/50 lg:hidden"
+            style={{
+              background: "linear-gradient(165deg, rgba(255,255,255,0.75), rgba(255,255,255,0.45))",
+              backdropFilter: "blur(28px) saturate(180%)",
+              WebkitBackdropFilter: "blur(28px) saturate(180%)",
+              boxShadow:
+                "inset 0 1px 1px 0 rgba(255,255,255,0.8), inset 0 -1px 2px 0 rgba(0,0,0,0.06), 0 24px 60px -20px rgba(0,0,0,0.35), 0 8px 24px -12px rgba(0,0,0,0.25)",
+            }}
+            initial={{ opacity: 0, y: -16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.96 }}
+            transition={{ duration: 0.35, ease: EASE }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site menu"
+          >
+            <ul className="flex flex-col p-3">
+              {nav.links.map((l, i) => (
+                <motion.li
+                  key={l.href}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: 0.06 + i * 0.04, ease: EASE }}
+                >
+                  <Link
+                    href={l.href}
+                    onClick={onClose}
+                    className="hover-lift font-avenir group flex items-center justify-between rounded-2xl px-4 py-3.5 text-base text-ink transition-colors duration-300 hover:bg-white/50"
+                  >
+                    {l.label}
+                    <ArrowRight className="h-4 w-4 text-ink-soft transition-transform duration-300 group-hover:translate-x-1" />
+                  </Link>
+                </motion.li>
+              ))}
+            </ul>
+            <div className="px-3 pb-3">
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 + i * 0.06, ease: EASE }}
+                transition={{ duration: 0.35, delay: 0.06 + nav.links.length * 0.04, ease: EASE }}
               >
                 <Link
-                  href={l.href}
+                  href="/contact?tab=booking"
                   onClick={onClose}
-                  className="hover-lift font-avenir block origin-left py-3 text-4xl tracking-tight text-ink"
+                  className="hover-lift font-avenir flex items-center justify-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-5 py-3.5 text-sm text-paper animate-gradient-shift"
                 >
-                  {l.label}
+                  {nav.cta}
+                  <ArrowUpRight className="h-4 w-4" />
                 </Link>
-              </motion.li>
-            ))}
-            <motion.li
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 + nav.links.length * 0.06, ease: EASE }}
-              className="pt-6"
-            >
-              <Link
-                href="/contact#email"
-                onClick={onClose}
-                className="hover-lift font-avenir inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-5 py-3 text-sm text-paper animate-gradient-shift"
-              >
-                {nav.cta}
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </motion.li>
-          </ul>
-        </motion.div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </>
       )}
     </AnimatePresence>
   );
