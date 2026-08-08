@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, type Variants } from "motion/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowUpRight, ArrowRight, ChevronDown } from "lucide-react";
+import { ArrowUpRight, ArrowRight, ChevronDown, Gauge, Star, ShieldCheck, Wallet, type LucideIcon } from "lucide-react";
 import { hero, trust } from "@/content/siteConfig";
 import { WEB_STACK } from "@/components/TechMarquee";
 import { useReducedMotion } from "@/lib/useReducedMotion";
@@ -22,6 +22,13 @@ import { setHeroVideo } from "@/lib/heroVideoRef";
 const container: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.1 } },
+};
+
+const TRUST_BADGE_ICONS: Record<string, LucideIcon> = {
+  "90+ Google PageSpeed Score": Gauge,
+  "Fiverr Top Rated Seller": Star,
+  "NDA Friendly": ShieldCheck,
+  "No Surprise Budget Increase": Wallet,
 };
 const item: Variants = {
   hidden: { opacity: 0, y: 24, filter: "blur(8px)" },
@@ -221,14 +228,18 @@ export function Hero() {
              shrunk text/padding below `sm` so all four badges hold to one
              line on a phone instead of wrapping. */}
           <motion.div variants={item} className="mt-6 flex flex-nowrap items-center justify-center gap-1 sm:gap-3">
-            {trust.badges.map((badge) => (
-              <span
-                key={badge}
-                className="inline-flex shrink-0 items-center whitespace-nowrap rounded-full bg-paper-2 px-1 py-1 text-[0.34rem] font-semibold text-ink-soft sm:px-4 sm:py-2 sm:text-sm"
-              >
-                {badge}
-              </span>
-            ))}
+            {trust.badges.map((badge) => {
+              const Icon = TRUST_BADGE_ICONS[badge] ?? ShieldCheck;
+              return (
+                <span
+                  key={badge}
+                  className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full bg-paper-2 px-1 py-1 text-[0.34rem] font-semibold text-ink-soft sm:gap-1.5 sm:px-4 sm:py-2 sm:text-sm"
+                >
+                  <Icon className="h-[0.55em] w-[0.55em] shrink-0 sm:h-[0.9em] sm:w-[0.9em]" />
+                  {badge}
+                </span>
+              );
+            })}
           </motion.div>
 
           {/* Scroll cue — mirrored yoyo (not a 3-keyframe loop resetting

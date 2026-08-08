@@ -29,7 +29,7 @@ export default function ServicesPage() {
                 maxFontSize={56}
               />
             </h1>
-            <p className="mt-3 max-w-xl text-lg leading-relaxed text-ink-soft">
+            <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-soft sm:whitespace-nowrap">
               {servicesIntro.engagementNote}
             </p>
           </Reveal>

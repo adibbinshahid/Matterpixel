@@ -20,22 +20,32 @@ function ServiceCard({ service }: { service: Service }) {
     <RevealItem className="h-full">
       <Link
         href={`/services/${service.slug}`}
-        className="hover-lift group flex h-full flex-col rounded-[var(--mp-radius-md)] border border-line bg-paper-2 p-8 transition-colors duration-300 hover:border-blue"
+        className="glass-card glass-card-blue-hover hover-lift group flex h-full flex-col rounded-[var(--mp-radius-md)] border border-line/60 p-8 transition-colors duration-300 hover:border-blue"
       >
-        <div className="flex items-center justify-between">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue/10 text-blue transition-colors duration-300 group-hover:bg-blue group-hover:text-paper">
-            <Icon className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
-          </span>
-          <span className="label-eyebrow">[ {service.id} ]</span>
-        </div>
-
-        <h3 className="mt-6 text-h3 text-ink">{service.title}</h3>
-        <p className="mt-3 max-w-md flex-1 text-sm leading-relaxed text-ink-soft">{service.shortDesc}</p>
-
-        <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-ink transition-colors duration-300 group-hover:text-blue">
-          Learn more
-          <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue/10 text-blue transition-colors duration-300 group-hover:bg-white/20 group-hover:text-white">
+          <Icon
+            className="h-5 w-5 group-hover:[animation:service-icon-loop_1.4s_ease-in-out_infinite]"
+            strokeWidth={1.75}
+            aria-hidden="true"
+          />
         </span>
+
+        <h3 className="mt-6 text-h3 text-ink transition-colors duration-300 group-hover:text-white">{service.title}</h3>
+        <p className="mt-3 max-w-md flex-1 text-sm leading-relaxed text-ink-soft transition-colors duration-300 group-hover:text-white/80">
+          {service.shortDesc}
+        </p>
+
+        <div className="mt-6 flex items-center justify-between gap-3">
+          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3.5 py-1.5 transition-colors duration-300 group-hover:border-transparent">
+            <span className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-ink-soft">Starting at</span>
+            <span className="text-sm font-bold tracking-tight text-blue">${service.startingPrice.toLocaleString()}</span>
+          </span>
+
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink transition-colors duration-300 group-hover:text-white">
+            Learn more
+            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          </span>
+        </div>
       </Link>
     </RevealItem>
   );

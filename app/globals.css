@@ -209,6 +209,18 @@
   }
 }
 
+/* Service-card icon: gentle looping float+tilt while the card is hovered —
+   stops the instant the pointer leaves since it's gated by group-hover,
+   not a running animation-fill state. */
+@keyframes service-icon-loop {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-3px) rotate(-6deg);
+  }
+}
+
 @keyframes pixel-in {
   from {
     opacity: 0;
@@ -262,6 +274,7 @@
 html {
   background: var(--paper);
   color-scheme: light;
+  overflow-x: hidden;
 }
 
 body {
@@ -270,6 +283,7 @@ body {
   font-family: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
 /* Selection — brand blue by default (reads on both white and magenta
@@ -295,6 +309,19 @@ body {
 :focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 3px;
+}
+
+/* Opt-out for full-bleed fields. An offset outline is painted *outside*
+   the element, so a `w-full` input inside an `overflow-hidden` column has
+   no room for it — the left and right segments get clipped away and only
+   the top/bottom bars survive, reading as a broken, cut-off frame.
+   Note this has to live here, unlayered, rather than as a
+   `focus-visible:outline-none` utility on the element: everything after
+   `@import "tailwindcss"` is unlayered and therefore outranks every
+   layered Tailwind utility no matter its specificity.
+   Focus stays legible on these fields via their own blue border. */
+.focus-no-outline:focus-visible {
+  outline: none;
 }
 
 /* Pixelated image rendering for the signature PixelResolve effect */
@@ -340,6 +367,23 @@ body {
   border-radius: inherit;
   pointer-events: none;
   background: radial-gradient(90% 40% at 85% 110%, rgba(255, 255, 255, 0.14), transparent 60%);
+}
+
+/* Brand-blue hover tint for glass cards — same layered-glass shine/edges
+   above, just the base fill swaps from neutral white to blue so the whole
+   card reads as tinted glass instead of a flat color swap. */
+.glass-card-blue-hover {
+  transition: background 0.35s var(--ease-site), box-shadow 0.35s var(--ease-site);
+}
+.glass-card-blue-hover:hover,
+.glass-card-blue-hover:focus-visible {
+  background: var(--blue);
+  box-shadow:
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.35),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2),
+    inset 0 0 60px rgba(255, 255, 255, 0.04),
+    0 10px 20px -10px rgba(44, 75, 255, 0.35),
+    0 40px 80px -28px rgba(44, 75, 255, 0.5);
 }
 
 /* Engagement-model pricing cards: hover swaps a white glass card for a

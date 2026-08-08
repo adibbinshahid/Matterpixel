@@ -8,6 +8,7 @@ export type Service = {
   id: string;
   title: string;
   shortDesc: string;
+  startingPrice: number;
   heroClaim: string;
   intro: string;
   deliverables: string[];
@@ -36,6 +37,7 @@ export const services: Service[] = [
     title: "Web & App Development",
     shortDesc:
       "Modern websites and web applications engineered for speed, scalability, and long-term maintainability.",
+    startingPrice: 700,
     heroClaim: "Web and app development that ships fast and stays fast.",
     intro:
       "We build modern websites and web applications that are fast, scalable, and easy to maintain. Using Next.js and React, every project is engineered for performance, accessibility, and long-term growth, not just launch day.",
@@ -102,6 +104,7 @@ export const services: Service[] = [
     title: "AI Automation",
     shortDesc:
       "Custom AI agents and workflow automation that cut manual work and connect your tools together.",
+    startingPrice: 500,
     heroClaim: "AI automation that removes the busywork, not the judgment.",
     intro:
       "We build AI agents and automated workflows that take repetitive, manual work off your team's plate. From lead handling to internal ops, every automation is scoped around a real bottleneck and wired into the tools you already use, not a generic bot bolted on top.",
@@ -148,6 +151,7 @@ export const services: Service[] = [
     id: "03",
     title: "Branding & Identity",
     shortDesc: "Brand systems that create memorable experiences across every platform and customer interaction.",
+    startingPrice: 600,
     heroClaim: "Brand identity systems designed to stay consistent everywhere they appear.",
     intro:
       "A brand is more than a logo. We create complete identity systems that define how your business looks, sounds, and behaves across every customer touchpoint, ensuring consistency from digital products to physical experiences.",
@@ -214,6 +218,7 @@ export const services: Service[] = [
     id: "04",
     title: "AI Image / Product Photography",
     shortDesc: "AI-powered product imagery with studio-quality results, delivered in a fraction of the time.",
+    startingPrice: 300,
     heroClaim: "Studio-quality product photography, without the studio.",
     intro:
       "Create premium product visuals without expensive photoshoots or long production timelines. Our AI-assisted workflow combines advanced generation with meticulous manual refinement, delivering images that are polished, consistent, and ready for commercial use.",
@@ -271,8 +276,9 @@ export const services: Service[] = [
   {
     slug: "ai-video",
     id: "05",
-    title: "AI Video",
+    title: "AI Video Commercial",
     shortDesc: "Cinematic AI videos that help brands communicate faster, better, and at scale.",
+    startingPrice: 400,
     heroClaim: "AI-powered video production, without the production crew.",
     intro:
       "Create high-quality marketing videos in days instead of weeks. Our AI-assisted production workflow combines scripting, motion design, and manual direction to produce polished videos that are ready for campaigns, social media, and product launches.",
@@ -328,6 +334,7 @@ export const services: Service[] = [
     title: "SEO & Digital Marketing",
     shortDesc:
       "Search-first strategies that improve discoverability, attract qualified traffic, and support sustainable growth.",
+    startingPrice: 600,
     heroClaim: "Digital growth driven by strategy, search, and performance marketing.",
     intro:
       "Growing online takes more than great design. We help brands attract, engage, and convert through technical SEO, content strategy, social media, paid advertising, and data-driven marketing campaigns, all aligned around measurable business outcomes.",

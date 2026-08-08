@@ -105,7 +105,7 @@ function ModelCard({ model }: { model: (typeof engagementModels)[number] }) {
           </div>
 
           <Link
-            href="/pricing"
+            href="/contact"
             className={`group mx-auto mt-8 w-fit ${model.featured ? "btn-primary" : "btn-outline"}`}
           >
             {model.cta}
