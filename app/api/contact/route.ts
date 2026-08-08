@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { inquirySchema } from "@/lib/schema";
+import { inquirySchema, normalizeWebsite } from "@/lib/schema";
 import { logger } from "@/lib/logger";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
@@ -65,11 +65,15 @@ export async function POST(request: Request) {
       text: [
         `Name: ${data.fullName}`,
         `Email: ${data.workEmail}`,
+        data.whatsapp ? `WhatsApp: ${data.whatsapp}` : null,
         data.company ? `Company: ${data.company}` : null,
-        data.website ? `Website: ${data.website}` : null,
+        data.website ? `Website: ${normalizeWebsite(data.website)}` : null,
         `Budget: ${data.budget}`,
         `Timeline: ${data.timeline}`,
+        `Project Type: ${data.projectType}`,
         `Services: ${data.serviceTypes.join(", ")}`,
+        `Goals: ${data.projectGoals.join(", ")}`,
+        data.otherGoalDetails ? `Other goal details: ${data.otherGoalDetails}` : null,
         "",
         "Project details:",
         data.projectDetails,
@@ -100,7 +104,9 @@ export async function POST(request: Request) {
         "Here's a copy of what you sent us:",
         `Budget: ${data.budget}`,
         `Timeline: ${data.timeline}`,
+        `Project Type: ${data.projectType}`,
         `Services: ${data.serviceTypes.join(", ")}`,
+        `Goals: ${data.projectGoals.join(", ")}`,
         data.projectDetails,
         "",
         "Talk soon,",

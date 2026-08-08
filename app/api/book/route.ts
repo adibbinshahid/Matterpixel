@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { bookingSchema } from "@/lib/schema";
+import {
+  AVAILABILITY,
+  HORIZON_DAYS,
+  LEAD_TIME_MINUTES,
+  formatSlotDate,
+  formatSlotTime,
+  isWithinCallWindow,
+  zoneOffsetLabel,
+} from "@/lib/availability";
 import { logger } from "@/lib/logger";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
@@ -37,6 +46,29 @@ export async function POST(request: Request) {
 
   const { hp, ...data } = parsed.data;
 
+  // Everything downstream quotes the slot twice: once as the visitor read it,
+  // once in UTC. A booking that only carries a wall clock is a booking nobody
+  // can put in a calendar with confidence.
+  const slot = new Date(data.slotUtc);
+
+  // The calendar already refuses closed hours, but the calendar is client
+  // code — a posted body can name any instant it likes, and a request for
+  // 04:00 UTC on a Monday is not a slot we have.
+  if (
+    !isWithinCallWindow(slot) ||
+    slot.getTime() < Date.now() + LEAD_TIME_MINUTES * 60_000 ||
+    slot.getTime() > Date.now() + HORIZON_DAYS * 24 * 60 * 60_000
+  ) {
+    logger.warn("book.slot_outside_window", { ip, slot: data.slotUtc });
+    return NextResponse.json(
+      { ok: false, error: "That time isn't available. Please pick another slot." },
+      { status: 400 },
+    );
+  }
+
+  const slotLocal = `${formatSlotDate(slot, data.timeZone)} at ${formatSlotTime(slot, data.timeZone)} (${data.timeZone}, ${zoneOffsetLabel(data.timeZone, slot)})`;
+  const slotUtcLabel = `${formatSlotDate(slot, "UTC")} at ${formatSlotTime(slot, "UTC")} UTC`;
+
   // Honeypot tripped — pretend success so the bot doesn't learn to adapt,
   // but never send mail or count this as a real request.
   if (hp) {
@@ -62,9 +94,20 @@ export async function POST(request: Request) {
       text: [
         `Name: ${data.fullName}`,
         `Email: ${data.email}`,
-        `Preferred date: ${data.preferredDate}`,
-        `Preferred time: ${data.preferredTime}`,
-        `Time zone: ${data.timeZone}`,
+        `WhatsApp: ${data.whatsapp || "—"}`,
+        `Company: ${data.company || "—"}`,
+        `Website: ${data.website || "—"}`,
+        `Role: ${data.role}`,
+        `Audit focus: ${data.auditFocus.join(", ")}`,
+        `Biggest challenge: ${data.challenge}`,
+        `Budget: ${data.budget}`,
+        `Timeline: ${data.timeline}`,
+        "",
+        `Slot (their time): ${slotLocal}`,
+        `Slot (UTC): ${slotUtcLabel}`,
+        `ISO: ${slot.toISOString()}`,
+        "",
+        `Notes: ${data.notes || "—"}`,
       ].join("\n"),
     });
 
@@ -86,7 +129,10 @@ export async function POST(request: Request) {
         `Hi ${data.fullName},`,
         "",
         "Thanks for requesting a discovery call. We've noted your preferred slot:",
-        `${data.preferredDate} at ${data.preferredTime} (${data.timeZone})`,
+        slotLocal,
+        `That's ${slotUtcLabel}.`,
+        "",
+        AVAILABILITY.callsLong,
         "",
         "We'll confirm shortly and send over a Google Meet link.",
         "",
