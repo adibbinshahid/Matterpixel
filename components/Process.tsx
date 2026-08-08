@@ -9,7 +9,7 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
 import { EASE } from "@/lib/utils";
 
 const AUTO_ADVANCE_MS = 2500;
-const CLICK_PAUSE_MS = 5000;
+const CLICK_PAUSE_MS = 15000;
 
 const total = processSteps.steps.length;
 
@@ -44,7 +44,7 @@ function ProcessGhostNumbers() {
           >
             <span
               className="process-ghost-num block"
-              style={{ animationDelay: `${i * -2}s`, animationDuration: `${12 + i * 2}s` }}
+              style={{ animationDelay: `${i * -0.67}s`, animationDuration: `${(12 + i * 2) / 3}s` }}
             >
               {s.id}
             </span>
@@ -142,12 +142,7 @@ export function Process() {
   return (
     <section ref={sectionRef} className="relative panel-blue border-t border-line">
       <ProcessGhostNumbers />
-      {/* py-12/16/20 rather than the site's standard section-py-spacious
-         (a flat 7rem/112px both sides) — this section targets fitting in
-         one screen on any device, so its own vertical padding needs to
-         scale down on short viewports instead of eating a fixed chunk of
-         them regardless of available height. */}
-      <div className="relative section-shell py-12 sm:py-16 lg:py-20">
+      <div className="relative section-shell py-20 sm:py-24 lg:py-32">
         <Reveal>
           <div className="flex flex-col items-center text-center">
             {/* .label-eyebrow hardcodes color: var(--blue) itself — the
@@ -207,7 +202,7 @@ export function Process() {
                   animate={{ scale: isActive ? 1 : 0.7, opacity: isActive ? 1 : 0.4 }}
                   transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 300, damping: 26 }}
                   className={`text-4xl font-extrabold leading-none tracking-tight transition-colors duration-300 sm:text-5xl lg:text-6xl ${
-                    isActive ? "text-white" : "text-ink-soft group-hover:text-ink"
+                    isActive ? "text-magenta" : "text-ink-soft group-hover:text-ink"
                   }`}
                 >
                   {s.id}
@@ -222,7 +217,7 @@ export function Process() {
                 {isActive && (
                   <motion.span
                     layoutId="process-active-underline"
-                    className="absolute -bottom-2 h-[3px] w-8 rounded-full bg-white"
+                    className="absolute -bottom-2 h-[3px] w-8 rounded-full bg-magenta"
                     transition={reduced ? { duration: 0 } : { type: "spring", stiffness: 380, damping: 32 }}
                     aria-hidden="true"
                   />
@@ -232,8 +227,10 @@ export function Process() {
           })}
         </div>
 
-        {/* Panel */}
-        <div className="relative mt-8">
+        {/* Panel — min-h reserves space for the tallest step (2-card grid),
+           so the section doesn't jump height when a step like 02 has only
+           one detail card. */}
+        <div className="relative mt-8 min-h-[220px] sm:min-h-[200px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={step.id}
@@ -250,23 +247,21 @@ export function Process() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, ease: EASE }}
               >
-                <span className="label-eyebrow" style={{ color: "#fff" }}>
-                  Step {step.id} of {String(total).padStart(2, "0")}
-                </span>
-                <h3 className="mt-4 text-h3 text-ink">{step.title}</h3>
-                <p className="mt-2 max-w-xl text-lg leading-relaxed text-ink-soft">{step.desc}</p>
+                <p className="whitespace-nowrap text-center text-sm font-medium leading-relaxed text-white sm:text-xl lg:text-3xl">
+                  {step.desc}
+                </p>
               </motion.div>
 
-              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <div className="mt-10 grid gap-5 sm:grid-cols-2">
                 {step.details.map((d, i) => (
                   <motion.div
                     key={d.label}
                     initial={reduced ? false : { opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2, delay: reduced ? 0 : 0.05 + i * 0.05, ease: EASE }}
-                    className="rounded-2xl bg-paper-2 p-5"
+                    className="rounded-2xl bg-paper-2 p-7"
                   >
-                    <p className="text-sm leading-relaxed text-ink-soft">
+                    <p className="text-base leading-relaxed text-ink-soft sm:text-lg">
                       <span className="font-semibold text-ink">{d.label}: </span>
                       {d.text}
                     </p>

@@ -45,7 +45,7 @@ export const projects: Project[] = [
       { label: "Accessibility", value: "WCAG AA" },
     ],
     liveDemoUrl: "https://scentora-demo.matterpixel.com",
-    relatedServiceSlugs: ["web-app-development", "product-design", "ai-product-photography"],
+    relatedServiceSlugs: ["web-app-development", "ai-automation", "ai-product-photography"],
   },
   {
     slug: "mindwell",
@@ -67,7 +67,7 @@ export const projects: Project[] = [
       { label: "Keyboard nav", value: "Complete" },
     ],
     liveDemoUrl: "https://mindwell-demo.matterpixel.com",
-    relatedServiceSlugs: ["product-design", "web-app-development", "branding-identity"],
+    relatedServiceSlugs: ["ai-automation", "web-app-development", "branding-identity"],
   },
   {
     slug: "lcinco-pizza",
@@ -111,7 +111,7 @@ export const projects: Project[] = [
       { label: "Data-ready", value: "Real-time" },
     ],
     liveDemoUrl: "https://insightflow-demo.matterpixel.com",
-    relatedServiceSlugs: ["web-app-development", "product-design", "seo-growth"],
+    relatedServiceSlugs: ["web-app-development", "ai-automation", "seo-growth"],
   },
 ];
 

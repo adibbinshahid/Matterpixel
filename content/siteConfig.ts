@@ -19,6 +19,7 @@ export const nav = {
   links: [
     { label: "Projects", href: "/projects" },
     { label: "Services", href: "/services" },
+    { label: "Pricing", href: "/pricing" },
     { label: "About", href: "/about" },
     { label: "Insights", href: "/insights" },
     { label: "Contact", href: "/contact" },
@@ -47,7 +48,6 @@ export const trust = {
     "Fiverr Top Rated Seller",
     "NDA Friendly",
     "No Surprise Budget Increase",
-    "UK Registered, Global Team",
   ],
 };
 
@@ -104,7 +104,7 @@ export const processSteps = {
       title: "Video meetup",
       desc: "We'll meet (Zoom) to discuss your project.",
       details: [
-        { label: "Specifications", text: "We'll write the specifications for your site's functionality and features." },
+        { label: "Specifications", text: "We'll write the specifications for your project's functionality and features." },
         { label: "Research", text: "We'll do research based on your needs." },
       ],
     },
@@ -113,24 +113,24 @@ export const processSteps = {
       title: "Requirements",
       desc: "We'll make sure we have everything needed to complete your project.",
       details: [
-        { label: "Planning", text: "We'll use your provided requirements to start planning your website." },
+        { label: "Planning", text: "We'll use your provided requirements to start planning your project." },
       ],
     },
     {
       id: "03",
-      title: "Website Design",
-      desc: "We'll create the design for your website.",
+      title: "Prototype",
+      desc: "We'll build a prototype of your project.",
       details: [
-        { label: "Design Concept", text: "We'll design a concept for your website." },
+        { label: "Prototype", text: "We'll build a working prototype of your project." },
         { label: "Follow-up session", text: "We'll have a follow-up session to discuss any open questions." },
       ],
     },
     {
       id: "04",
       title: "Development",
-      desc: "We'll develop the website and deliver a working product for your review.",
+      desc: "We'll develop your project and deliver a working product for your review.",
       details: [
-        { label: "Content Upload", text: "We'll upload your content (copy, images, videos, etc.) to your website." },
+        { label: "Content Upload", text: "We'll upload your content (copy, images, videos, etc.) to your project." },
         { label: "Progress check", text: "We'll meet to review your project status and the steps needed to finish it." },
       ],
     },

@@ -1,28 +1,22 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type MutableRefObject } from "react";
+import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
-import { GiantHeading } from "@/components/GiantHeading";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
-import { getLenis } from "@/components/SmoothScrollProvider";
 import { services } from "@/content/services";
 import { servicesIntro, servicesCta } from "@/content/siteConfig";
-import { DURATIONS } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
 /** Matches Nav's own mobile/desktop cutoff (its hamburger is `lg:hidden`)
- * — below that width the pinned/scrubbed carousel is skipped entirely in
- * favor of a plain stacked list (see MobileServicesList). The pin's scroll
- * distance is proportional to the full unrolled track width regardless of
- * viewport, so on a phone it demanded many screens' worth of pure vertical
- * scrolling just to pan through six cards — most of the page was empty
- * scroll-jacked space with nothing visibly changing. Defaults to `false`
- * so SSR/first paint never renders the heavy pinned layout (worst case on
- * a slow mobile connection); corrects up to `true` on mount wherever the
- * viewport actually is desktop-width. */
+ * — below that width the pinned vertical carousel is skipped entirely in
+ * favor of a plain stacked list (see MobileServicesList). Defaults to
+ * `false` so SSR/first paint never renders the heavy pinned layout (worst
+ * case on a slow mobile connection); corrects up to `true` on mount
+ * wherever the viewport actually is desktop-width. */
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
@@ -35,9 +29,98 @@ function useIsDesktop() {
   return isDesktop;
 }
 
-const ACTIVE_SCALE = 1.1; // scale of the centered card
-const REST_SCALE = 0.8; // scale of an unselected/off-center card — 20% smaller than the neutral 1x baseline
-const CARD_GAP = 56; // px — matches the gap-14 row class below
+/**
+ * Placeholder imagery for the pinned left column — no per-service
+ * photography exists yet, so these cycle across the 6 cards until real
+ * shots are ready. Swap for dedicated per-service images later.
+ */
+const LEFT_IMAGES = [
+  "/WhoWeWorkFor/Digital First Businesses.webp",
+  "/WhoWeWorkFor/Property & physical goods.webp",
+  "/WhoWeWorkFor/Services businesses.webp",
+  "/WhoWeWorkFor/regulated and relationshion driven.webp",
+];
+
+
+/** Fixed px sizing for the pinned card stack — px-based rather than a
+ * viewport fraction so the gap between cards is a real, deliberate space
+ * (baked into `step`) rather than an accident of window-height math. No
+ * overflow-hidden clip on the track — cards scroll fully open, nothing
+ * gets cropped; `CARD_HEIGHT` just sizes the layout placeholder each card
+ * slot occupies. */
+const CARD_HEIGHT = 300;
+const CARD_GAP = 32;
+const CARD_STEP = CARD_HEIGHT + CARD_GAP;
+/** Closing CTA card keeps its own (taller) height — only the 6 service
+ * cards were trimmed to CARD_HEIGHT's minimum-no-clip value. Card
+ * *positions* still step by CARD_STEP (service-card size), so this just
+ * lets the CTA render taller than the slot it starts at without affecting
+ * the scroll/pin math. */
+const CTA_CARD_HEIGHT = 380;
+
+/** The pinned stack is the six service cards plus one closing CTA card
+ * (replaces the old standalone magenta banner below the carousel — same
+ * content, folded into the scroll sequence instead of living after it). */
+const PINNED_COUNT = services.length + 1;
+
+/** Background grid moves at this fraction of the card track's scroll
+ * distance — slower than the cards (which track scroll input at a
+ * natural, unstretched 1:1 rate — see SCROLL_LENGTH_MULTIPLIER) for a
+ * parallax depth effect during the pin. */
+const BG_PARALLAX_RATE = 0.7;
+
+/** Multiplier on the scroll distance mapped to the cards' full travel —
+ * 1 keeps cards tracking scroll input at its natural 1:1 rate. */
+const SCROLL_LENGTH_MULTIPLIER = 1;
+
+/** Extra scroll distance the pin holds AFTER the cards finish travelling,
+ * so the last card visibly settles flush with the image's bottom edge
+ * before the section releases — `scrub` eases the track toward its target
+ * over ~1s, so without this dwell the pin let go while the final card was
+ * still easing in, and it finished arriving as the section scrolled away. */
+const PIN_HOLD_AFTER_LAST = 120;
+
+/** Replicates WhoWeWorkFor's own section gutter (px-6 sm:px-8 lg:px-12,
+ * max-w-1400) so this heading's `sizeRef` fit lands on the exact same
+ * pixel font-size as WhoWeWorkFor's — GiantHeading's own hardcoded
+ * `servicesContainerWidth` models a different section's gutter, so it
+ * can't be reused here. */
+function whoWeWorkForContainerWidth() {
+  const w = window.innerWidth;
+  const gutter = w >= 1024 ? 48 : w >= 640 ? 32 : 24;
+  return Math.min(w - gutter * 2, 1400);
+}
+
+/** Computes the exact px font-size WhoWeWorkFor's own GiantHeading fits
+ * to (same canvas-measurement technique, same reference line/width), so
+ * this heading can match it in size while still wrapping normally inside
+ * a narrow sidebar column — GiantHeading itself forces `whitespace-nowrap`
+ * edge-to-edge, which would overflow a 420px column at that font-size. */
+function useMatchedFontSize(referenceLine: string, containerWidth: () => number) {
+  const [fontSize, setFontSize] = useState<number | null>(null);
+
+  useEffect(() => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    function update() {
+      if (!ctx) return;
+      const cw = containerWidth();
+      const bodyFont = getComputedStyle(document.body).fontFamily;
+      const REF = 100;
+      ctx.font = `800 ${REF}px ${bodyFont}`;
+      const width = ctx.measureText(referenceLine).width;
+      setFontSize(width > 0 ? (cw / width) * REF : REF);
+    }
+
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [referenceLine, containerWidth]);
+
+  return fontSize;
+}
 
 /**
  * Section background — sits behind everything (headline, cards, CTA
@@ -47,532 +130,480 @@ const CARD_GAP = 56; // px — matches the gap-14 row class below
  * A slow-drifting hairline grid (`.services-grid-bg`, see globals.css)
  * over the dark `panel-dark` base, faded out toward the edges via a
  * radial mask so it reads as an ambient field rather than a hard-edged
- * tiled pattern running to the section boundary.
+ * tiled pattern running to the section boundary. Forwards a ref so
+ * `PinnedServicesRow` can drive it at `BG_PARALLAX_RATE` of the card
+ * scroll speed for a parallax effect during the pin.
+ *
+ * `extraHeight` (desktop pin only): the element only spans its own
+ * container's height by default (`inset-0`), but the pinned version
+ * gets translated upward by more than that height over the scroll —
+ * without extra height budgeted in, it would slide fully out of view
+ * partway through, leaving nothing behind the cards for the rest of the
+ * scroll. Padding the height by the max travel distance keeps it fully
+ * covering the box for the whole pin.
  */
-function ServicesBgGrid() {
+const ServicesBgGrid = forwardRef<HTMLDivElement, { extraHeight?: number }>(function ServicesBgGrid(
+  { extraHeight },
+  ref,
+) {
   return (
     <div
+      ref={ref}
       aria-hidden="true"
       className="services-grid-bg pointer-events-none absolute inset-0"
       style={{
+        height: extraHeight ? `calc(100% + ${extraHeight}px)` : undefined,
         maskImage: "radial-gradient(ellipse at center, black 0%, transparent 90%)",
         WebkitMaskImage: "radial-gradient(ellipse at center, black 0%, transparent 90%)",
       }}
     />
   );
-}
+});
 
-/**
- * Left/right edge vignette — same technique as Stats' own `EdgeFade`, on
- * this section's dark `panel-dark` base instead of blue, so both sections
- * fade their outermost content the same way.
- */
-function ServicesEdgeFade() {
-  return (
-    <>
-      <div
-        className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 sm:w-32"
-        style={{ background: "linear-gradient(to right, #121214, transparent)" }}
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 sm:w-32"
-        style={{ background: "linear-gradient(to left, #121214, transparent)" }}
-        aria-hidden="true"
-      />
-    </>
+/** Renders the services heading with "pixel-perfect" picked out in brand
+ * magenta — same source string (`servicesIntro.headingLines`) feeds both
+ * the mobile and pinned-desktop heading, so this is shared rather than
+ * duplicated per render site. */
+function renderServicesHeading(text: string) {
+  return text.split(/(pixel-perfect)/i).map((part, i) =>
+    /^pixel-perfect$/i.test(part) ? (
+      <span key={i} className="text-magenta">
+        {part}
+      </span>
+    ) : (
+      part
+    ),
   );
 }
 
 /**
- * Same margin recipe as Nav's own pill (px-4 sm:px-6 outer gutter,
- * max-w-[1400px] centered) so the giant heading's edges line up with the
- * nav bar's, instead of running to the true screen edge.
- *
- * Rendered *inside* the pinned wrapper in motion mode (see
- * PinnedCarouselRow) rather than above it, so the heading stays visible
- * throughout the whole horizontal scrub instead of scrolling away the
- * moment the card row engages its pin.
- */
-function ServicesHeading() {
-  return (
-    <div className="relative px-4 pb-4 pt-28 sm:px-6 sm:pb-5 sm:pt-28">
-      <div className="mx-auto flex max-w-[1400px] flex-col items-center text-center">
-        <Reveal className="w-full">
-          <p className="label-eyebrow mb-4" style={{ fontSize: "1.5rem" }}>
-            {servicesIntro.eyebrow}
-          </p>
-          <h2>
-            <GiantHeading lines={servicesIntro.headingLines} highlight="pixel-perfect" />
-          </h2>
-        </Reveal>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Mobile/tablet substitute for the pinned scrub carousel (see
+ * Mobile/tablet substitute for the pinned vertical carousel (see
  * `useIsDesktop`) — a plain stacked list, each card a real link to its
- * detail page (the desktop carousel's cards aren't clickable at all; this
- * fixes that too). Reveal-animated on scroll-into-view like everything
- * else on the page, not scroll-jacked.
+ * detail page. Reveal-animated on scroll-into-view like everything else
+ * on the page, not scroll-jacked.
  */
 function MobileServicesList() {
   return (
-    <>
-      <ServicesHeading />
-      <div className="relative px-4 pb-16 pt-6 sm:px-6">
-        <RevealGroup className="mx-auto flex max-w-md flex-col gap-5">
-          {services.map((service) => (
-            <RevealItem key={service.slug}>
-              <Link
-                href={`/services/${service.slug}`}
-                className="hover-lift group relative block overflow-hidden rounded-[2rem] bg-blue p-7 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.4),0_40px_80px_-28px_rgba(0,0,0,0.55)]"
+    <div className="relative overflow-hidden px-4 pb-16 pt-28 sm:px-6">
+      <ServicesBgGrid />
+      <Reveal className="mx-auto max-w-md text-center">
+        <p className="label-eyebrow mb-4">{servicesIntro.eyebrow}</p>
+        <h2 className="text-h2 text-ink">{renderServicesHeading(servicesIntro.headingLines.join(" "))}</h2>
+        <p className="mt-4 text-ink-soft">{servicesIntro.engagementNote}</p>
+      </Reveal>
+
+      <RevealGroup className="mx-auto mt-10 flex max-w-md flex-col gap-5">
+        {services.map((service) => (
+          <RevealItem key={service.slug}>
+            <Link
+              href={`/services/${service.slug}`}
+              className="hover-lift group relative block overflow-hidden rounded-[2rem] bg-blue p-7 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.4),0_40px_80px_-28px_rgba(0,0,0,0.55)]"
+            >
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute -right-3 -top-6 select-none text-[5.5rem] font-black leading-none text-white/10"
               >
-                <span
-                  aria-hidden="true"
-                  className="pointer-events-none absolute -right-3 -top-6 select-none text-[5.5rem] font-black leading-none text-white/10"
-                >
-                  {service.id}
+                {service.id}
+              </span>
+              <div className="relative flex flex-col">
+                <span className="inline-flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/70">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue" aria-hidden="true" />[ {service.id} ]
                 </span>
-                <div className="relative flex flex-col">
-                  <span className="inline-flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/70">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue" aria-hidden="true" />[ {service.id} ]
-                  </span>
-                  <h3 className="mt-3 text-2xl font-black leading-[1.1] tracking-tight text-white">
-                    {service.title}
-                  </h3>
-                  <p className="mt-2 text-base leading-relaxed text-white/80">{service.shortDesc}</p>
-                  <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white">
-                    Learn more
-                    <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  </span>
-                </div>
-              </Link>
-            </RevealItem>
-          ))}
-        </RevealGroup>
-      </div>
-    </>
-  );
-}
+                <h3 className="mt-3 text-2xl font-black leading-[1.1] tracking-tight text-white">{service.title}</h3>
+                <p className="mt-2 text-base leading-relaxed text-white/80">{service.shortDesc}</p>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-white">
+                  Learn more
+                  <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                </span>
+              </div>
+            </Link>
+          </RevealItem>
+        ))}
 
-/** Curved glow baseline the cards sit along — decorative only, sits
- * behind the row (earlier in DOM, no z-index needed). Shared by both
- * carousel modes below. */
-function ServicesArcGlow() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 1440 140"
-      preserveAspectRatio="none"
-      className="pointer-events-none absolute inset-x-0 bottom-10 h-28 w-full opacity-80 sm:bottom-16"
-    >
-      <defs>
-        <linearGradient id="services-arc-glow" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="var(--blue)" stopOpacity="0" />
-          <stop offset="50%" stopColor="var(--magenta)" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="var(--blue)" stopOpacity="0" />
-        </linearGradient>
-        <filter id="services-arc-blur">
-          <feGaussianBlur stdDeviation="3" />
-        </filter>
-      </defs>
-      <path
-        d="M0,120 Q720,-20 1440,120"
-        stroke="url(#services-arc-glow)"
-        strokeWidth="2.5"
-        fill="none"
-        filter="url(#services-arc-blur)"
-      />
-    </svg>
-  );
-}
-
-export function ServicesFold() {
-  return (
-    <section id="services" className="panel-dark relative">
-      {/* `data-nav-scrim="light"` scoped to just the dark carousel part
-         (bg grid + cards), not the whole section — the closing CTA banner
-         below is a bright magenta panel that reads better with the nav's
-         light theme (dark text), so it deliberately falls outside this
-         wrapper and lets the nav switch back once it scrolls into view.
-         Needs its own `relative` (a positioning context) — without it,
-         `ServicesEdgeFade`'s `inset-y-0` was resolving against the outer
-         `<section>` instead (the next positioned ancestor up), so its
-         left/right fade stretched down the *section's* full height and
-         bled across the CTA banner below instead of stopping at the
-         carousel's own bottom edge. */}
-      <div data-nav-scrim="light" className="relative">
-        {/* The Stats -> ServicesFold seam's gradient fade is owned by
-           Stats.tsx (its own bottom edge), not here — keeps both of Stats'
-           seams (top into Hero, bottom into this section) on one side for
-           consistency, rather than split across two components. */}
-        <ServicesBgGrid />
-        <ServicesEdgeFade />
-
-        <ServicesCarousel />
-      </div>
-
-      {/* Same structure/style as FinalCta.tsx's closing banner, sides
-         swapped: copy right, button left there vs. copy left, button right
-         here. Explicit white/black here rather than the text-paper/bg-paper
-         tokens — this banner sits inside the outer panel-dark section,
-         which reassigns exactly those tokens to their dark-mode values,
-         flipping this "light text + white pill on blue" banner backwards
-         into black text on blue with a black button. */}
-      <div className="relative overflow-hidden border-t border-line px-6 py-6 sm:px-8 lg:px-12">
-        <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
-        <Reveal
-          duration={DURATIONS.standard}
-          delay={0.1}
-          className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-5 lg:flex-row lg:items-center lg:justify-between"
-        >
-          <p className="max-w-2xl text-center leading-snug text-white lg:text-left">
-            <span className="block text-2xl font-bold sm:text-3xl">{servicesCta.heading}</span>
-            <span className="mt-1 block text-sm text-white/85 sm:text-base">{servicesCta.body}</span>
-          </p>
+        <RevealItem>
           <Link
             href="/contact?tab=booking"
-            className="hover-lift font-avenir group inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-7 py-4 text-sm text-black hover:bg-black hover:text-white"
+            className="hover-lift group relative block overflow-hidden rounded-[2rem] bg-magenta p-7 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.4),0_40px_80px_-28px_rgba(0,0,0,0.55)]"
           >
-            {servicesCta.button}
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            <div className="relative flex flex-col">
+              <h3 className="text-2xl font-black leading-[1.1] tracking-tight text-white">{servicesCta.heading}</h3>
+              <p className="mt-2 text-base leading-relaxed text-white/80">{servicesCta.body}</p>
+              <span className="hover-lift mt-5 inline-flex w-fit items-center gap-2.5 rounded-full bg-white px-7 py-4 text-base font-black text-ink shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover:scale-[1.04]">
+                {servicesCta.button}
+                <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+              </span>
+            </div>
           </Link>
-        </Reveal>
-      </div>
-    </section>
+        </RevealItem>
+      </RevealGroup>
+    </div>
   );
 }
 
-type CardRefs = MutableRefObject<(HTMLDivElement | null)[]>;
+/** Vertical card used in the desktop pinned-scroll stack — same blue
+ * accent-card look the carousel has always used, just full-height and
+ * stacked instead of side-by-side. */
+function PinnedCard({ service }: { service: (typeof services)[number] }) {
+  return (
+    <Link
+      href={`/services/${service.slug}`}
+      className="hover-lift group relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[2rem] bg-blue p-7 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.4),0_40px_80px_-28px_rgba(0,0,0,0.55)] transition-colors duration-300 sm:p-9"
+    >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-3 -top-7 select-none text-[6.5rem] font-black leading-none text-white/10 transition-colors duration-300"
+      >
+        {service.id}
+      </span>
+      <div className="relative">
+        <span className="inline-flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/70 transition-colors duration-300">
+          <span className="h-1.5 w-1.5 rounded-full bg-magenta" aria-hidden="true" />[ {service.id} ]
+        </span>
+        <h3 className="mt-3 text-2xl font-black leading-[1.08] tracking-tight text-white transition-colors duration-300 sm:text-3xl">
+          {service.title}
+        </h3>
+        <p className="mt-2 max-w-lg text-sm leading-relaxed text-white/80 transition-colors duration-300 sm:text-base">
+          {service.shortDesc}
+        </p>
+      </div>
 
-/**
- * Per-card scale/lift/tilt/glow math, shared by both carousel modes below.
- * Takes only a `centerX` (viewport px) and each card's real
- * `getBoundingClientRect()` — it doesn't care whether that position came
- * from native `scrollLeft` or a GSAP-driven `transform: translateX`, so
- * the same function drives both the reduced-motion fallback and the
- * pinned/scrubbed version without duplicating the visual treatment.
- */
-function applyCardTransforms(cards: CardRefs, glowRings: CardRefs, centerX: number) {
-  cards.current.forEach((el, i) => {
-    if (!el) return;
-    const cardRect = el.getBoundingClientRect();
-    const cardCenter = cardRect.left + cardRect.width / 2;
-    const step = cardRect.width + CARD_GAP;
-    const d = Math.max(-1, Math.min(1, (cardCenter - centerX) / step));
-    const absD = Math.abs(d);
-
-    const scale = REST_SCALE + (ACTIVE_SCALE - REST_SCALE) * (1 - absD);
-    // Off-center cards sit noticeably lower than the centered one,
-    // reading as a pronounced arc/curved shelf rather than a flat row.
-    const lift = (1 - absD) * 70;
-    // Darker/more muted falloff than a plain opacity fade — the
-    // centered card reads bright and lit-up, others flat and dim.
-    const opacity = 0.35 + 0.65 * (1 - absD);
-    const brightness = 0.55 + 0.45 * (1 - absD);
-    const rotateY = d * -14;
-    const translateZ = -absD * 80;
-    // In-plane tilt following the arc's tangent.
-    const rotateZ = d * -7;
-
-    el.style.transform = `translateY(${-lift}px) scale(${scale}) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) translateZ(${translateZ}px)`;
-    el.style.opacity = String(opacity);
-    el.style.zIndex = String(Math.round((1 - absD) * 100));
-    el.style.filter =
-      absD > 0.15
-        ? `blur(${(absD * 1.5).toFixed(1)}px) brightness(${brightness.toFixed(2)})`
-        : `brightness(${brightness.toFixed(2)})`;
-
-    const ring = glowRings.current[i];
-    if (ring) ring.style.opacity = String(Math.max(0, 1 - absD * 1.6));
-  });
+      <div className="relative mt-5 flex items-center justify-between border-t border-white/20 pt-4 transition-colors duration-300">
+        <span className="text-xs text-white/70 transition-colors duration-300 sm:text-sm">
+          {service.id} / {String(PINNED_COUNT).padStart(2, "0")}
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-white transition-colors duration-300 sm:text-sm">
+          Learn more
+          <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+        </span>
+      </div>
+    </Link>
+  );
 }
 
-function CarouselCard({
-  service,
-  snap,
-  registerCard,
-  registerGlow,
-}: {
-  service: (typeof services)[number];
-  snap: boolean;
-  registerCard: (el: HTMLDivElement | null) => void;
-  registerGlow: (el: HTMLDivElement | null) => void;
-}) {
+/** Closing CTA folded into the pinned card stack as its final card
+ * (replaces the old standalone magenta banner) — same copy/badges/button
+ * from `servicesCta`, magenta instead of the service cards' blue. The
+ * card itself is a plain div, not a link — only the button inside is
+ * clickable, so hovering/reading the card body doesn't imply navigation. */
+function PinnedCtaCard() {
+  const [headingLine1, headingLine2] = servicesCta.heading.split(". ");
   return (
-    <div
-      ref={registerCard}
-      className={`relative h-[24rem] w-72 shrink-0 will-change-transform sm:h-[28rem] sm:w-80 ${
-        snap ? "snap-center [scroll-snap-stop:always]" : ""
-      }`}
-      style={{ transformStyle: "preserve-3d" }}
-    >
-      {/* Neon ring, only around the active/centered card — sits outside
-         the card's own overflow-hidden so it isn't clipped; opacity
-         driven per-frame by applyCardTransforms(). */}
-      <div
-        ref={registerGlow}
-        aria-hidden="true"
-        className="glow-ring pointer-events-none absolute -inset-1 rounded-[2.6rem] opacity-0"
-      />
-      <div className="relative h-full w-full overflow-hidden rounded-[2.5rem] bg-blue p-8 shadow-[0_10px_20px_-10px_rgba(0,0,0,0.4),0_40px_80px_-28px_rgba(0,0,0,0.55)]">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute -right-4 -top-8 select-none text-[7rem] font-black leading-none text-white/10 sm:text-[9rem]"
-        >
-          {service.id}
-        </span>
-        <div className="relative flex h-full flex-col justify-start">
-          <span className="inline-flex w-fit items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-white/70">
-            <span className="h-1.5 w-1.5 rounded-full bg-blue" aria-hidden="true" />[ {service.id} ]
-          </span>
-          <h3 className="mt-4 text-3xl font-black leading-[1.05] tracking-tight text-white sm:text-4xl">
-            {service.title}
-          </h3>
-          <p className="mt-3 max-w-xs text-[1.3125rem] leading-relaxed text-white/80">
-            {service.shortDesc}
-          </p>
-        </div>
+    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-[2rem] bg-magenta p-7 text-center shadow-[0_10px_20px_-10px_rgba(0,0,0,0.4),0_40px_80px_-28px_rgba(0,0,0,0.55)] sm:p-9">
+      <h3 className="text-4xl font-black leading-[1.08] tracking-tight text-white sm:text-5xl">
+        {headingLine1}.
+        <br />
+        {headingLine2}
+      </h3>
+      <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/80 sm:text-base">{servicesCta.body}</p>
+
+      <Link
+        href="/contact?tab=booking"
+        className="hover-lift group mt-8 inline-flex items-center gap-2.5 rounded-full bg-white px-8 py-4 text-base font-black text-black shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5)] transition-transform duration-300 hover:scale-[1.04] sm:px-10 sm:py-5 sm:text-lg"
+      >
+        {servicesCta.button}
+        <ArrowUpRight className="h-5 w-5 text-black transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:h-6 sm:w-6" />
+      </Link>
+    </div>
+  );
+}
+
+/** Vertical progress rail showing how many cards are left to scroll
+ * through — one tick per service, active tick lit brand-magenta, plus a
+ * numeric counter. Lives in its own column *beside* the clipped card
+ * window (not inside it), so it's never overlapped or clipped by the
+ * cards it's tracking. */
+function ScrollProgress({ activeIndex, total }: { activeIndex: number; total: number }) {
+  return (
+    <div className="hidden w-14 shrink-0 flex-col items-center justify-center gap-5 lg:flex">
+      <span className="text-lg font-bold tabular-nums text-ink">{String(activeIndex + 1).padStart(2, "0")}</span>
+      <div className="flex flex-col gap-2.5">
+        {Array.from({ length: total }, (_, i) => (
+          <span
+            key={i}
+            className={`h-8 w-1.5 rounded-full transition-colors duration-300 ${
+              i === activeIndex ? "bg-magenta" : "bg-line"
+            }`}
+          />
+        ))}
       </div>
+      <span className="text-lg font-bold tabular-nums text-ink-soft">{String(total).padStart(2, "0")}</span>
     </div>
   );
 }
 
 /**
- * Reduced-motion fallback: a real, native horizontally-scrolling row —
- * `overflow-x: auto` + `scroll-snap-type: x mandatory` +
- * `scroll-snap-stop: always` on each card, so one card advances per
- * gesture with zero custom event interception. No pin, no scroll-jack:
- * the page's vertical scroll and this row's horizontal scroll are
- * independent axes.
+ * Desktop carousel: the whole two-column row pins in the viewport (GSAP
+ * ScrollTrigger) while the six cards scroll continuously through a fixed
+ * height window on the right. Left column (heading, subtext, image) stays
+ * put; its image crossfades to match whichever card is currently active.
+ * Unpins once the last card clears. Skipped under prefers-reduced-motion —
+ * caller falls back to a static, non-pinned render of the same markup.
  */
-function NativeCarouselRow({ cardRefs, glowRingRefs }: { cardRefs: CardRefs; glowRingRefs: CardRefs }) {
-  const scrollerRef = useRef<HTMLDivElement>(null);
+function PinnedServicesRow({ reduced }: { reduced: boolean }) {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
+  const imageWrapRef = useRef<HTMLDivElement>(null);
+  const rightColRef = useRef<HTMLDivElement>(null);
+  const cardWindowRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [bottomAlignMargin, setBottomAlignMargin] = useState(0);
+  const headingFontSize = useMatchedFontSize(
+    "wherever you build, we understand it.",
+    whoWeWorkForContainerWidth,
+  );
+
+  // Bottom-align the card window (not the whole right column — that also
+  // contains ScrollProgress, which can be taller than a single card and
+  // would throw the measurement off by that difference) with the left
+  // image, measured directly rather than guessed via CSS align-self
+  // keywords — both sides' real heights depend on dynamic content (a
+  // canvas-measured giant heading font-size, an aspect-ratio image, a
+  // variable-length tick rail), and `self-end`/`self-center` alignment
+  // quietly stopped landing pixel-exact once both became independently
+  // variable. The margin itself is applied to the outer right-column div
+  // (rightColRef) so the window and the indicator rail move down together.
+  // Re-measures on resize and whenever the matched heading font-size
+  // settles in (that resize of the left column happens after mount, not
+  // synchronously with it).
+  useLayoutEffect(() => {
+    const img = imageWrapRef.current;
+    const col = rightColRef.current;
+    const cardWindow = cardWindowRef.current;
+    if (!img || !col || !cardWindow) return;
+
+    function measure() {
+      if (!img || !col || !cardWindow || window.innerWidth < 1024) {
+        setBottomAlignMargin(0);
+        return;
+      }
+      const imgBottom = img.getBoundingClientRect().bottom;
+      // Never mutate col's own style directly to "reset" it before
+      // measuring — if two ResizeObserver firings land on the same final
+      // value, React sees no state change and skips re-applying the
+      // style, silently stranding a manual reset in the live DOM. Instead
+      // back the *currently applied* margin out of the measured rect
+      // (via the functional updater, so it's never a stale closure value)
+      // to get the natural, unmargined bottom.
+      setBottomAlignMargin((prevMargin) => {
+        const naturalWindowBottom = cardWindow.getBoundingClientRect().bottom - prevMargin;
+        return Math.max(0, imgBottom - naturalWindowBottom);
+      });
+    }
+
+    measure();
+    // Only the image is worth watching — its aspect-ratio height genuinely
+    // depends on viewport width. cardWindow's height is the hardcoded
+    // CARD_HEIGHT constant and never legitimately changes; observing it
+    // too meant GSAP's pin engaging (`position: fixed`, a sub-pixel
+    // reflow) fired this callback again post-pin, and re-derived the
+    // "natural" bottom from geometry that had shifted for reasons other
+    // than the margin — corrupting the alignment right as the pin kicked in.
+    const ro = new ResizeObserver(measure);
+    ro.observe(img);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [headingFontSize]);
+
+  // GSAP's ScrollTrigger caches the pin's start/end scroll positions when
+  // it's set up (see the effect below) — but the heading's real
+  // canvas-measured font-size resolves asynchronously, *after* that setup
+  // runs, and bottomAlignMargin above only settles once that resolves.
+  // That late layout shift invalidated ScrollTrigger's already-cached
+  // geometry, so the pin ended based on stale measurements — landing
+  // short of true alignment even though the margin itself was correct by
+  // the time you could see it. Refresh once the margin (and therefore the
+  // DOM) has actually settled, using a plain effect (runs after paint,
+  // so the browser has committed the new style) rather than the
+  // useLayoutEffect above.
+  useEffect(() => {
+    if (reduced) return;
+    ScrollTrigger.refresh();
+  }, [reduced, bottomAlignMargin]);
 
   useEffect(() => {
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
+    if (reduced) return;
+    gsap.registerPlugin(ScrollTrigger);
 
-    let rafId = 0;
-
-    function update() {
-      rafId = 0;
-      if (!scroller) return;
-      const rect = scroller.getBoundingClientRect();
-      applyCardTransforms(cardRefs, glowRingRefs, rect.left + rect.width / 2);
-    }
-
-    function onScroll() {
-      if (rafId) return;
-      rafId = requestAnimationFrame(update);
-    }
-
-    update();
-    scroller.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-
-    // Convenience for a plain (non-trackpad) mouse wheel, which has no
-    // native horizontal axis of its own: redirect vertical wheel input
-    // into horizontal scroll while hovering the row. A trackpad's own
-    // horizontal swipe already scrolls the row natively without this.
-    function onWheel(e: WheelEvent) {
-      if (!scroller || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
-      const atStart = scroller.scrollLeft <= 0;
-      const atEnd = scroller.scrollLeft >= scroller.scrollWidth - scroller.clientWidth - 1;
-      if ((e.deltaY < 0 && atStart) || (e.deltaY > 0 && atEnd)) return;
-      e.preventDefault();
-      scroller.scrollBy({ left: e.deltaY });
-    }
-    scroller.addEventListener("wheel", onWheel, { passive: false });
-
-    return () => {
-      if (rafId) cancelAnimationFrame(rafId);
-      scroller.removeEventListener("scroll", onScroll);
-      scroller.removeEventListener("wheel", onWheel);
-      window.removeEventListener("resize", onScroll);
-    };
-  }, [cardRefs, glowRingRefs]);
-
-  return (
-    <>
-      <ServicesHeading />
-      <div className="relative py-10 sm:py-16">
-        <ServicesArcGlow />
-        <div
-          ref={scrollerRef}
-          className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto pt-20 pb-8"
-          style={{ perspective: "1600px" }}
-        >
-          {/* Spacer cells so the first/last card can scroll all the way to
-             true center — without these, native scroll can only bring an
-             edge card's own edge to the container's edge, not its center. */}
-          <div aria-hidden="true" className="w-[calc(50%-144px)] shrink-0 sm:w-[calc(50%-160px)]" />
-          <div className="flex items-center gap-14">
-            {services.map((service, i) => (
-              <CarouselCard
-                key={service.slug}
-                service={service}
-                snap
-                registerCard={(el) => {
-                  cardRefs.current[i] = el;
-                }}
-                registerGlow={(el) => {
-                  glowRingRefs.current[i] = el;
-                }}
-              />
-            ))}
-          </div>
-          <div aria-hidden="true" className="w-[calc(50%-144px)] shrink-0 sm:w-[calc(50%-160px)]" />
-        </div>
-      </div>
-    </>
-  );
-}
-
-/**
- * Full-motion mode: pins (GSAP ScrollTrigger `pin: true`) once its top
- * hits the viewport top, and the card track's `x` is scrubbed 1:1 against
- * scroll progress until the last card reaches center, at which point it
- * unpins and the page continues — reversing cleanly on scroll-up since a
- * scrubbed tween is just scroll-position-driven, no direction branch
- * needed. `end`/`x` are functions (with `invalidateOnRefresh`) so
- * resize/font-swap recomputes the pin distance instead of a manual
- * ResizeObserver rebuild.
- *
- * The pin target (`pinRef`) wraps the heading *and* the card row, not
- * just the row — so the heading rides along pinned in place for the
- * whole scrub instead of scrolling off before the cards even start
- * moving. `rowRef`/`trackRef` (a level deeper) still drive the actual
- * distance/centering math, unchanged by that wrapping.
- *
- * This *is* the pin-and-scroll-jack idea a previous version of this
- * carousel attempted — that one hand-rolled it with wheel/touch listeners
- * and Lenis stop()/start() coordination and went through many rounds of
- * edge-case bugs (spurious unpinning, trackpad momentum swallowing the
- * next swipe, auto-advance on entry). The difference here is using GSAP
- * ScrollTrigger's own pin+scrub primitives instead of reimplementing scroll
- * capture by hand — Lenis already feeds ScrollTrigger via
- * `lenis.on("scroll", ScrollTrigger.update)` in SmoothScrollProvider, so
- * this needs no custom wheel/touch interception at all.
- */
-function PinnedCarouselRow({ cardRefs, glowRingRefs }: { cardRefs: CardRefs; glowRingRefs: CardRefs }) {
-  const pinRef = useRef<HTMLDivElement>(null);
-  const rowRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-
-  useLayoutEffect(() => {
-    const pinEl = pinRef.current;
-    const row = rowRef.current;
+    const section = sectionRef.current;
     const track = trackRef.current;
-    if (!pinEl || !row || !track) return;
+    if (!section || !track) return;
 
-    function distance() {
-      return Math.max(0, track!.scrollWidth - row!.clientWidth);
-    }
+    const distance = (PINNED_COUNT - 1) * CARD_STEP * SCROLL_LENGTH_MULTIPLIER;
 
-    function updateCards() {
-      const rect = row!.getBoundingClientRect();
-      applyCardTransforms(cardRefs, glowRingRefs, rect.left + rect.width / 2);
-    }
+    // The pin runs LONGER than the card travel (by PIN_HOLD_AFTER_LAST) and
+    // is its own ScrollTrigger, rather than being attached to the track
+    // tween. `scrub: 1` smooths the track toward its target over ~1s, so
+    // when pin and tween shared one trigger the pin released the moment
+    // scroll hit `distance` — while the last card was still easing into
+    // place. The card then finished arriving as the whole section was
+    // already scrolling away (the "in parallel" motion). This dwell keeps
+    // the section pinned until the last card has actually settled flush
+    // with the image's bottom edge; only then does the section scroll up.
+    const pinTrigger = ScrollTrigger.create({
+      trigger: section,
+      start: "top top",
+      end: `+=${distance + PIN_HOLD_AFTER_LAST}`,
+      pin: true,
+    });
 
     const tween = gsap.to(track, {
-      x: () => -distance(),
+      y: -(PINNED_COUNT - 1) * CARD_STEP,
       ease: "none",
       scrollTrigger: {
-        trigger: pinEl,
+        trigger: section,
         start: "top top",
-        end: () => `+=${distance()}`,
-        // A number (not `true`) — GSAP only builds its internal catch-up
-        // tween, and therefore only ever fires `onScrubComplete` below,
-        // when `scrub` is numeric. The value itself is a light smoothing
-        // lag on the card motion, independent of Lenis's own scroll easing.
-        scrub: 0.3,
-        pin: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-        onUpdate: updateCards,
-        onRefresh: updateCards,
-        // Free-scrub while the user is actively scrolling; once they stop
-        // (this fires ~0.3s after the last scroll update, so it naturally
-        // waits out Lenis's own momentum first), animate to the nearest of
-        // the (n-1) even steps between card centers via `lenis.scrollTo()`
-        // — not GSAP's own built-in `snap`, which sets scroll position
-        // directly and gets silently overwritten by Lenis on its next
-        // rAF tick since Lenis, not the browser, owns scroll position here.
-        onScrubComplete: (self) => {
-          const steps = services.length - 1;
-          const snapProgress = Math.round(self.progress * steps) / steps;
-          const target = self.start + (self.end - self.start) * snapProgress;
-          if (Math.abs(target - window.scrollY) < 1) return;
-          getLenis()?.scrollTo(target, { duration: 0.6, easing: (t) => 1 - Math.pow(1 - t, 3) });
+        end: `+=${distance}`,
+        scrub: 1,
+        onUpdate: (self) => {
+          setActiveIndex(Math.round(self.progress * (PINNED_COUNT - 1)));
         },
       },
     });
 
-    updateCards();
+    // Background grid rides the same scroll range but only travels
+    // BG_PARALLAX_RATE of the card distance — slower than the (regular
+    // speed) cards, reading as a parallax depth cue during the pin.
+    const bg = bgRef.current;
+    const bgTween = bg
+      ? gsap.to(bg, {
+          y: -(PINNED_COUNT - 1) * CARD_STEP * BG_PARALLAX_RATE,
+          ease: "none",
+          scrollTrigger: {
+            trigger: section,
+            start: "top top",
+            end: `+=${distance}`,
+            scrub: 1,
+          },
+        })
+      : null;
+
     ScrollTrigger.refresh();
 
-    // The track's x is otherwise driven only by vertical scroll progress
-    // (the scrub above) — a trackpad's horizontal swipe (or shift+wheel)
-    // has no effect by default even though the row visually reads as a
-    // horizontal carousel. Redirect horizontal wheel input into the page's
-    // vertical scroll position while this row is actively pinned, so it
-    // drives the same scrub the vertical axis does; only while pinned
-    // (`st.isActive`) so it doesn't hijack horizontal gestures anywhere
-    // else on the page before/after this section is engaged.
-    function onWheel(e: WheelEvent) {
-      const st = tween.scrollTrigger;
-      if (!st || !st.isActive) return;
-      if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
-      e.preventDefault();
-      const target = window.scrollY + e.deltaX;
-      const lenis = getLenis();
-      if (lenis) lenis.scrollTo(target, { immediate: true });
-      else window.scrollTo(0, target);
-    }
-    pinEl.addEventListener("wheel", onWheel, { passive: false });
-
     return () => {
-      pinEl.removeEventListener("wheel", onWheel);
+      pinTrigger.kill();
       tween.scrollTrigger?.kill();
       tween.kill();
+      bgTween?.scrollTrigger?.kill();
+      bgTween?.kill();
     };
-  }, [cardRefs, glowRingRefs]);
+  }, [reduced]);
 
   return (
-    <div ref={pinRef} className="relative">
-      <ServicesHeading />
-      <div className="relative py-10 sm:py-16">
-        <ServicesArcGlow />
-        {/* pt-28 (112px): the centered card's real upward reach is more
-           than the 70px `lift` alone — `scale(1.1)` grows the box from its
-           center, so half the height gain (~22px at h-28rem) also pushes
-           the top edge up, ~92px total. Needs to clear that everywhere or
-           this row's own overflow-hidden (required to clip the
-           wider-than-viewport track) clips the lifted card's top instead. */}
-        <div ref={rowRef} className="overflow-hidden pb-8 pt-28">
+    // GSAP's `pin: true` flips this element to `position: fixed`. A block
+    // with only `max-w-[1400px] mx-auto` and no explicit `width` resolves
+    // that via shrink-to-fit once fixed (its containing block becomes the
+    // viewport), which let the `1fr` track blow out near full-viewport
+    // width instead of staying capped — hence `w-full` here (a definite
+    // 100vw once fixed, no shrink-to-fit guessing) with the actual
+    // centered/capped grid as a plain non-pinned child inside it.
+    //
+    // The bg grid lives *inside* this pinned wrapper (not as an outside
+    // sibling) deliberately: an outside sibling stays in normal document
+    // flow and scrolls away at the page's natural 1:1 rate the instant
+    // the user scrolls, while this wrapper visually freezes in place for
+    // the whole pin — so an outside bg looked like it was racing past the
+    // stationary cards regardless of any rate math. In here, both start
+    // from the same frozen reference frame and only diverge by the
+    // deliberate BG_PARALLAX_RATE offset.
+    // No overflow-hidden here — cards must stay fully open/uncropped
+    // (per earlier fix); the bg grid's own radial mask already fades its
+    // edges to transparent, so it doesn't need a hard clip either.
+    <div ref={sectionRef} className="relative w-full px-4 pb-16 pt-28 sm:px-6 lg:px-12">
+      <ServicesBgGrid ref={bgRef} extraHeight={(PINNED_COUNT - 1) * CARD_STEP * BG_PARALLAX_RATE} />
+      <div className="relative mx-auto grid max-w-[1400px] items-start gap-12 lg:grid-cols-[minmax(0,520px)_1fr] lg:gap-12">
+        <div className="lg:self-start">
+          {/* y={0}: this column's own bottom edge gets pixel-measured
+             (see bottomAlignMargin below) to align the card stack against
+             it — Reveal's default translateY entrance would leave that
+             measurement racing a transform that hasn't settled to y:0
+             yet, intermittently capturing a stale, offset position.
+             Opacity/blur-only avoids the transform entirely. */}
+          <Reveal y={0}>
+            <p className="mb-4 font-semibold uppercase tracking-[0.12em] text-ink" style={{ fontSize: "1.5rem" }}>
+              {servicesIntro.eyebrow}
+            </p>
+            <h2
+              className="font-extrabold leading-[1.05] tracking-tight text-ink"
+              style={{
+                fontSize: headingFontSize ? `${headingFontSize}px` : undefined,
+                opacity: headingFontSize ? 1 : 0,
+              }}
+            >
+              {renderServicesHeading(servicesIntro.headingLines.join(" "))}
+            </h2>
+            <p className="mt-5 max-w-sm text-ink-soft">{servicesIntro.engagementNote}</p>
+
+            <div
+              ref={imageWrapRef}
+              className="relative mt-8 aspect-[16/10] overflow-hidden rounded-[var(--mp-radius-md)] border border-line"
+            >
+              {LEFT_IMAGES.map((src, i) => {
+                const active = i === activeIndex % LEFT_IMAGES.length;
+                return (
+                  <Image
+                    key={src}
+                    src={encodeURI(src)}
+                    alt=""
+                    fill
+                    loading="eager"
+                    sizes="(min-width: 1024px) 520px, 100vw"
+                    className="object-cover"
+                    style={{
+                      opacity: active ? 1 : 0,
+                      zIndex: active ? 1 : 0,
+                      transition: "opacity 500ms ease-in-out",
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </Reveal>
+        </div>
+
+        {/* Bottom-aligned to the left image via measured `bottomAlignMargin`
+           (see the useLayoutEffect above), not a CSS align-self keyword —
+           both columns' heights are independently dynamic (canvas-fitted
+           heading size, aspect-ratio image, variable tick rail), so a
+           guessed `self-end`/`self-center` drifted a hundred-plus px off
+           in practice. This keeps the last card's bottom edge pixel-flush
+           with the image's bottom edge, with nothing dead below it once
+           the stack finishes scrolling through, right as the pin releases. */}
+        <div ref={rightColRef} className="flex items-stretch gap-4 lg:gap-6" style={{ marginTop: bottomAlignMargin }}>
           <div
-            ref={trackRef}
-            className="flex w-max items-center gap-14 pl-[calc(50%-144px)] pr-[calc(50%-144px)] will-change-transform sm:pl-[calc(50%-160px)] sm:pr-[calc(50%-160px)]"
-            style={{ perspective: "1600px" }}
+            ref={cardWindowRef}
+            className="relative min-w-0 flex-1"
+            style={reduced ? undefined : { height: CTA_CARD_HEIGHT }}
           >
-            {services.map((service, i) => (
-              <CarouselCard
-                key={service.slug}
-                service={service}
-                snap={false}
-                registerCard={(el) => {
-                  cardRefs.current[i] = el;
-                }}
-                registerGlow={(el) => {
-                  glowRingRefs.current[i] = el;
-                }}
-              />
-            ))}
+            <div
+              ref={trackRef}
+              className={`flex flex-col gap-6 ${reduced ? "" : "lg:absolute lg:inset-0 lg:block lg:gap-0"}`}
+            >
+              {services.map((service, i) => (
+                <div
+                  key={service.slug}
+                  className={`h-[22rem] lg:w-[70%] ${reduced ? "" : "lg:absolute lg:inset-x-0 lg:mx-auto"}`}
+                  style={reduced ? undefined : { top: `${i * CARD_STEP}px`, height: CARD_HEIGHT }}
+                >
+                  <PinnedCard service={service} />
+                </div>
+              ))}
+              <div
+                key="cta"
+                className={`h-[22rem] lg:w-[70%] ${reduced ? "" : "lg:absolute lg:inset-x-0 lg:mx-auto"}`}
+                style={reduced ? undefined : { top: `${services.length * CARD_STEP}px`, height: CTA_CARD_HEIGHT }}
+              >
+                <PinnedCtaCard />
+              </div>
+            </div>
           </div>
+
+          {!reduced && (
+            <ScrollProgress activeIndex={Math.min(activeIndex, services.length - 1)} total={services.length} />
+          )}
         </div>
       </div>
     </div>
@@ -582,14 +613,22 @@ function PinnedCarouselRow({ cardRefs, glowRingRefs }: { cardRefs: CardRefs; glo
 function ServicesCarousel() {
   const reduced = useReducedMotion();
   const isDesktop = useIsDesktop();
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const glowRingRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   if (!isDesktop) return <MobileServicesList />;
 
-  return reduced ? (
-    <NativeCarouselRow cardRefs={cardRefs} glowRingRefs={glowRingRefs} />
-  ) : (
-    <PinnedCarouselRow cardRefs={cardRefs} glowRingRefs={glowRingRefs} />
+  return <PinnedServicesRow reduced={reduced} />;
+}
+
+export function ServicesFold() {
+  return (
+    <section id="services" className="panel-dark relative">
+      {/* The closing CTA used to be a standalone magenta banner after the
+         carousel; it's now folded in as the stack's final card (see
+         PinnedCtaCard / MobileServicesList's trailing card) instead, so
+         this section is just the carousel now — no second wrapper needed. */}
+      <div data-nav-scrim="light" className="relative">
+        <ServicesCarousel />
+      </div>
+    </section>
   );
 }

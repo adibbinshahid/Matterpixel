@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Camera, Clapperboard, Code2, Palette, Sparkles, TrendingUp, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Bot, Camera, Clapperboard, Code2, Sparkles, TrendingUp, type LucideIcon } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { services, type Service } from "@/content/services";
 import { servicesIntro, servicesCta } from "@/content/siteConfig";
@@ -7,7 +7,7 @@ import { DURATIONS } from "@/lib/utils";
 
 const ICON_BY_SLUG: Record<string, LucideIcon> = {
   "web-app-development": Code2,
-  "product-design": Palette,
+  "ai-automation": Bot,
   "branding-identity": Sparkles,
   "ai-product-photography": Camera,
   "ai-video": Clapperboard,

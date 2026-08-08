@@ -342,6 +342,35 @@ body {
   background: radial-gradient(90% 40% at 85% 110%, rgba(255, 255, 255, 0.14), transparent 60%);
 }
 
+/* Engagement-model pricing cards: hover swaps a white glass card for a
+   photo card — image + scrim fade in together (one visual unit, not two
+   independently-timed layers), then the image scales up. A single plain
+   `transition` (not a keyframe `animation`) drives the zoom, so hover-in
+   and hover-out play the exact same 0.25s-linear curve in reverse —
+   there's no separate "reset" step to keep in sync with it. */
+.pricing-card-media,
+.pricing-card-scrim {
+  transition: opacity 650ms var(--ease-site);
+}
+.pricing-card-media {
+  transition-property: opacity, transform;
+  transition-duration: 650ms, 0.25s;
+  transition-timing-function: var(--ease-site), linear;
+}
+.pricing-card-media[data-visible="false"] {
+  opacity: 0;
+}
+.pricing-card-scrim[data-visible="false"] {
+  opacity: 0;
+}
+.group:hover .pricing-card-media[data-visible="false"],
+.group:hover .pricing-card-scrim[data-visible="false"] {
+  opacity: 1;
+}
+.group:hover .pricing-card-media {
+  transform: scale(1.1);
+}
+
 /* Apple "Liquid Glass" specular treatment for the nav capsule — the same
    top-shine/bottom-glow technique as .glass-card above, so the nav's
    glass reads as the same family of surface as every other glass panel

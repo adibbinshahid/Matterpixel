@@ -7,7 +7,7 @@ import { servicesIntro } from "@/content/siteConfig";
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "Web & app development, product design, branding, AI product photography, AI video, and SEO & digital marketing — senior-led, fixed quotes, no bench.",
+    "Web & app development, AI automation, branding, AI product photography, AI video, and SEO & digital marketing — senior-led, fixed quotes, no bench.",
   alternates: { canonical: "/services" },
 };
 

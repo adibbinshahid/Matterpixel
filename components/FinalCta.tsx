@@ -12,7 +12,7 @@ import { Reveal } from "@/components/Reveal";
  */
 export function FinalCta() {
   return (
-    <section className="relative overflow-hidden px-6 py-6 sm:px-8 lg:px-12">
+    <section className="relative overflow-hidden px-6 py-10 sm:px-8 sm:py-12 lg:px-12">
       <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
       <Reveal className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
         <Link

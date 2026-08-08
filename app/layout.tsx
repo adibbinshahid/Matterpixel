@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   keywords: [
     "digital agency",
     "web development",
-    "product design",
+    "AI automation",
     "branding",
     "Next.js agency",
   ],
