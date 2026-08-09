@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 import { ArrowUpRight, Code2, Megaphone, PenTool, Sparkles } from "lucide-react";
 import { PixelResolve } from "@/components/PixelResolve";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
-import { founder, team } from "@/content/siteConfig";
+import { founder } from "@/content/siteConfig";
 import { EASE } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
@@ -125,9 +125,10 @@ function PortraitPlate() {
 }
 
 /**
- * The About page's centrepiece: one named person up front, the wider
- * crew as a supporting beat underneath — so the page reads as "here's who
- * you'll work with", not "here's an agency of nobody in particular".
+ * The About page's centrepiece: one named person up front, so the page
+ * reads as "here's who you'll work with", not "here's an agency of nobody
+ * in particular". The wider crew is the next section's job — see
+ * CrewThread.tsx.
  */
 export function FounderFeature() {
   return (
@@ -213,45 +214,6 @@ export function FounderFeature() {
           </div>
         </div>
 
-        {/* Crew beat — three real disciplines, given card weight so the page
-           reads as a coordinated team rather than one person with helpers.
-           The hub line above the grid is the visual argument: every lane
-           traces back to the same point of contact. */}
-        <div className="mt-14 border-t border-line pt-12 lg:mt-16">
-          <Reveal>
-            <p className="label-eyebrow mb-4">{team.eyebrow}</p>
-            <h3 className="max-w-3xl text-2xl font-bold tracking-tight text-ink sm:text-4xl">
-              {team.heading}
-            </h3>
-            <p className="mt-4 max-w-3xl leading-relaxed text-ink-soft">{team.body}</p>
-          </Reveal>
-
-          <RevealGroup className="mt-9 grid gap-5 sm:grid-cols-3" stagger={0.1}>
-            {team.roles.map((r, i) => (
-              <RevealItem key={r.title} className="group h-full">
-                <div className="relative flex h-full flex-col overflow-hidden rounded-[24px] border border-line bg-paper p-7 transition-colors duration-500 group-hover:border-blue/40">
-                  {/* Lane index doubles as the hover accent — it lifts from
-                      hairline grey to brand blue as the card wakes up. */}
-                  <span className="text-xs font-bold tracking-[0.18em] text-ink-soft/50 transition-colors duration-500 group-hover:text-blue">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <p className="mt-5 text-xl font-bold tracking-tight text-ink">{r.title}</p>
-                  <p className="mt-3 text-sm leading-relaxed text-ink-soft">{r.desc}</p>
-                  <span
-                    aria-hidden="true"
-                    className="absolute inset-x-7 bottom-0 h-0.5 origin-left scale-x-0 bg-blue transition-transform duration-500 ease-out group-hover:scale-x-100"
-                  />
-                </div>
-              </RevealItem>
-            ))}
-          </RevealGroup>
-
-          <Reveal delay={0.1}>
-            <p className="mt-8 max-w-3xl border-l-2 border-magenta pl-5 text-lg leading-relaxed text-ink">
-              {team.note}
-            </p>
-          </Reveal>
-        </div>
       </div>
     </section>
   );

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { FounderFeature } from "@/components/FounderFeature";
-import { foundingOffer } from "@/content/siteConfig";
+import { CrewThread } from "@/components/CrewThread";
+import { FoundingRoster } from "@/components/FoundingRoster";
 
 export const metadata: Metadata = {
   title: "About",
@@ -34,32 +33,9 @@ export default function AboutPage() {
 
       <FounderFeature />
 
-      <section className="relative overflow-hidden border-t border-line px-6 py-16 sm:px-8 lg:px-12">
-        <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
-        <div className="relative mx-auto max-w-[1400px]">
-          <Reveal>
-            <h2 className="max-w-2xl text-3xl font-bold tracking-tight text-paper sm:text-5xl">
-              {foundingOffer.heading}
-            </h2>
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-paper/85">
-              {foundingOffer.body}
-            </p>
-            {/* Same two-style system as the founder block. On this magenta
-                panel the primary inverts to a paper pill with magenta type
-                (.btn-on-brand + .on-magenta) — the gradient has nothing to
-                contrast against here. */}
-            <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Link
-                href="/contact?tab=booking"
-                className="btn-brand btn-on-brand on-magenta group"
-              >
-                Get a Free Audit
-                <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      <CrewThread />
+
+      <FoundingRoster />
     </>
   );
 }

@@ -147,7 +147,7 @@ export const processSteps = {
 
 export const founder = {
   eyebrow: "who's leading this",
-  heading: "One senior lead. Everything handled. Creatively!",
+  heading: "One senior lead. Everything handled.",
   name: "Md. Adib Bin Shahid",
   role: "Founder & Lead",
   /** Discipline line under the role — the four things he personally covers,
@@ -166,13 +166,13 @@ export const founder = {
   ],
   /** Label over the credential cards — the tenure claim is stated once here
    * so the four cards stay pure discipline names. */
-  credentialsLead: "7+ years in",
+  credentialsLead: "7+ years of experience",
   /** Four discipline claims, one per card. Kept as plain capability
    * statements — the proof row below carries the numbers. `icon` keys into
    * the lucide map in FounderFeature so each card reads as its own
    * discipline rather than four identical ticks. */
   credentials: [
-    { label: "Professional brand & marketing", icon: "brand" },
+    { label: "Brand & marketing leadership", icon: "brand" },
     { label: "Full-stack web development", icon: "code" },
     { label: "AI & workflow automation", icon: "ai" },
     { label: "Creative direction & visual design", icon: "design" },
@@ -186,35 +186,105 @@ export const founder = {
   ],
 };
 
-/** The crew beat — three specialist disciplines, framed by capability
+/** The crew beat — four specialist disciplines, framed by capability
  * rather than named headcount so the copy stays true as the roster flexes
- * per project. Adib is the constant; these are the hands. */
+ * per project. Adib is the constant; these are the hands.
+ *
+ * Shaped as the nodes of one thread (brief → lead → four lanes → result)
+ * because CrewThread.tsx renders the operating model as a diagram, not a
+ * card grid: every key below is a node or an edge label in that diagram.
+ */
 export const team = {
   eyebrow: "the crew",
-  heading: "Three disciplines. One brief. One timeline.",
-  body: "Each lane is run by a specialist who works in it full time. Adib sets the brief, sequences the work, and holds the three to a single plan.",
+  /** Two lines, kept separate so the diagram's headline can break exactly
+   * where the argument does rather than wherever the box ends. */
+  heading: ["You don’t manage the crew.", "Adib does."],
+  body: "A specialist crew handles the disciplines. Adib owns the brief, directs the work, and keeps every moving part aligned from first conversation to final delivery.",
+  /** Entry node — the client's side of the thread. */
+  brief: {
+    label: "Your brief",
+    note: "One conversation to start.",
+  },
+  /** Hub node. `duties` are what Adib holds, stated as four single words so
+   * they read as a responsibility set rather than a service list. */
+  lead: {
+    name: "Adib",
+    role: "Founder & Lead",
+    duties: ["Brief", "Direction", "Review", "Accountability"],
+  },
+  /** The four specialist nodes. `verb` is the node's headline — one word
+   * per discipline, so the row reads BUILD · GROW · CREATE · AUTOMATE at a
+   * glance and the technical detail stays subordinate. `status` is the
+   * present-participle state that makes each node read as running, not
+   * listed. AI Automation is its own discipline and never folds into
+   * AI Content. */
   roles: [
     {
+      verb: "Build",
       title: "Engineering",
-      desc: "Full-stack builders in Next.js, React, and Supabase — the ones writing the code your product runs on.",
+      desc: "Full-stack development",
+      detail: "Next.js · React · Supabase",
+      status: "Shipping",
     },
     {
-      title: "Digital marketing",
-      desc: "SEO, paid, and lifecycle work that puts the build in front of the right people and turns visits into revenue.",
+      verb: "Grow",
+      title: "Digital growth",
+      desc: "SEO · Paid · Lifecycle",
+      detail: "Strategy and performance",
+      status: "Scaling",
     },
     {
+      verb: "Create",
       title: "AI content",
-      desc: "Product photography, video, and automation pipelines produced at volume, art-directed to brand.",
+      desc: "Product imagery · Video",
+      detail: "AI production · Content systems",
+      status: "Producing",
+    },
+    {
+      verb: "Automate",
+      title: "AI automation",
+      desc: "AI workflows · Automation",
+      detail: "Integrations · Process systems",
+      status: "Streamlining",
     },
   ],
-  /** Closing line under the role grid — states the coordination model the
-   * three role cards can't state on their own. */
-  note: "Coordination is Adib's job. You get one thread, one person answering, and one person accountable for the result.",
+  /** Exit node — the single thing the four lanes converge into. The three
+   * `marks` are the payoff, set as their own row inside the node. */
+  result: {
+    label: "The output",
+    title: "One result",
+    marks: ["Shipped", "Reviewed", "Accountable"],
+  },
+  /** Closing statement under the diagram — states the coordination model
+   * the nodes can't state on their own. Two lines so the second can carry
+   * the emphasis. */
+  closing: ["Many specialists.", "One thread."],
+  note: "You get one thread, one person answering, and one person accountable for the result.",
 };
 
+/** Closing CTA on /about. Positioning note: Matterpixel is a new studio,
+ * but Adib is not a new operator — the copy sells limited availability and
+ * senior access, never inexperience or discounting. */
 export const foundingOffer = {
-  heading: "Now taking a select few founding clients.",
-  body: "A new studio staffed with senior people from day one. Founding clients get priority scheduling, direct access to the lead running their project, and founding-client pricing that ends when the roster fills.",
+  eyebrow: "now open",
+  /** Two lines, set as one oversized typographic composition. */
+  heading: ["A few projects.", "Full attention."],
+  body: "Matterpixel is opening its first studio roster with a limited number of clients. Early projects get direct involvement from Adib from strategy through delivery, with the specialist crew working behind the scenes.",
+  /** The founding-client offer, phrased as terms rather than a discount. */
+  terms: "Early clients receive preferred founding-client terms while the initial roster is being built.",
+  /** The offer here is access to Adib, not a discount, so the button says
+   * exactly that. Only read by FoundingRoster — the homepage's own closing
+   * CTA keeps its audit framing. */
+  cta: { label: "Talk to Adib directly", href: "/contact?tab=booking" },
+  micro: "Limited availability for the initial Matterpixel roster.",
+  /** Status indicator in the corner of the panel — state, not a countdown. */
+  status: { label: "Roster", value: "Open · Limited" },
+  /** The availability module on the panel's right column. Deliberately
+   * states a condition, never a slot count — no invented scarcity. */
+  availability: {
+    label: "Initial roster",
+    lines: ["Limited", "availability"],
+  },
 };
 
 export const footer = {

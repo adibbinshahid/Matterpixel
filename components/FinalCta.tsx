@@ -4,8 +4,8 @@ import { Reveal } from "@/components/Reveal";
 
 /**
  * The homepage's closing statement — distinct from the founding-client CTA
- * block on /about (that one still uses foundingOffer.heading/.body
- * verbatim), since this is the page's actual final word, not a mid-flow
+ * block on /about (that one is FoundingRoster.tsx, on foundingOffer),
+ * since this is the page's actual final word, not a mid-flow
  * nudge like ServicesFold.tsx's own baked-in CTA banner earlier in the
  * homepage flow. Mirrors that banner's layout with copy/button sides
  * swapped: copy left, button right there vs. button left, copy right here.
