@@ -146,25 +146,75 @@ export const processSteps = {
 };
 
 export const founder = {
-  eyebrow: "who's building this",
-  heading: "Founder-led. No bench, no juniors.",
+  eyebrow: "who's leading this",
+  heading: "One senior lead. Everything handled. Creatively!",
+  name: "Md. Adib Bin Shahid",
+  role: "Founder & Lead",
+  /** Discipline line under the role — the four things he personally covers,
+   * set apart from the title so the plate reads title-then-scope. */
+  roleScope: "Strategy · Design · Development · AI",
+  initials: "AS",
+  /* TODO(founder): drop a real portrait at /public/founder.webp and set
+     `photo` to it — the monogram plate in FounderFeature is the stand-in
+     until then, and it swaps automatically once this is non-null. */
+  photo: "/founder.webp" as string | null,
+  /** Two declarative lines about what he does on your project. The proof
+   * row and credentials below carry the evidence — the copy doesn't argue. */
   bio: [
-    "Matterpixel is a new studio — founder-led, senior-only, no bench of juniors learning on your dime.",
-    "The founder background: senior brand strategist with FMCG experience, a Fiverr Top Rated Seller across AI product photography and web development, and a full-stack engineer working in Next.js, React, and Supabase alongside modern AI tooling.",
-    "That combination — brand strategy, hands-on engineering, and production AI workflows — is why Matterpixel exists: most studios are good at one of those. This one is built to be good at all three.",
+    "Adib leads strategy, creative direction, development, and delivery from the first conversation to launch. You work directly with him throughout the project, while a specialist team works behind the scenes where deeper expertise is needed.",
+    "No layers of account managers. No disappearing into a large agency. One person owns the direction, keeps the work moving, and stays accountable for the result.",
   ],
-  // TODO(founder): swap in real name/photo/Fiverr profile link once approved for public use.
+  /** Label over the credential cards — the tenure claim is stated once here
+   * so the four cards stay pure discipline names. */
+  credentialsLead: "7+ years in",
+  /** Four discipline claims, one per card. Kept as plain capability
+   * statements — the proof row below carries the numbers. `icon` keys into
+   * the lucide map in FounderFeature so each card reads as its own
+   * discipline rather than four identical ticks. */
   credentials: [
-    "Fiverr Top Rated Seller",
-    "Senior brand strategist (FMCG)",
-    "Full-stack: Next.js, React, Supabase",
-    "Production AI image & video workflows",
+    { label: "Professional brand & marketing", icon: "brand" },
+    { label: "Full-stack web development", icon: "code" },
+    { label: "AI & workflow automation", icon: "ai" },
+    { label: "Creative direction & visual design", icon: "design" },
+  ] as const,
+  /** Proof row beside the portrait. Every figure is an existing site claim
+   * (see `stats` above) restated here — nothing new is asserted. */
+  proof: [
+    { value: "4.9", label: "Client rating", note: "Verified reviews" },
+    { value: "150+", label: "Projects delivered", note: "Shipped and live" },
+    { value: "7+", label: "Years", note: "Senior-level practice" },
   ],
+};
+
+/** The crew beat — three specialist disciplines, framed by capability
+ * rather than named headcount so the copy stays true as the roster flexes
+ * per project. Adib is the constant; these are the hands. */
+export const team = {
+  eyebrow: "the crew",
+  heading: "Three disciplines. One brief. One timeline.",
+  body: "Each lane is run by a specialist who works in it full time. Adib sets the brief, sequences the work, and holds the three to a single plan.",
+  roles: [
+    {
+      title: "Engineering",
+      desc: "Full-stack builders in Next.js, React, and Supabase — the ones writing the code your product runs on.",
+    },
+    {
+      title: "Digital marketing",
+      desc: "SEO, paid, and lifecycle work that puts the build in front of the right people and turns visits into revenue.",
+    },
+    {
+      title: "AI content",
+      desc: "Product photography, video, and automation pipelines produced at volume, art-directed to brand.",
+    },
+  ],
+  /** Closing line under the role grid — states the coordination model the
+   * three role cards can't state on their own. */
+  note: "Coordination is Adib's job. You get one thread, one person answering, and one person accountable for the result.",
 };
 
 export const foundingOffer = {
   heading: "Now taking a select few founding clients.",
-  body: "New studio, senior attention. Founding clients get priority scheduling, direct access to the person actually building your product, and founding-client pricing that won't be repeated once the roster fills up.",
+  body: "A new studio staffed with senior people from day one. Founding clients get priority scheduling, direct access to the lead running their project, and founding-client pricing that ends when the roster fills.",
 };
 
 export const footer = {

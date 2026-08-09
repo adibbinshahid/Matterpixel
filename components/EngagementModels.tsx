@@ -106,7 +106,15 @@ function ModelCard({ model }: { model: (typeof engagementModels)[number] }) {
 
           <Link
             href="/contact"
-            className={`group mx-auto mt-8 w-fit ${model.featured ? "btn-primary" : "btn-outline"}`}
+            /* Featured card is dark at rest, so it takes the primary pill.
+               The other two are light at rest and go dark only on hover —
+               hence .btn-line plus a group-hover inversion, rather than
+               .btn-outline (white glass, invisible on a light card). */
+            className={`group mx-auto mt-8 w-fit ${
+              model.featured
+                ? "btn-brand"
+                : "btn-line group-hover:border-white/45 group-hover:text-white"
+            }`}
           >
             {model.cta}
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />

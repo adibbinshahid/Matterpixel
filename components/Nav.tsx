@@ -168,13 +168,15 @@ export function Nav() {
         </ul>
 
         <div className="relative flex items-center gap-3">
-          <Link
-            href="/contact?tab=booking"
-            className="hover-lift font-avenir group hidden items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-5 py-2.5 text-sm text-paper animate-gradient-shift lg:inline-flex"
-          >
-            {nav.cta}
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
+          {/* Wrapper carries the breakpoint visibility: .btn-brand sets its
+              own `display`, so a `hidden lg:inline-flex` on the link itself
+              would fight the class rather than hide it. */}
+          <div className="hidden lg:block">
+            <Link href="/contact?tab=booking" className="btn-brand btn-sm group">
+              {nav.cta}
+              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </Link>
+          </div>
 
           <button
             type="button"
@@ -260,7 +262,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
                 <Link
                   href="/contact?tab=booking"
                   onClick={onClose}
-                  className="hover-lift font-avenir flex items-center justify-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-5 py-3.5 text-sm text-paper animate-gradient-shift"
+                  className="btn-brand btn-block"
                 >
                   {nav.cta}
                   <ArrowUpRight className="h-4 w-4" />

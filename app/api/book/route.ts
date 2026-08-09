@@ -7,6 +7,8 @@ import {
   LEAD_TIME_MINUTES,
   formatSlotDate,
   formatSlotTime,
+  isOnSlotGrain,
+  isValidTimeZone,
   isWithinCallWindow,
   zoneOffsetLabel,
 } from "@/lib/availability";
@@ -56,12 +58,25 @@ export async function POST(request: Request) {
   // 04:00 UTC on a Monday is not a slot we have.
   if (
     !isWithinCallWindow(slot) ||
+    // A slot the calendar never offered: the window rule alone would accept
+    // 7:07 PM, and every label downstream assumes a clean half hour.
+    !isOnSlotGrain(slot) ||
     slot.getTime() < Date.now() + LEAD_TIME_MINUTES * 60_000 ||
     slot.getTime() > Date.now() + HORIZON_DAYS * 24 * 60 * 60_000
   ) {
     logger.warn("book.slot_outside_window", { ip, slot: data.slotUtc });
     return NextResponse.json(
       { ok: false, error: "That time isn't available. Please pick another slot." },
+      { status: 400 },
+    );
+  }
+
+  // Formatting with a zone `Intl` doesn't know throws, so an arbitrary string
+  // in the body would otherwise surface as a 500 rather than a 400.
+  if (!isValidTimeZone(data.timeZone)) {
+    logger.warn("book.invalid_timezone", { ip, timeZone: data.timeZone });
+    return NextResponse.json(
+      { ok: false, error: "That time zone isn't one we recognise. Please pick another." },
       { status: 400 },
     );
   }

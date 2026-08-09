@@ -228,9 +228,9 @@ function MobileServicesList() {
             <div className="relative flex flex-col">
               <h3 className="text-2xl font-black leading-[1.1] tracking-tight text-white">{servicesCta.heading}</h3>
               <p className="mt-2 text-base leading-relaxed text-white/80">{servicesCta.body}</p>
-              <span className="hover-lift mt-5 inline-flex w-fit items-center gap-2.5 rounded-full bg-white px-7 py-4 text-base font-black text-ink shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover:scale-[1.04]">
+              <span className="btn-brand btn-on-brand on-magenta mt-5 w-fit">
                 {servicesCta.button}
-                <ArrowRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </span>
             </div>
           </Link>
@@ -298,10 +298,10 @@ function PinnedCtaCard() {
 
       <Link
         href="/contact?tab=booking"
-        className="hover-lift group mt-8 inline-flex items-center gap-2.5 rounded-full bg-white px-8 py-4 text-base font-black text-black shadow-[0_12px_32px_-8px_rgba(0,0,0,0.5)] transition-transform duration-300 hover:scale-[1.04] sm:px-10 sm:py-5 sm:text-lg"
+        className="btn-brand btn-on-brand on-magenta group mt-8"
       >
         {servicesCta.button}
-        <ArrowUpRight className="h-5 w-5 text-black transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:h-6 sm:w-6" />
+        <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </Link>
     </div>
   );

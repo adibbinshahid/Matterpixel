@@ -2,14 +2,16 @@
  * When Matterpixel is reachable — the single source of truth for both the
  * booking calendar and every piece of availability copy on the site.
  *
- * Audit calls  Sunday–Thursday, 13:00–24:00 UTC; Friday–Saturday, 24 hours.
+ * Audit calls  Sunday–Thursday, 7:00–11:30 PM; Friday–Saturday, 24 hours —
+ * all on the office clock (Asia/Dhaka, GMT+6).
  * WhatsApp/email  always.
  *
- * Everything here is defined in **UTC** and rendered in whichever zone the
- * visitor picks, because the office window is fixed in UTC while visitors
- * are not. A slot is therefore an *instant* (a `Date`), never a wall-clock
- * string — a "2:30 PM" that doesn't say where is exactly the ambiguity this
- * module exists to remove.
+ * The window is defined in the **office's own zone** and rendered in whichever
+ * zone the visitor picks. Defining it in UTC instead is what made a Dhaka
+ * Sunday open at midnight: a UTC-Saturday 24h rule runs to 23:30 UTC, which is
+ * already 05:30 Sunday in Dhaka. A slot is therefore an *instant* (a `Date`),
+ * never a wall-clock string — a "2:30 PM" that doesn't say where is exactly
+ * the ambiguity this module exists to remove.
  */
 
 /** Slot granularity, and the length of the call itself. */
@@ -25,24 +27,42 @@ export const HORIZON_DAYS = 90;
 /** Human-readable statements of the rule above. Copy anywhere on the site
  * should come from here so the hours can never drift between pages. */
 export const AVAILABILITY = {
-  callsShort: "Sun–Thu 1:00 PM–12:00 AM UTC · Fri–Sat 24h",
-  callsLong: "Audit calls: Sunday–Thursday, 1:00 PM–12:00 AM UTC. Friday–Saturday, 24 hours.",
+  callsShort: "Sun–Thu 7:00–11:30 PM (GMT+6) · Fri–Sat 24h",
+  /** Tightest form — for places that must hold one line. */
+  callsCompact: "Sun–Thu 7–11:30 PM GMT+6 · Fri–Sat 24h",
+  callsLong:
+    "Audit calls: Sunday–Thursday, 7:00 PM–11:30 PM (GMT+6). Friday–Saturday, 24 hours.",
   messaging: "WhatsApp & email: 24/7",
 } as const;
 
-/** UTC hour (inclusive) the Sun–Thu window opens. It runs to midnight, so a
- * 23:30 start still finishes inside the window. */
-const WEEKDAY_OPEN_HOUR_UTC = 13;
+/** The office's own clock. Every rule below is a wall-clock rule *here*. */
+export const OFFICE_TIME_ZONE = "Asia/Dhaka";
 
-/** UTC weekdays that are open around the clock (5 = Fri, 6 = Sat). */
-const FULL_DAY_UTC = new Set([5, 6]);
+/** Sun–Thu: first and last bookable *start*, as minutes past office midnight.
+ * The last start is 23:30 so a 30-minute call still ends on the same day. */
+const WEEKDAY_OPEN_MINUTE = 19 * 60;
+const WEEKDAY_LAST_START_MINUTE = 23 * 60 + 30;
 
-/** Whether a call may *start* at this instant, by the UTC rule alone —
- * lead time and horizon are separate concerns (see `slotMapForRange`). */
+/** Office weekdays open around the clock (5 = Fri, 6 = Sat). */
+const FULL_DAY_OFFICE = new Set([5, 6]);
+
+const WEEKDAY_INDEX: Record<string, number> = {
+  Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6,
+};
+
+/** Day of week (0 = Sunday) for `instant` as seen in `timeZone`. */
+export function zonedWeekday(instant: Date, timeZone: string): number {
+  const label = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" }).format(instant);
+  return WEEKDAY_INDEX[label] ?? 0;
+}
+
+/** Whether a call may *start* at this instant, by the office-hours rule alone
+ * — lead time and horizon are separate concerns (see `slotMapForRange`). */
 export function isWithinCallWindow(instant: Date): boolean {
-  const day = instant.getUTCDay();
-  if (FULL_DAY_UTC.has(day)) return true;
-  return instant.getUTCHours() >= WEEKDAY_OPEN_HOUR_UTC;
+  if (FULL_DAY_OFFICE.has(zonedWeekday(instant, OFFICE_TIME_ZONE))) return true;
+  const { hour, minute } = zonedParts(instant, OFFICE_TIME_ZONE);
+  const mins = hour * 60 + minute;
+  return mins >= WEEKDAY_OPEN_MINUTE && mins <= WEEKDAY_LAST_START_MINUTE;
 }
 
 interface ZonedParts {
@@ -111,6 +131,25 @@ export function zoneOffsetLabel(timeZone: string, at: Date = new Date()): string
   const hours = Math.floor(abs / 60);
   const minutes = abs % 60;
   return `GMT${sign}${hours}${minutes ? `:${String(minutes).padStart(2, "0")}` : ""}`;
+}
+
+/** Whether `Intl` will accept this as a zone. Worth asking before formatting
+ * anything with a zone that arrived over the wire: `Intl.DateTimeFormat`
+ * throws a `RangeError` on an unknown one, which would turn a junk request
+ * body into a 500. */
+export function isValidTimeZone(timeZone: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Whether `instant` lands on a real slot boundary. The window rule alone
+ * would accept 7:07 PM, which is not a slot anyone was offered. */
+export function isOnSlotGrain(instant: Date): boolean {
+  return instant.getTime() % (SLOT_MINUTES * 60_000) === 0;
 }
 
 /** The visitor's own zone, or UTC where the browser won't say. */

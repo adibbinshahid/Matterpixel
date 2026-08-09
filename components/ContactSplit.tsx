@@ -676,7 +676,7 @@ function SubmitRow({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="hover-lift font-avenir group relative inline-flex w-full items-center justify-center gap-2 rounded-full bg-ink px-8 py-3 text-sm text-paper hover:bg-blue disabled:opacity-60"
+        className="btn-brand btn-block group"
       >
         {isSubmitting ? "Sending…" : label}
         <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -1365,10 +1365,8 @@ function InquiryPanel() {
               // muted label — so Previous stays secondary without
               // behaving differently under the cursor.
               className={cn(
-                "hover-lift font-avenir group inline-flex min-w-[10.5rem] items-center justify-center gap-2 rounded-full border px-7 py-3.5 text-sm font-semibold transition-colors duration-300",
-                step === 0
-                  ? "invisible"
-                  : "border-white/20 bg-white/[0.06] text-ink-soft hover:border-white/35 hover:bg-white/[0.12] hover:text-ink",
+                "btn-outline group min-w-[10.5rem]",
+                step === 0 && "invisible",
               )}
             >
               <ChevronLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
@@ -1383,12 +1381,14 @@ function InquiryPanel() {
                 // than "Continue", so without a floor the button would
                 // visibly shrink/grow as an optional field is typed into
                 // and cleared. Floor is sized to the wider label.
-                "hover-lift font-avenir group inline-flex min-w-[10.5rem] items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold transition-colors duration-300",
-                !canContinue
-                  ? "cursor-not-allowed bg-ink/15 text-ink-soft/50"
-                  : isSkip
-                    ? "border border-white/15 bg-white/10 text-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] backdrop-blur-md backdrop-saturate-150 hover:border-blue/50"
-                    : "bg-gradient-to-r from-blue to-magenta text-white shadow-[0_20px_45px_-18px_rgba(37,99,235,0.5)]",
+                // Skip is the quiet exit, so it takes the secondary pill;
+                // Continue is the step's real action and takes the same
+                // primary pill every conversion action on the site uses.
+                // Exclusive, never stacked — .btn-outline's `background`
+                // shorthand would wipe .btn-brand's gradient.
+                isSkip || !canContinue ? "btn-outline" : "btn-brand",
+                "group min-w-[10.5rem]",
+                !canContinue && "cursor-not-allowed",
               )}
             >
               {isSkip ? "Skip" : "Continue"}
@@ -1714,7 +1714,9 @@ const BOOKING_STEPS: BookingStep[] = [
     reviewLabel: "Your slot",
     title: "Pick your slot.",
     titleWithName: (n) => `Nearly there, ${n} — pick your slot.`,
-    desc: `30 minutes, shown in your time zone. ${AVAILABILITY.callsShort}.`,
+    // Kept to one line at the card's width — the zone picker sits inside the
+    // scheduler now, so this line no longer has to explain it.
+    desc: `30-min call · ${AVAILABILITY.callsCompact}`,
   },
   {
     id: "notes",
@@ -2092,10 +2094,8 @@ function BookingPanel() {
               onClick={goBack}
               disabled={step === 0 && !returnToReview}
               className={cn(
-                "hover-lift font-avenir group inline-flex min-w-[10.5rem] items-center justify-center gap-2 rounded-full border px-7 py-3.5 text-sm font-semibold transition-colors duration-300",
-                step === 0 && !returnToReview
-                  ? "invisible"
-                  : "border-white/20 bg-white/[0.06] text-ink-soft hover:border-white/35 hover:bg-white/[0.12] hover:text-ink",
+                "btn-outline group min-w-[10.5rem]",
+                step === 0 && !returnToReview && "invisible",
               )}
             >
               <ChevronLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
@@ -2106,12 +2106,14 @@ function BookingPanel() {
               onClick={goNext}
               disabled={!canContinue}
               className={cn(
-                "hover-lift font-avenir group inline-flex min-w-[10.5rem] items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold transition-colors duration-300",
-                !canContinue
-                  ? "cursor-not-allowed bg-ink/15 text-ink-soft/50"
-                  : isSkip
-                    ? "border border-white/15 bg-white/10 text-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] backdrop-blur-md backdrop-saturate-150 hover:border-blue/50"
-                    : "bg-gradient-to-r from-blue to-magenta text-white shadow-[0_20px_45px_-18px_rgba(37,99,235,0.5)]",
+                // Skip is the quiet exit, so it takes the secondary pill;
+                // Continue is the step's real action and takes the same
+                // primary pill every conversion action on the site uses.
+                // Exclusive, never stacked — .btn-outline's `background`
+                // shorthand would wipe .btn-brand's gradient.
+                isSkip || !canContinue ? "btn-outline" : "btn-brand",
+                "group min-w-[10.5rem]",
+                !canContinue && "cursor-not-allowed",
               )}
             >
               {returnToReview ? "Save" : isSkip ? "Skip" : "Continue"}
@@ -2293,8 +2295,7 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
         </div>
         <div className="flex flex-col gap-0.5 sm:pl-4">
           <span className="text-xs font-semibold text-ink-soft">Messaging is open</span>
-          <span className="font-avenir text-lg font-extrabold leading-tight text-ink">24/7</span>
-          <span className="text-xs text-ink-soft">Audit calls: {AVAILABILITY.callsShort}</span>
+          <span className="font-avenir text-2xl font-extrabold leading-tight text-ink">24/7</span>
         </div>
       </motion.div>
 
@@ -2310,7 +2311,7 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
         <button
           type="button"
           onClick={onBookCall}
-          className="hover-lift font-avenir group inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-[#12121a] shadow-[0_18px_40px_-20px_rgba(0,0,0,0.8)]"
+          className="btn-brand btn-sm group shrink-0"
         >
           <Calendar className="h-4 w-4" aria-hidden="true" />
           Book Free Audit Call

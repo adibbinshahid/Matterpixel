@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GiantHeading } from "@/components/GiantHeading";
 import { Services } from "@/components/Services";
+import { Process } from "@/components/Process";
 import { Reveal } from "@/components/Reveal";
 import { servicesIntro } from "@/content/siteConfig";
 
@@ -37,6 +38,8 @@ export default function ServicesPage() {
       </section>
 
       <Services showHeading={false} />
+
+      <Process />
     </>
   );
 }

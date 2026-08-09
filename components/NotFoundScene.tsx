@@ -57,7 +57,7 @@ export function NotFoundScene() {
         </div>
         <Link
           href="/"
-          className="hover-lift font-avenir group inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-6 py-3.5 text-sm text-paper animate-gradient-shift"
+          className="btn-brand group"
         >
           <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
           Back home

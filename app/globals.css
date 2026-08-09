@@ -184,31 +184,6 @@
   }
 }
 
-/* Hero primary CTA idle attention cue — a soft blob of color drifting
-   through the pill on an irregular path (uneven keyframe spacing/offsets,
-   not a smooth circular orbit) so it reads as liquid movement. See
-   .btn-primary::before in the button system further down. */
-@keyframes btn-liquid-drift {
-  0% {
-    transform: translate(-18%, -12%) scale(1);
-  }
-  22% {
-    transform: translate(14%, 8%) scale(1.2);
-  }
-  41% {
-    transform: translate(-6%, 18%) scale(0.85);
-  }
-  63% {
-    transform: translate(16%, -14%) scale(1.1);
-  }
-  79% {
-    transform: translate(-16%, 2%) scale(0.95);
-  }
-  100% {
-    transform: translate(-18%, -12%) scale(1);
-  }
-}
-
 /* Service-card icon: gentle looping float+tilt while the card is hovered —
    stops the instant the pointer leaves since it's gated by group-hover,
    not a running animation-fill state. */
@@ -702,17 +677,32 @@ html.lenis body {
   line-height: 1.2;
 }
 
-/* Button system — Hero-only (its two CTAs are the sole consumers), styled
-   as 3D glassmorphic pills against Hero's dark video backdrop, electric-
-   blue + black. Deliberately asymmetric at rest now: primary carries a
-   subtle animated liquid tint (its ::before below) and a faint glow;
-   outline sits flat with no outer glow at all, so it reads as the quieter
-   second action. Both still bloom to the same bright glow on hover — the
-   asymmetry is a rest-state cue, not a permanent style difference. Depth
-   on both comes from stacking: a bright top sheen (inset, catching light
-   like a glass edge), a dark inner shadow low in the pill (concave glass
-   thickness), and an ambient drop shadow underneath (physical lift off
-   the page). */
+/* Heavier h3 for card titles. Unlayered like `.text-h3` itself, since a
+   Tailwind `font-extrabold` utility is layered and would lose to it. */
+.text-h3-strong {
+  font-weight: 800;
+}
+
+/* ── Button system ────────────────────────────────────────────────────────
+   Two roles, two surfaces, one shape. Every call-to-action on the site is
+   one of these four classes — no page hand-rolls its own pill.
+
+     role         light surface (paper)   dark / photo / brand surface
+     primary      .btn-brand              .btn-brand  (+ .btn-on-brand)
+     secondary    .btn-line               .btn-outline
+
+   Primary is always the animated blue->magenta gradient, so "Get a Free
+   Audit" is the same object in the nav, the hero, a service page, and the
+   closing band — one intent, one look. Secondary changes with the surface
+   because an ink outline is invisible on near-black and a glass fill is
+   invisible on paper; the shape, padding, type, and hover motion are
+   identical across all four, which is what makes them read as one family.
+
+   Modifiers: .btn-sm (nav-height), .btn-block (full-width, forms),
+   .btn-on-brand (paper ring when primary sits on magenta/blue, where the
+   gradient's own magenta half would otherwise melt into the panel). */
+.btn-brand,
+.btn-line,
 .btn-primary,
 .btn-outline {
   position: relative;
@@ -720,95 +710,134 @@ html.lenis body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  overflow: hidden;
   border-radius: var(--mp-radius-full);
-  border: 1px solid rgba(44, 75, 255, 0.4);
-  color: #fff;
-  padding: 0.875rem 2rem;
+  padding: 0.875rem 1.75rem;
+  border: 1px solid transparent;
   font-family: var(--font-avenir), sans-serif;
-  font-weight: 700;
   font-size: 0.875rem;
-  backdrop-filter: blur(14px) saturate(160%);
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  /* Same recipe as .hover-lift — buttons carry it natively so no call site
+     has to remember to add the class or invent its own scale value. */
   transition:
     transform 0.3s var(--ease-site),
-    border-color 0.3s var(--ease-site),
+    box-shadow 0.3s var(--ease-site),
     background-color 0.3s var(--ease-site),
-    box-shadow 0.3s var(--ease-site);
+    border-color 0.3s var(--ease-site),
+    color 0.3s var(--ease-site);
 }
-.btn-primary {
-  background: linear-gradient(
-    180deg,
-    rgba(20, 27, 56, 0.55) 0%,
-    rgba(15, 21, 46, 0.6) 55%,
-    rgba(24, 38, 87, 0.6) 100%
-  );
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -8px 12px -8px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-    0 10px 24px -10px rgba(0, 0, 0, 0.65),
-    0 0 0 1px rgba(44, 75, 255, 0.12),
-    0 0 10px 0px rgba(44, 75, 255, 0.2);
-}
-/* Liquid tint — a soft, blurred blob of brand blue drifting through the
-   pill on an organic, irregular path (several unevenly-timed keyframe
-   stops rather than a smooth circle) so it reads as fluid movement, not
-   a spinning gradient. Single hue family (brand blue, lightened for the
-   core / at full saturation for the outer falloff) rather than mixing in
-   magenta, so the tint reads as "the brand blue" both at rest and on
-   hover, not a different color at each state. Clipped to the pill by the
-   parent's `overflow: hidden`; sits behind the button's own text
-   (generated content is first-in-tree, so real DOM children paint over
-   it) at low opacity — a detail you notice, not a distraction. */
-.btn-primary::before {
-  content: "";
-  position: absolute;
-  inset: -30%;
-  background:
-    radial-gradient(40% 48% at 50% 50%, rgba(120, 155, 255, 0.9), transparent 68%),
-    radial-gradient(30% 36% at 50% 50%, rgba(44, 75, 255, 0.55), transparent 72%);
-  filter: blur(16px);
-  opacity: 0.85;
-  animation: btn-liquid-drift 11s ease-in-out infinite;
-  pointer-events: none;
-}
-.btn-outline {
-  /* No border, no shadow, no glow at rest — just the translucent glass
-     fill (background + backdrop-filter, both from the shared base rule)
-     so it reads as the quiet second action. `border-color: transparent`
-     (not removing the shared 1px border) keeps the button's box size
-     identical to :hover's, which does draw a real border — otherwise
-     hovering would shift the layout by 2px. */
-  border-color: transparent;
-  background: rgba(24, 26, 36, 0.4);
-  box-shadow: none;
-}
+.btn-brand:hover,
+.btn-line:hover,
 .btn-primary:hover,
 .btn-outline:hover {
-  transform: translateY(-2px) scale(1.03);
-  border-color: rgba(44, 75, 255, 0.8);
-  box-shadow:
-    inset 0 1px 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -8px 12px -8px rgba(0, 0, 0, 0.5),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 14px 28px -10px rgba(0, 0, 0, 0.7),
-    0 0 0 1px rgba(44, 75, 255, 0.7),
-    0 0 26px 3px rgba(44, 75, 255, 0.55),
-    0 0 52px 10px rgba(44, 75, 255, 0.3);
+  transform: translateY(-2px) scale(1.035);
 }
-.btn-primary:hover {
-  background: linear-gradient(180deg, #0a0e1f 0%, #0d1230 45%, var(--blue) 100%);
-}
-.btn-outline:hover {
-  background: rgba(20, 20, 28, 0.65);
-}
+.btn-brand:active,
+.btn-line:active,
 .btn-primary:active,
 .btn-outline:active {
   transform: translateY(0) scale(1.01);
 }
-.btn-primary:disabled {
-  opacity: 0.6;
+.btn-brand:disabled,
+.btn-line:disabled,
+.btn-primary:disabled,
+.btn-outline:disabled {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.55;
+  cursor: not-allowed;
 }
+
+/* Size + width modifiers. */
+.btn-sm {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.8125rem;
+}
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+/* Primary — the one conversion style. Label is a literal white, not
+   var(--paper): inside .panel-dark / .panel-blue that token is reassigned
+   to the panel's own dark/blue value, which would paint the label the same
+   color as the surface it sits on. */
+.btn-brand,
+.btn-primary {
+  color: #fff;
+  background-image: linear-gradient(90deg, var(--blue), var(--magenta), var(--blue));
+  background-size: 200% 100%;
+  animation: var(--animate-gradient-shift);
+}
+.btn-brand:hover,
+.btn-primary:hover {
+  box-shadow: 0 14px 30px -12px rgba(255, 0, 128, 0.55);
+}
+.btn-brand:disabled,
+.btn-primary:disabled {
+  background-image: none;
+  animation: none;
+}
+/* Primary sitting on a magenta or blue panel: the gradient has nowhere to
+   contrast against, so it inverts to a solid white pill with the panel's
+   own hue as the label color — same pill, same primary role, figure and
+   ground swapped. Panels declare their hue via .on-magenta / .on-blue.
+
+   Every value here is a literal, deliberately. Most of these panels live
+   inside .panel-dark or .panel-blue, which reassign --paper to a dark or
+   blue value — a token-based fill would render this pill near-black on
+   magenta, which is exactly the bug this replaces. */
+.btn-on-brand {
+  color: var(--btn-on-brand-fg, #16161c);
+  background-image: none;
+  background-color: #fff;
+  animation: none;
+  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.45);
+}
+.btn-on-brand:hover {
+  color: #fff;
+  background-color: #16161c;
+  box-shadow: 0 16px 34px -14px rgba(0, 0, 0, 0.55);
+}
+.on-magenta {
+  --btn-on-brand-fg: var(--magenta);
+}
+.on-blue {
+  --btn-on-brand-fg: var(--blue);
+}
+
+/* Secondary on paper — outlined, inverting to solid ink. Border is a firm
+   40% ink: at 25% it read as an unstyled ghost next to the solid primary
+   rather than a deliberate second tier. */
+.btn-line {
+  color: var(--ink);
+  background: transparent;
+  border-color: color-mix(in srgb, var(--ink) 40%, transparent);
+}
+.btn-line:hover {
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+/* Secondary on dark/photo — translucent glass, brightening on hover.
+   `border-color: transparent` rather than no border so the box size
+   matches :hover's real border and nothing shifts by 2px. */
+.btn-outline {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+}
+.btn-outline:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Text-only tertiary — inline links styled as an action, no pill. Not part
+   of the two-role system above; used where a pill would be too loud. */
 .btn-secondary {
   display: inline-flex;
   align-items: center;

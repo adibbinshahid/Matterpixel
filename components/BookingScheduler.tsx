@@ -1,14 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
-import { ChevronLeft, ChevronRight, Globe, Moon, Sun, Sunrise, Sunset } from "lucide-react";
-import { cn, EASE } from "@/lib/utils";
-import { useReducedMotion } from "@/lib/useReducedMotion";
+import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import {
-  AVAILABILITY,
-  formatSlotDate,
-  formatSlotTime,
+  CalendarDays,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Globe,
+  Moon,
+  Sparkles,
+  Sun,
+  Sunrise,
+  Sunset,
+} from "lucide-react";
+import { cn, EASE } from "@/lib/utils";
+import {
+  CALL_MINUTES,
   slotMapForRange,
   zonedDateKey,
   zonedParts,
@@ -17,18 +26,22 @@ import {
 } from "@/lib/availability";
 
 /**
- * The booking wizard's slot step: an Apple-Calendar-style month grid, a
- * time-of-day rail, and a live analog clock — all three driven by the real
- * availability window in `lib/availability` and rendered in whichever time
- * zone the visitor picks.
+ * The booking wizard's slot step: one card split into a month grid and a
+ * slot rail, both driven by the real availability window in
+ * `lib/availability` and rendered in whichever time zone the visitor picks.
  *
  * The selection this reports upward is an **ISO instant**, not a wall-clock
- * string: the office window is fixed in UTC, the visitor is not, and the two
- * only agree on an instant. The zone-local date/time the visitor saw travel
- * alongside it for the confirmation email.
+ * string: the office window is fixed to the office's clock, the visitor is
+ * not, and the two only agree on an instant. The zone-local date/time the
+ * visitor saw travel alongside it for the confirmation email.
  */
 
-const WEEKDAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"] as const;
+/** Above this many slots in a day, the rail splits into parts of the day;
+ * at or below it the day is shown whole. Set just above a normal weekday's
+ * ten so only the around-the-clock days ever get tabs. */
+const GROUP_THRESHOLD = 12;
+
+const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 /** Offered zones, one per major offset — enough to cover any visitor
  * without a 400-row select. Sorted by real offset at render time. */
@@ -166,11 +179,20 @@ export function SchedulePicker({
 
   const daySlots = activeDay ? (slotMap.get(activeDay) ?? []) : [];
 
+  /**
+   * Whether the day is long enough to be worth splitting into parts of the
+   * day. A short day is shown *whole* — filtering it would hide slots behind
+   * a control that isn't on screen, which is what a Sun–Thu evening looked
+   * like from a western zone: ten slots open, two of them reachable.
+   */
+  const grouped = daySlots.length > GROUP_THRESHOLD;
+
   const [group, setGroup] = useState<GroupId>("morning");
 
   // Keep the rail on a tab that actually has slots: the visitor's own pick
   // if there is one, otherwise the earliest group that day offers.
   useEffect(() => {
+    if (!grouped) return;
     if (selectedInstant && activeDay === zonedDateKey(selectedInstant, timeZone)) {
       setGroup(groupOf(selectedInstant, timeZone));
       return;
@@ -179,7 +201,7 @@ export function SchedulePicker({
     if (first) setGroup(first.id);
     // daySlots is derived from activeDay/slotMap; those are the real inputs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeDay, slotMap, timeZone, selectedInstant]);
+  }, [activeDay, slotMap, timeZone, selectedInstant, grouped]);
 
   const shiftMonth = (delta: number) => {
     setDirection(delta);
@@ -203,18 +225,35 @@ export function SchedulePicker({
   const monthKey = `${cursor.year}-${cursor.month}`;
   const monthLabel = new Date(Date.UTC(cursor.year, cursor.month, 1));
 
-  const visibleSlots = daySlots.filter((s) => groupOf(s, timeZone) === group);
+  const visibleSlots = useMemo(
+    () => (grouped ? daySlots.filter((s) => groupOf(s, timeZone) === group) : daySlots),
+    // daySlots is derived from activeDay/slotMap; those are the real inputs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeDay, slotMap, group, grouped, timeZone],
+  );
 
   return (
-    <div className="flex flex-col gap-3">
-      <ZonePicker timeZone={timeZone} onChange={onTimeZoneChange} now={now} />
+    <div className="rounded-[1.6rem] bg-gradient-to-br from-blue/45 via-white/10 to-magenta/45 p-px shadow-[0_40px_90px_-45px_rgba(37,99,235,0.65)]">
+      <div className="grid overflow-hidden rounded-[calc(1.6rem-1px)] bg-[#0a0a12]/85 backdrop-blur-xl backdrop-saturate-150 md:grid-cols-[0.86fr_1.14fr]">
+        {/* ------------------------------ date --------------------------- */}
+        <div className="flex flex-col border-b border-white/10 md:border-b-0 md:border-r">
+          <div className="flex items-center gap-3 px-4 pt-4">
+            <PanelIcon>
+              <CalendarDays className="h-4 w-4" strokeWidth={2.25} />
+            </PanelIcon>
+            <div className="min-w-0">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-ink-soft/70">Select a</p>
+              <p className="text-[1.05rem] font-extrabold leading-tight tracking-tight text-ink">Date</p>
+            </div>
+          </div>
 
-      <div className="grid gap-3 lg:grid-cols-2">
-        {/* ------------------------------ calendar ----------------------- */}
-        <div className="rounded-2xl border border-white/15 bg-white/[0.07] p-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] backdrop-blur-md backdrop-saturate-150">
-          <div className="flex items-center justify-between px-1 pb-2">
-            {/* The month label swaps with the grid and in the same
-               direction, so the header reads as one page turn. */}
+          <div className="flex items-center justify-between px-4 pb-2 pt-3">
+            <MonthButton label="Previous month" disabled={atFirstMonth} onClick={() => shiftMonth(-1)}>
+              <ChevronLeft className="h-4 w-4" strokeWidth={2.5} />
+            </MonthButton>
+
+            {/* The month label swaps with the grid and in the same direction,
+               so the header reads as one page turn. */}
             <div className="relative h-6 flex-1 overflow-hidden">
               <AnimatePresence mode="popLayout" custom={direction} initial={false}>
                 <motion.span
@@ -224,7 +263,7 @@ export function SchedulePicker({
                   initial="enter"
                   animate="center"
                   exit="exit"
-                  className="absolute inset-0 flex items-center text-[0.95rem] font-bold tracking-tight text-ink"
+                  className="absolute inset-0 flex items-center justify-center text-[0.95rem] font-bold tracking-tight text-ink"
                 >
                   {monthLabel.toLocaleDateString("en-US", { month: "long", timeZone: "UTC" })}
                   <span className="ml-1.5 font-semibold text-ink-soft">{cursor.year}</span>
@@ -232,29 +271,24 @@ export function SchedulePicker({
               </AnimatePresence>
             </div>
 
-            <div className="flex items-center gap-1">
-              <MonthButton label="Previous month" disabled={atFirstMonth} onClick={() => shiftMonth(-1)}>
-                <ChevronLeft className="h-4 w-4" strokeWidth={2.5} />
-              </MonthButton>
-              <MonthButton label="Next month" onClick={() => shiftMonth(1)}>
-                <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
-              </MonthButton>
-            </div>
+            <MonthButton label="Next month" onClick={() => shiftMonth(1)}>
+              <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
+            </MonthButton>
           </div>
 
-          <div className="grid grid-cols-7 gap-0.5 pb-1">
+          <div className="grid grid-cols-7 gap-0.5 px-3 pb-1">
             {WEEKDAY_LABELS.map((d, i) => (
               <span
                 key={i}
                 aria-hidden="true"
-                className="text-center text-[0.6rem] font-bold uppercase tracking-[0.1em] text-ink-soft/70"
+                className="text-center text-[0.58rem] font-bold uppercase tracking-[0.12em] text-ink-soft/60"
               >
                 {d}
               </span>
             ))}
           </div>
 
-          <div className="relative overflow-hidden">
+          <div className="relative flex-1 overflow-hidden px-3 pb-3">
             <AnimatePresence mode="popLayout" custom={direction} initial={false}>
               <motion.div
                 key={monthKey}
@@ -263,7 +297,7 @@ export function SchedulePicker({
                 initial="enter"
                 animate="center"
                 exit="exit"
-                className="grid grid-cols-7 gap-0.5"
+                className="grid grid-cols-7 gap-y-0.5"
               >
                 {cells.map((day, i) => {
                   if (day === null) return <span key={`pad-${i}`} />;
@@ -276,6 +310,11 @@ export function SchedulePicker({
                   const isActive = key === activeDay;
                   const holdsSelection =
                     !!selectedInstant && key === zonedDateKey(selectedInstant, timeZone);
+                  // The around-the-clock days get the accent colour, but by
+                  // slot count rather than by column: Friday in Dhaka starts
+                  // on Thursday evening in Cairo, so the open-all-day cell is
+                  // not always the weekend column in the visitor's zone.
+                  const isFullDay = (slotMap.get(key)?.length ?? 0) > GROUP_THRESHOLD;
 
                   return (
                     <button
@@ -286,16 +325,17 @@ export function SchedulePicker({
                       aria-label={`${key}${open ? "" : " — no slots"}`}
                       aria-pressed={isActive}
                       className={cn(
-                        // Fixed 36px circles rather than `aspect-square`
-                        // cells: the column width comes from the pane, and a
-                        // six-row month of pane-wide squares is taller than
-                        // the card.
-                        "relative mx-auto flex h-9 w-9 items-center justify-center rounded-full text-[0.8rem] font-semibold transition-colors duration-200",
+                        // Fixed circles rather than `aspect-square` cells: the
+                        // column width comes from the pane, and a six-row
+                        // month of pane-wide squares is taller than the card.
+                        "relative mx-auto flex h-9 w-9 items-center justify-center rounded-full text-[0.82rem] font-semibold transition-colors duration-200",
                         !open
-                          ? "cursor-not-allowed text-ink-soft/25"
-                          : holdsSelection || isActive
+                          ? "cursor-not-allowed text-ink-soft/20"
+                          : isActive
                             ? "text-white"
-                            : "text-ink hover:bg-white/12",
+                            : isFullDay
+                              ? "text-magenta hover:bg-white/10"
+                              : "text-ink hover:bg-white/10",
                       )}
                     >
                       {/* One puck for the whole grid: `layoutId` animates it
@@ -306,19 +346,22 @@ export function SchedulePicker({
                           layoutId="calendar-selection"
                           transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.8 }}
                           className={cn(
-                            "absolute inset-[3px] rounded-full",
+                            "absolute inset-[2px] rounded-full",
                             holdsSelection
-                              ? "bg-gradient-to-br from-blue to-magenta shadow-[0_10px_22px_-10px_rgba(37,99,235,0.9)]"
-                              : "bg-white/20",
+                              ? "bg-gradient-to-br from-blue to-magenta shadow-[0_0_26px_-2px_rgba(37,99,235,0.85)]"
+                              : "bg-white/15",
                           )}
                         />
                       )}
                       {isToday && !isActive && (
-                        <span className="absolute inset-[3px] rounded-full border border-blue/60" />
+                        <span className="absolute inset-[2px] rounded-full border border-white/25" />
                       )}
                       <span className="relative z-10">{day}</span>
-                      {holdsSelection && !isActive && (
-                        <span className="absolute bottom-[5px] left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-magenta" />
+                      {holdsSelection && (
+                        <motion.span
+                          layoutId="calendar-selection-dot"
+                          className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-magenta"
+                        />
                       )}
                     </button>
                   );
@@ -327,116 +370,177 @@ export function SchedulePicker({
             </AnimatePresence>
           </div>
 
-          <p className="px-1 pt-2 text-[0.65rem] font-semibold leading-relaxed text-ink-soft/70">
-            {AVAILABILITY.callsShort}
-          </p>
         </div>
 
-        {/* -------------------------- clock + rail ------------------------ */}
-        <div className="flex flex-col gap-3">
-          <ClockPreview instant={selectedInstant} timeZone={timeZone} />
-
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-1.5">
-              {SLOT_GROUPS.map(({ id, label, icon: Icon }) => {
-                const count = daySlots.filter((s) => groupOf(s, timeZone) === id).length;
-                const isActive = id === group;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    disabled={count === 0}
-                    onClick={() => setGroup(id)}
-                    aria-pressed={isActive}
-                    className={cn(
-                      "relative flex flex-1 items-center justify-center gap-1 rounded-full px-1.5 py-1.5 text-[0.65rem] font-bold transition-colors duration-200",
-                      count === 0
-                        ? "cursor-not-allowed text-ink-soft/30"
-                        : isActive
-                          ? "text-white"
-                          : "text-ink-soft hover:text-ink",
-                    )}
-                  >
-                    {isActive && (
-                      <motion.span
-                        layoutId="slot-group-pill"
-                        transition={{ type: "spring", stiffness: 400, damping: 34 }}
-                        className="absolute inset-0 rounded-full bg-blue shadow-[0_10px_22px_-12px_rgba(37,99,235,0.9)]"
-                      />
-                    )}
-                    <Icon className="relative z-10 h-3.5 w-3.5" strokeWidth={2.25} aria-hidden="true" />
-                    <span className="relative z-10">{label}</span>
-                  </button>
-                );
-              })}
+        {/* ------------------------------ time --------------------------- */}
+        <div className="flex flex-col">
+          {/* The zone control lives beside the times it rewrites, not under
+             the calendar: it changes what every slot below is *called*. */}
+          <div className="flex items-center gap-3 px-4 pt-4">
+            <PanelIcon>
+              <Clock className="h-4 w-4" strokeWidth={2.25} />
+            </PanelIcon>
+            <div className="min-w-0 flex-1">
+              <p className="text-[0.62rem] font-bold uppercase tracking-[0.18em] text-ink-soft/70">Select a</p>
+              <p className="text-[1.05rem] font-extrabold leading-tight tracking-tight text-ink">Time Slot</p>
             </div>
-
-            {/* A 24-hour Friday can offer 48 slots; the rail scrolls inside
-               its own box rather than growing the step past the card and
-               pushing the calendar out of view. overflow-x-hidden because
-               `overflow-y: auto` alone would let the x axis compute to auto
-               and flash a scrollbar under the entering slot grid. */}
-            <div className="min-h-[6.75rem] max-h-[13.5rem] overflow-y-auto overflow-x-hidden pr-0.5">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`${activeDay}-${group}`}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.24, ease: EASE }}
-                  className={cn(!activeDay || !visibleSlots.length ? "" : "grid grid-cols-3 gap-1.5")}
-                >
-                  {!activeDay ? (
-                    <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-4 text-center text-[0.75rem] font-semibold text-ink-soft">
-                      Pick a day to see open times.
-                    </p>
-                  ) : !visibleSlots.length ? (
-                    <p className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-4 text-center text-[0.75rem] font-semibold text-ink-soft">
-                      No times left in this part of the day.
-                    </p>
-                  ) : (
-                    visibleSlots.map((instant, i) => {
-                      const iso = instant.toISOString();
-                      const isSelected = iso === slotUtc;
-                      return (
-                        <motion.button
-                          key={iso}
-                          type="button"
-                          onClick={() =>
-                            onSelect({
-                              slotUtc: iso,
-                              dateKey: zonedDateKey(instant, timeZone),
-                              timeKey: `${String(zonedParts(instant, timeZone).hour).padStart(2, "0")}:${String(
-                                zonedParts(instant, timeZone).minute,
-                              ).padStart(2, "0")}`,
-                            })
-                          }
-                          aria-pressed={isSelected}
-                          initial={{ opacity: 0, y: 8, scale: 0.96 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          transition={{ duration: 0.28, ease: EASE, delay: Math.min(i, 12) * 0.025 }}
-                          whileHover={{ y: -2 }}
-                          whileTap={{ scale: 0.97 }}
-                          className={cn(
-                            "rounded-xl border px-2 py-1.5 text-[0.75rem] font-bold tabular-nums transition-colors duration-200",
-                            isSelected
-                              ? "border-blue bg-blue/20 text-ink shadow-[0_0_0_3px_rgba(37,99,235,0.12)]"
-                              : "border-white/15 bg-white/10 text-ink-soft hover:border-blue/50 hover:text-ink",
-                          )}
-                        >
-                          {formatSlotTime(instant, timeZone)}
-                        </motion.button>
-                      );
-                    })
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
+            <ZonePicker timeZone={timeZone} onChange={onTimeZoneChange} now={now} />
           </div>
+
+          <p className="px-4 pt-1.5 text-[0.72rem] font-semibold text-ink-soft">
+            {/* The window itself is already stated in the step header — this
+               line only carries what the header does not. */}
+            Meeting duration: {CALL_MINUTES} min
+            {daySlots.length > 0 && (
+              <span className="text-ink-soft/60"> · {daySlots.length} slots open</span>
+            )}
+          </p>
+
+          {/* The tabs are a 24-hour-day affordance, so they appear only when
+             the day actually has more slots than the rail can hold. */}
+          <AnimatePresence initial={false}>
+            {grouped && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.28, ease: EASE }}
+                className="overflow-hidden"
+              >
+                <div className="mx-4 mt-3 flex rounded-full border border-white/10 bg-white/[0.05] p-0.5">
+                  {SLOT_GROUPS.map(({ id, label, icon: Icon }) => {
+                    const count = daySlots.filter((s) => groupOf(s, timeZone) === id).length;
+                    const isActive = id === group;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        disabled={count === 0}
+                        onClick={() => setGroup(id)}
+                        aria-pressed={isActive}
+                        title={`${label} — ${count} times`}
+                        className={cn(
+                          "relative flex flex-1 items-center justify-center gap-1 rounded-full py-1.5 text-[0.6rem] font-bold uppercase tracking-[0.06em] transition-colors duration-200",
+                          count === 0
+                            ? "cursor-not-allowed text-ink-soft/25"
+                            : isActive
+                              ? "text-white"
+                              : "text-ink-soft hover:text-ink",
+                        )}
+                      >
+                        {isActive && (
+                          <motion.span
+                            layoutId="slot-group-pill"
+                            transition={{ type: "spring", stiffness: 420, damping: 36 }}
+                            className="absolute inset-0 rounded-full bg-white/12 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.18)]"
+                          />
+                        )}
+                        <Icon className="relative z-10 h-3 w-3" strokeWidth={2.25} aria-hidden="true" />
+                        <span className="relative z-10 hidden sm:inline">{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* A 24-hour Friday can offer 48 slots; the rail scrolls inside its
+             own box rather than growing the step past the card. overflow-x is
+             pinned because `overflow-y: auto` alone would let the x axis
+             compute to auto and flash a scrollbar under the entering grid. */}
+          <div className="min-h-[13rem] flex-1 overflow-y-auto overflow-x-hidden px-4 py-3">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${activeDay}-${group}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.24, ease: EASE }}
+                className={cn(
+                  !activeDay || !visibleSlots.length
+                    ? ""
+                    : // Four columns once there is room: a 24-hour day then
+                      // shows a whole period without scrolling.
+                      "grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4",
+                )}
+              >
+                {!activeDay || !visibleSlots.length ? (
+                  <p className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-[0.78rem] font-semibold text-ink-soft">
+                    {!activeDay ? "Pick a day to see open times." : "No times left in this part of the day."}
+                  </p>
+                ) : (
+                  visibleSlots.map((instant, i) => {
+                    const iso = instant.toISOString();
+                    const isSelected = iso === slotUtc;
+                    const { hour, minute } = zonedParts(instant, timeZone);
+                    return (
+                      <motion.button
+                        key={iso}
+                        type="button"
+                        onClick={() =>
+                          onSelect({
+                            slotUtc: iso,
+                            dateKey: zonedDateKey(instant, timeZone),
+                            timeKey: `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`,
+                          })
+                        }
+                        aria-pressed={isSelected}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, ease: EASE, delay: Math.min(i, 14) * 0.028 }}
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.97 }}
+                        className={cn(
+                          "relative overflow-hidden rounded-xl border px-1 py-2.5 text-[0.75rem] font-semibold tabular-nums transition-colors duration-200",
+                          isSelected
+                            ? "border-transparent text-white"
+                            : "border-white/10 bg-white/[0.04] text-ink hover:border-white/25 hover:bg-white/[0.08]",
+                        )}
+                      >
+                        {/* One puck for the whole rail, same trick as the
+                           calendar: it travels to the new slot rather than
+                           two chips cross-fading. */}
+                        {isSelected && (
+                          <motion.span
+                            layoutId="slot-selection"
+                            transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.8 }}
+                            className="absolute inset-0 rounded-xl bg-gradient-to-r from-blue to-magenta shadow-[0_14px_30px_-12px_rgba(37,99,235,0.95)]"
+                          />
+                        )}
+                        <span className="relative z-10">{padSlotTime(instant, timeZone)}</span>
+                      </motion.button>
+                    );
+                  })
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <p className="flex items-center gap-2 border-t border-white/10 px-4 py-3 text-[0.72rem] font-semibold text-ink-soft">
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-blue" strokeWidth={2.25} aria-hidden="true" />
+            Times shown in your selected time zone — change it above
+          </p>
         </div>
       </div>
     </div>
   );
+}
+
+/** The small rounded glyph tile that heads each panel. */
+function PanelIcon({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/12 bg-gradient-to-br from-blue/25 to-magenta/15 text-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.16)]">
+      {children}
+    </span>
+  );
+}
+
+/** "09:00 AM" — zero-padded so a column of slots keeps one edge. */
+function padSlotTime(instant: Date, timeZone: string): string {
+  const { hour, minute } = zonedParts(instant, timeZone);
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${String(h12).padStart(2, "0")}:${String(minute).padStart(2, "0")} ${hour < 12 ? "AM" : "PM"}`;
 }
 
 function ZonePicker({
@@ -463,15 +567,28 @@ function ZonePicker({
   const hasCurrent = zones.some((z) => z.tz === timeZone);
 
   return (
-    <label className="flex items-center gap-2.5 rounded-2xl border border-white/15 bg-white/[0.07] px-3 py-2 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] backdrop-blur-md backdrop-saturate-150">
-      <Globe className="h-4 w-4 shrink-0 text-blue" strokeWidth={2} aria-hidden="true" />
-      <span className="shrink-0 text-[0.7rem] font-bold uppercase tracking-wide text-ink-soft">
-        Times shown in
+    // A compact pill, because it sits in a header row rather than a footer:
+    // the offset is the part anyone scans for, the city name is the proof.
+    <label className="group relative flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full border border-white/12 bg-white/[0.06] px-2.5 py-1.5 transition-colors duration-200 hover:border-white/25 hover:bg-white/[0.1] focus-within:border-blue">
+      <Globe className="h-3.5 w-3.5 shrink-0 text-blue" strokeWidth={2.25} aria-hidden="true" />
+      <span className="max-w-[6.5rem] truncate text-[0.7rem] font-bold text-ink sm:max-w-[9rem]">
+        <span className="tabular-nums">{zoneOffsetLabel(timeZone, now)}</span>
+        <span className="ml-1 hidden font-semibold text-ink-soft sm:inline">
+          {timeZone.split("/").pop()?.replace(/_/g, " ")}
+        </span>
       </span>
+      <ChevronDown
+        className="h-3.5 w-3.5 shrink-0 text-ink-soft transition-transform duration-200 group-hover:translate-y-0.5"
+        strokeWidth={2.5}
+        aria-hidden="true"
+      />
+      {/* A native select laid over the pill: the zone list stays keyboard-
+         and mobile-native while the trigger reads as one line of type. */}
       <select
         value={timeZone}
         onChange={(e) => onChange(e.target.value)}
-        className="focus-no-outline min-w-0 flex-1 cursor-pointer rounded-lg border border-white/15 bg-white/10 px-2 py-1.5 text-[0.8rem] font-semibold text-ink outline-none transition-colors focus:border-blue"
+        aria-label="Time zone"
+        className="focus-no-outline absolute inset-0 h-full w-full cursor-pointer opacity-0"
       >
         {!hasCurrent && timeZone && (
           <option value={timeZone}>
@@ -518,144 +635,4 @@ function MonthButton({
   );
 }
 
-/* -------------------------------- clock -------------------------------- */
 
-/**
- * Analog preview of the picked slot, in the visitor's zone. The hands spring
- * to each new selection (and take the short way round — see `useSmoothAngle`),
- * and the face warms from dawn-blue to dusk-magenta across the day, so the
- * time reads before the numbers do.
- */
-export function ClockPreview({ instant, timeZone }: { instant: Date | null; timeZone: string }) {
-  const reduced = useReducedMotion();
-  const parts = instant ? zonedParts(instant, timeZone) : null;
-  const h = parts?.hour ?? 9;
-  const m = parts?.minute ?? 0;
-
-  const hourAngle = useSmoothAngle(parts ? ((h % 12) + m / 60) * 30 : 0, reduced);
-  const minuteAngle = useSmoothAngle(parts ? m * 6 : 0, reduced);
-
-  // Live second hand — the one thing on the card that is always moving, so
-  // the preview reads as a clock rather than a picture of one.
-  const [seconds, setSeconds] = useState(() => new Date().getSeconds());
-  useEffect(() => {
-    if (reduced) return;
-    const id = setInterval(() => setSeconds(new Date().getSeconds()), 1000);
-    return () => clearInterval(id);
-  }, [reduced]);
-
-  const dayProgress = parts ? Math.min(Math.max((h * 60 + m) / (24 * 60), 0), 1) : 0;
-  const faceGlow = `radial-gradient(circle at 50% 32%, rgba(${Math.round(37 + dayProgress * 182)},${Math.round(99 - dayProgress * 60)},${Math.round(235 - dayProgress * 116)},0.28) 0%, rgba(10,10,14,0) 68%)`;
-
-  return (
-    <div className="flex items-center gap-4 rounded-2xl border border-white/15 bg-white/[0.07] px-3.5 py-2.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] backdrop-blur-md backdrop-saturate-150">
-      <div className="relative h-[64px] w-[64px] shrink-0">
-        <motion.div
-          className="absolute inset-0 rounded-full"
-          style={{ background: faceGlow }}
-          animate={{ opacity: parts ? 1 : 0.35 }}
-          transition={{ duration: 0.5, ease: EASE }}
-        />
-        <svg viewBox="0 0 100 100" className="relative h-full w-full">
-          <circle cx="50" cy="50" r="46" fill="none" stroke="currentColor" className="text-ink/15" strokeWidth="1.5" />
-          {Array.from({ length: 12 }, (_, i) => {
-            const angle = (i * 30 * Math.PI) / 180;
-            const outer = 41;
-            const inner = i % 3 === 0 ? 33 : 37;
-            return (
-              <line
-                key={i}
-                x1={50 + Math.sin(angle) * inner}
-                y1={50 - Math.cos(angle) * inner}
-                x2={50 + Math.sin(angle) * outer}
-                y2={50 - Math.cos(angle) * outer}
-                stroke="currentColor"
-                className={i % 3 === 0 ? "text-ink/60" : "text-ink/25"}
-                strokeWidth={i % 3 === 0 ? 2.5 : 1.5}
-                strokeLinecap="round"
-              />
-            );
-          })}
-
-          <motion.line
-            x1="50"
-            y1="50"
-            x2="50"
-            y2="27"
-            stroke="currentColor"
-            className="text-ink"
-            strokeWidth="4"
-            strokeLinecap="round"
-            style={{ transformOrigin: "50px 50px", rotate: hourAngle }}
-          />
-          <motion.line
-            x1="50"
-            y1="50"
-            x2="50"
-            y2="16"
-            stroke="currentColor"
-            className="text-ink"
-            strokeWidth="3"
-            strokeLinecap="round"
-            style={{ transformOrigin: "50px 50px", rotate: minuteAngle }}
-          />
-          <line
-            x1="50"
-            y1="56"
-            x2="50"
-            y2="14"
-            stroke="currentColor"
-            className="text-magenta"
-            strokeWidth="1.25"
-            strokeLinecap="round"
-            style={{
-              transformOrigin: "50px 50px",
-              transform: `rotate(${seconds * 6}deg)`,
-              transition: "transform 0.35s cubic-bezier(0.4, 2.2, 0.5, 1)",
-            }}
-          />
-          <circle cx="50" cy="50" r="3.5" className="fill-ink" />
-          <circle cx="50" cy="50" r="1.5" className="fill-magenta" />
-        </svg>
-      </div>
-
-      <div className="min-w-0">
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={instant ? instant.toISOString() : "empty"}
-            initial={{ opacity: 0, y: 8, filter: "blur(4px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            exit={{ opacity: 0, y: -8, filter: "blur(4px)" }}
-            transition={{ duration: 0.28, ease: EASE }}
-            className="text-[1.35rem] font-extrabold leading-none tracking-tight text-ink tabular-nums"
-          >
-            {instant ? formatSlotTime(instant, timeZone) : "--:--"}
-          </motion.p>
-        </AnimatePresence>
-        <p className="mt-1.5 truncate text-[0.72rem] font-semibold text-ink-soft">
-          {instant ? formatSlotDate(instant, timeZone) : "Pick a time"}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Springs a clock hand to `target` degrees along the *short* arc. Feeding
- * raw 0–360 values to a spring makes 11:30 → 12:00 unwind almost a full
- * turn backwards; tracking an unbounded angle instead keeps every move to
- * at most half a revolution.
- */
-function useSmoothAngle(target: number, reduced: boolean) {
-  const raw = useMotionValue(target);
-  const spring = useSpring(raw, { stiffness: 90, damping: 16, mass: 0.9 });
-  const unwrapped = useRef(target);
-
-  useEffect(() => {
-    const delta = ((((target - unwrapped.current) % 360) + 540) % 360) - 180;
-    unwrapped.current += delta;
-    raw.set(unwrapped.current);
-  }, [target, raw]);
-
-  return reduced ? target : spring;
-}

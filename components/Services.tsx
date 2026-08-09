@@ -30,15 +30,15 @@ function ServiceCard({ service }: { service: Service }) {
           />
         </span>
 
-        <h3 className="mt-6 text-h3 text-ink transition-colors duration-300 group-hover:text-white">{service.title}</h3>
+        <h3 className="mt-6 text-h3 text-h3-strong text-ink transition-colors duration-300 group-hover:text-white">{service.title}</h3>
         <p className="mt-3 max-w-md flex-1 text-sm leading-relaxed text-ink-soft transition-colors duration-300 group-hover:text-white/80">
           {service.shortDesc}
         </p>
 
         <div className="mt-6 flex items-center justify-between gap-3">
-          <span className="inline-flex items-center gap-2 rounded-full border border-line bg-paper px-3.5 py-1.5 transition-colors duration-300 group-hover:border-transparent">
-            <span className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-ink-soft">Starting at</span>
-            <span className="text-sm font-bold tracking-tight text-blue">${service.startingPrice.toLocaleString()}</span>
+          <span className="inline-flex items-center gap-2 rounded-full border border-blue bg-blue px-3.5 py-1.5 transition-colors duration-300 group-hover:border-transparent group-hover:bg-white/20">
+            <span className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-white/80">Starting at</span>
+            <span className="text-sm font-bold tracking-tight text-white">${service.startingPrice.toLocaleString()}</span>
           </span>
 
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink transition-colors duration-300 group-hover:text-white">
@@ -97,7 +97,7 @@ export function Services({ showHeading = true }: { showHeading?: boolean }) {
 
               <Link
                 href="/contact?tab=booking"
-                className="hover-lift font-avenir group inline-flex w-fit items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink"
+                className="btn-brand btn-on-brand on-blue group w-fit"
               >
                 {servicesCta.button}
                 <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

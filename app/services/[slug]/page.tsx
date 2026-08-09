@@ -100,7 +100,7 @@ export default async function ServiceDetailPage({
             </p>
             <Link
               href="/contact?tab=booking"
-              className="hover-lift font-avenir group mt-8 inline-flex items-center gap-2 rounded-full bg-[length:200%_100%] bg-gradient-to-r from-blue via-magenta to-blue px-6 py-3.5 text-sm text-paper animate-gradient-shift"
+              className="btn-brand group mt-8"
             >
               Get a Free Audit
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -172,7 +172,7 @@ export default async function ServiceDetailPage({
           </h2>
           <Link
             href="/projects"
-            className="hover-lift font-avenir group inline-flex shrink-0 items-center gap-2 rounded-full bg-paper px-6 py-3.5 text-sm text-ink hover:bg-blue hover:text-paper"
+            className="btn-outline group shrink-0"
           >
             View all projects
             <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -203,7 +203,7 @@ export default async function ServiceDetailPage({
             </h2>
             <Link
               href="/contact?tab=booking"
-              className="hover-lift font-avenir group mt-8 inline-flex items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink hover:bg-ink hover:text-paper"
+              className="btn-brand btn-on-brand on-blue group mt-8"
             >
               Get a Free Audit
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

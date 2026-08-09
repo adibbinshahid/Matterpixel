@@ -17,7 +17,7 @@ export function FinalCta() {
       <Reveal className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
         <Link
           href="/contact?tab=booking"
-          className="hover-lift font-avenir group inline-flex shrink-0 items-center gap-2 rounded-full bg-paper px-7 py-4 text-sm text-ink hover:bg-ink hover:text-paper"
+          className="btn-brand btn-on-brand on-magenta group shrink-0"
         >
           Get a Free Audit
           <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
