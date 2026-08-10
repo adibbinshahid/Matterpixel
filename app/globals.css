@@ -258,7 +258,15 @@ body {
   font-family: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overflow-x: hidden;
+  /* Deliberately NO `overflow-x: hidden` here. Setting it on <body> makes
+     the body its own scroll container (overflow-y resolves to `auto`),
+     which silently breaks every viewport-relative `position: sticky` on
+     the site — the sticky element resolves against the body scrollport,
+     which never scrolls, so it just scrolls away with the page.
+     `html` above already carries `overflow-x: hidden`, and on the root
+     element that value propagates to the viewport while html itself stays
+     effectively `visible` — so horizontal bleed is still clipped and
+     sticky still works. Keep the clip in one place only. */
 }
 
 /* Selection — brand blue by default (reads on both white and magenta

@@ -1025,6 +1025,11 @@ function InquiryPanel() {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
+  /** Off on mount (and on a restored draft) so the browser never auto-scrolls
+   * the page to the field on load — flips on once the visitor actually
+   * advances a step, so focus-follows-step still works while stepping
+   * through the wizard. */
+  const [autoFocusStep, setAutoFocusStep] = useState(false);
   /** Drafts are read in an effect, not during render — localStorage doesn't
    * exist on the server, and prefilling during render would hydrate-mismatch. */
   const [draftLoaded, setDraftLoaded] = useState(false);
@@ -1126,10 +1131,12 @@ function InquiryPanel() {
     if (!canContinue) return;
     normalizeAnswer(current.id);
     setDirection(1);
+    setAutoFocusStep(true);
     setStep((s) => Math.min(s + 1, WIZARD_STEPS.length));
   };
   const goBack = () => {
     setDirection(-1);
+    setAutoFocusStep(true);
     setStep((s) => Math.max(s - 1, 0));
   };
   /** Opens the inline editor on the review screen. The previous answer is
@@ -1292,7 +1299,7 @@ function InquiryPanel() {
                     type={current.kind}
                     placeholder={current.placeholder ?? ""}
                     error={visibleIssue ?? (errors[current.id]?.message as string | undefined)}
-                    autoFocus
+                    autoFocus={autoFocusStep}
                     autoComplete={current.autoComplete}
                     onKeyDown={handleEnter}
                   />
@@ -1303,7 +1310,7 @@ function InquiryPanel() {
                     registration={register(current.id)}
                     placeholder={current.placeholder ?? ""}
                     error={visibleIssue ?? (errors[current.id]?.message as string | undefined)}
-                    autoFocus
+                    autoFocus={autoFocusStep}
                   />
                 )}
 
@@ -1773,6 +1780,10 @@ function BookingPanel() {
    * straight back to the summary instead of walking the rest of the wizard
    * again. */
   const [returnToReview, setReturnToReview] = useState(false);
+  /** Off on mount (and on a restored draft) so the browser never auto-scrolls
+   * the page to the field on load — flips on once the visitor actually
+   * advances a step. */
+  const [autoFocusStep, setAutoFocusStep] = useState(false);
   const {
     register,
     handleSubmit,
@@ -1858,6 +1869,7 @@ function BookingPanel() {
       }
     }
     setDirection(1);
+    setAutoFocusStep(true);
     if (returnToReview) {
       setReturnToReview(false);
       setStep(BOOKING_STEPS.length);
@@ -1867,6 +1879,7 @@ function BookingPanel() {
   };
   const goBack = () => {
     setDirection(-1);
+    setAutoFocusStep(true);
     if (returnToReview) {
       setReturnToReview(false);
       setStep(BOOKING_STEPS.length);
@@ -1880,6 +1893,7 @@ function BookingPanel() {
     if (index < 0) return;
     setReturnToReview(true);
     setDirection(-1);
+    setAutoFocusStep(true);
     setStep(index);
   };
   const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -2016,7 +2030,7 @@ function BookingPanel() {
                     type={current.kind}
                     placeholder={current.placeholder ?? ""}
                     error={visibleIssue ?? (errors[current.fields[0]]?.message as string | undefined)}
-                    autoFocus
+                    autoFocus={autoFocusStep}
                     autoComplete={current.autoComplete}
                     onKeyDown={handleEnter}
                   />
@@ -2027,7 +2041,7 @@ function BookingPanel() {
                     registration={register(current.fields[0] as "notes")}
                     placeholder={current.placeholder ?? ""}
                     error={visibleIssue ?? (errors[current.fields[0]]?.message as string | undefined)}
-                    autoFocus
+                    autoFocus={autoFocusStep}
                   />
                 )}
 

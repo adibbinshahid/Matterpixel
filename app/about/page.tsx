@@ -3,6 +3,7 @@ import { Reveal } from "@/components/Reveal";
 import { FounderFeature } from "@/components/FounderFeature";
 import { CrewThread } from "@/components/CrewThread";
 import { FoundingRoster } from "@/components/FoundingRoster";
+import { PixelField } from "@/components/PixelField";
 
 export const metadata: Metadata = {
   title: "About",
@@ -14,8 +15,9 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <section className="px-6 pb-10 pt-28 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="relative overflow-hidden px-6 pb-10 pt-28 sm:px-8 lg:px-12">
+        <PixelField className="pointer-events-none absolute inset-0 z-0" />
+        <div className="relative z-10 mx-auto max-w-[1400px]">
           <Reveal>
             <p className="label-eyebrow mb-4">the studio</p>
             {/* One line from lg up: the size is tied to viewport width so the

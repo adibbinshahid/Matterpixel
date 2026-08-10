@@ -4,14 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { GiantHeading } from "@/components/GiantHeading";
 import { Reveal } from "@/components/Reveal";
-import { processSteps, servicesIntro } from "@/content/siteConfig";
+import { servicesIntro } from "@/content/siteConfig";
+import { processMethod } from "@/content/servicesPage";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { EASE } from "@/lib/utils";
 
 const AUTO_ADVANCE_MS = 2500;
 const CLICK_PAUSE_MS = 15000;
 
-const total = processSteps.steps.length;
+const total = processMethod.steps.length;
 
 /**
  * Scattered giant step numerals drifting slowly behind the section — the
@@ -34,7 +35,7 @@ const GHOST_POSITIONS: { top: string; left: string; rotate: number }[] = [
 function ProcessGhostNumbers() {
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
-      {processSteps.steps.map((s, i) => {
+      {processMethod.steps.map((s, i) => {
         const pos = GHOST_POSITIONS[i % GHOST_POSITIONS.length];
         return (
           <div
@@ -88,7 +89,7 @@ function ProcessGhostNumbers() {
 export function Process() {
   const reduced = useReducedMotion();
   const [activeIndex, setActiveIndex] = useState(0);
-  const step = processSteps.steps[activeIndex];
+  const step = processMethod.steps[activeIndex];
   const fillPercent = total > 1 ? (activeIndex / (total - 1)) * 100 : 0;
   const pausedUntilRef = useRef(0);
   const sectionRef = useRef<HTMLElement>(null);
@@ -150,10 +151,10 @@ export function Process() {
                --ink/--ink-soft/etc, so this needs an explicit override or
                it's blue eyebrow text on a blue background. */}
             <p className="label-eyebrow mb-4" style={{ fontSize: "1.5rem", color: "#fff" }}>
-              {processSteps.eyebrow}
+              {processMethod.eyebrow}
             </p>
             <h2>
-              <GiantHeading lines={[processSteps.heading]} sizeRef={servicesIntro.headingLines} />
+              <GiantHeading lines={[processMethod.heading]} sizeRef={servicesIntro.headingLines} />
             </h2>
           </div>
         </Reveal>
@@ -178,7 +179,7 @@ export function Process() {
            a label under a small marker, per "more prominent Step 01,
            02..." feedback on the previous circle-based version. */}
         <div className="relative mt-6 flex justify-between px-5" role="tablist" aria-label="Project process steps">
-          {processSteps.steps.map((s, i) => {
+          {processMethod.steps.map((s, i) => {
             const isActive = i === activeIndex;
             return (
               <button
@@ -253,7 +254,10 @@ export function Process() {
               </motion.div>
 
               <div className="mt-10 grid gap-5 sm:grid-cols-2">
-                {step.details.map((d, i) => (
+                {[
+                  { label: "Detail", text: step.detail },
+                  { label: "Output", text: step.output },
+                ].map((d, i) => (
                   <motion.div
                     key={d.label}
                     initial={reduced ? false : { opacity: 0, y: 8 }}
