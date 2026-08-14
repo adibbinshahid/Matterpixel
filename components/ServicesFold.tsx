@@ -3,13 +3,12 @@
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { services } from "@/content/services";
 import { servicesIntro, servicesCta } from "@/content/siteConfig";
 import { useReducedMotion } from "@/lib/useReducedMotion";
+import { loadGsap, refreshScrollTrigger } from "@/lib/loadGsap";
 
 /** Matches Nav's own mobile/desktop cutoff (its hamburger is `lg:hidden`)
  * — below that width the pinned vertical carousel is skipped entirely in
@@ -421,74 +420,85 @@ function PinnedServicesRow({ reduced }: { reduced: boolean }) {
   // useLayoutEffect above.
   useEffect(() => {
     if (reduced) return;
-    ScrollTrigger.refresh();
+    refreshScrollTrigger();
   }, [reduced, bottomAlignMargin]);
 
   useEffect(() => {
     if (reduced) return;
-    gsap.registerPlugin(ScrollTrigger);
-
     const section = sectionRef.current;
     const track = trackRef.current;
     if (!section || !track) return;
 
-    const distance = (PINNED_COUNT - 1) * CARD_STEP * SCROLL_LENGTH_MULTIPLIER;
+    let cancelled = false;
+    let cleanup: (() => void) | null = null;
 
-    // The pin runs LONGER than the card travel (by PIN_HOLD_AFTER_LAST) and
-    // is its own ScrollTrigger, rather than being attached to the track
-    // tween. `scrub: 1` smooths the track toward its target over ~1s, so
-    // when pin and tween shared one trigger the pin released the moment
-    // scroll hit `distance` — while the last card was still easing into
-    // place. The card then finished arriving as the whole section was
-    // already scrolling away (the "in parallel" motion). This dwell keeps
-    // the section pinned until the last card has actually settled flush
-    // with the image's bottom edge; only then does the section scroll up.
-    const pinTrigger = ScrollTrigger.create({
-      trigger: section,
-      start: "top top",
-      end: `+=${distance + PIN_HOLD_AFTER_LAST}`,
-      pin: true,
-    });
+    loadGsap().then(({ gsap, ScrollTrigger }) => {
+      if (cancelled) return;
 
-    const tween = gsap.to(track, {
-      y: -(PINNED_COUNT - 1) * CARD_STEP,
-      ease: "none",
-      scrollTrigger: {
+      const distance = (PINNED_COUNT - 1) * CARD_STEP * SCROLL_LENGTH_MULTIPLIER;
+
+
+      // The pin runs LONGER than the card travel (by PIN_HOLD_AFTER_LAST) and
+      // is its own ScrollTrigger, rather than being attached to the track
+      // tween. `scrub: 1` smooths the track toward its target over ~1s, so
+      // when pin and tween shared one trigger the pin released the moment
+      // scroll hit `distance` — while the last card was still easing into
+      // place. The card then finished arriving as the whole section was
+      // already scrolling away (the "in parallel" motion). This dwell keeps
+      // the section pinned until the last card has actually settled flush
+      // with the image's bottom edge; only then does the section scroll up.
+      const pinTrigger = ScrollTrigger.create({
         trigger: section,
         start: "top top",
-        end: `+=${distance}`,
-        scrub: 1,
-        onUpdate: (self) => {
-          setActiveIndex(Math.round(self.progress * (PINNED_COUNT - 1)));
+        end: `+=${distance + PIN_HOLD_AFTER_LAST}`,
+        pin: true,
+      });
+
+      const tween = gsap.to(track, {
+        y: -(PINNED_COUNT - 1) * CARD_STEP,
+        ease: "none",
+        scrollTrigger: {
+          trigger: section,
+          start: "top top",
+          end: `+=${distance}`,
+          scrub: 1,
+          onUpdate: (self) => {
+            setActiveIndex(Math.round(self.progress * (PINNED_COUNT - 1)));
+          },
         },
-      },
+      });
+
+      // Background grid rides the same scroll range but only travels
+      // BG_PARALLAX_RATE of the card distance — slower than the (regular
+      // speed) cards, reading as a parallax depth cue during the pin.
+      const bg = bgRef.current;
+      const bgTween = bg
+        ? gsap.to(bg, {
+            y: -(PINNED_COUNT - 1) * CARD_STEP * BG_PARALLAX_RATE,
+            ease: "none",
+            scrollTrigger: {
+              trigger: section,
+              start: "top top",
+              end: `+=${distance}`,
+              scrub: 1,
+            },
+          })
+        : null;
+
+      refreshScrollTrigger();
+
+      cleanup = () => {
+        pinTrigger.kill();
+        tween.scrollTrigger?.kill();
+        tween.kill();
+        bgTween?.scrollTrigger?.kill();
+        bgTween?.kill();
+      };
     });
 
-    // Background grid rides the same scroll range but only travels
-    // BG_PARALLAX_RATE of the card distance — slower than the (regular
-    // speed) cards, reading as a parallax depth cue during the pin.
-    const bg = bgRef.current;
-    const bgTween = bg
-      ? gsap.to(bg, {
-          y: -(PINNED_COUNT - 1) * CARD_STEP * BG_PARALLAX_RATE,
-          ease: "none",
-          scrollTrigger: {
-            trigger: section,
-            start: "top top",
-            end: `+=${distance}`,
-            scrub: 1,
-          },
-        })
-      : null;
-
-    ScrollTrigger.refresh();
-
     return () => {
-      pinTrigger.kill();
-      tween.scrollTrigger?.kill();
-      tween.kill();
-      bgTween?.scrollTrigger?.kill();
-      bgTween?.kill();
+      cancelled = true;
+      cleanup?.();
     };
   }, [reduced]);
 
@@ -549,7 +559,12 @@ function PinnedServicesRow({ reduced }: { reduced: boolean }) {
                     src={encodeURI(src)}
                     alt=""
                     fill
-                    loading="eager"
+                    // Lazy, not eager: this section sits several folds down,
+                    // so eagerly pulling all four crossfade frames put them
+                    // in direct bandwidth competition with the hero's own
+                    // LCP paint. The browser's lazy threshold starts these
+                    // well before the section scrolls into view.
+                    loading="lazy"
                     sizes="(min-width: 1024px) 520px, 100vw"
                     className="object-cover"
                     style={{

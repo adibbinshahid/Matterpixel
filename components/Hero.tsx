@@ -3,14 +3,13 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, type Variants } from "motion/react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { ArrowUpRight, ArrowRight, ChevronDown, Gauge, Star, ShieldCheck, Wallet, type LucideIcon } from "lucide-react";
 import { hero, trust } from "@/content/siteConfig";
 import { WEB_STACK } from "@/components/TechMarquee";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { DURATIONS, EASE } from "@/lib/utils";
 import { setHeroVideo } from "@/lib/heroVideoRef";
+import { loadGsap, refreshScrollTrigger } from "@/lib/loadGsap";
 
 /**
  * Text Reveal System (see Reveal.tsx) — the same blur-to-sharp + upward-
@@ -40,15 +39,6 @@ const item: Variants = {
   },
 };
 
-/** Headline lines reveal with a clip-path wipe (same technique as
- * RouteTransition's route wipe) instead of the blur/translate every other
- * line uses — the manifesto's two lines are the one moment on the page
- * that should read as "unveiled," not "faded in." */
-const line: Variants = {
-  hidden: { clipPath: "inset(0% 0% 100% 0%)" },
-  visible: { clipPath: "inset(0% 0% 0% 0%)", transition: { duration: DURATIONS.standard, ease: EASE } },
-};
-
 export function Hero() {
   const reduced = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -59,22 +49,30 @@ export function Hero() {
   // than a pan.
   useEffect(() => {
     if (reduced || !videoRef.current) return;
-    const tween = gsap.fromTo(
-      videoRef.current,
-      // Starts at 1.05, not 1 — matches the Tailwind `scale-105` fallback
-      // (reduced-motion never runs this effect, so that class is what
-      // renders instead) and gives the blur filter a hair of overscan so
-      // its edge-softening never peeks past the section's clipped bounds.
-      { scale: 1.05 },
-      {
-        scale: 1.12,
-        ease: "none",
-        scrollTrigger: { trigger: videoRef.current, start: "top top", end: "bottom top", scrub: true },
-      },
-    );
-    ScrollTrigger.refresh();
+    let cancelled = false;
+    let tween: gsap.core.Tween | null = null;
+
+    loadGsap().then(({ gsap }) => {
+      if (cancelled || !videoRef.current) return;
+      tween = gsap.fromTo(
+        videoRef.current,
+        // Starts at 1.05, not 1 — matches the Tailwind `scale-105` fallback
+        // (reduced-motion never runs this effect, so that class is what
+        // renders instead) and gives the blur filter a hair of overscan so
+        // its edge-softening never peeks past the section's clipped bounds.
+        { scale: 1.05 },
+        {
+          scale: 1.12,
+          ease: "none",
+          scrollTrigger: { trigger: videoRef.current, start: "top top", end: "bottom top", scrub: true },
+        },
+      );
+      refreshScrollTrigger();
+    });
+
     return () => {
-      tween.scrollTrigger?.kill();
+      cancelled = true;
+      tween?.scrollTrigger?.kill();
     };
   }, [reduced]);
 
@@ -172,12 +170,12 @@ export function Hero() {
           </motion.p>
 
           <h1 className="text-hero-headline lowercase overflow-hidden text-ink">
-            <motion.span variants={line} className="block overflow-hidden">
+            <span className="hero-line block overflow-hidden">
               We <span className="text-blue">build</span> what matters.
-            </motion.span>
-            <motion.span variants={line} className="block overflow-hidden">
+            </span>
+            <span className="hero-line block overflow-hidden" style={{ animationDelay: "0.08s" }}>
               Down to the <span className="text-magenta">pixel</span>.
-            </motion.span>
+            </span>
           </h1>
 
           {/* Same wording as hero.sub (content/siteConfig) — hardcoded here

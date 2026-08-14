@@ -22,7 +22,10 @@ const interTight = Inter_Tight({
 // Avenir has no dedicated "Bold" cut — Heavy is the standard stand-in
 // (Avenir Next is the only variant with a true Bold weight).
 const avenir = localFont({
-  src: "../public/fonts/Avenir-Heavy.ttf",
+  // WOFF2, not the raw .ttf sitting beside it — same outlines, ~a third the
+  // bytes (173KB -> 57KB), and it's a render-blocking-adjacent font on the
+  // hero headline's critical path.
+  src: "../public/fonts/Avenir-Heavy.woff2",
   variable: "--font-avenir",
   weight: "700",
   display: "swap",
