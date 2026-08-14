@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import { useDarkLogoSrc } from "@/lib/useDarkLogoSrc";
 
 /**
  * Master logo lockup (public/logo.png) — mark + "matterpixel" wordmark
@@ -11,8 +10,16 @@ import { useDarkLogoSrc } from "@/lib/useDarkLogoSrc";
  * for icon-only spots (hero visual, playground fallback).
  *
  * The raster wordmark (baked dark-gray ink) is illegible over a dark
- * background — `forceLight` swaps it for a client-recolored variant (see
- * lib/useDarkLogoSrc.ts) without touching the brand-color icon blocks.
+ * background — `forceLight` swaps it for public/logo-dark.png, which is the
+ * same lockup with only the near-gray wordmark pixels remapped to a light
+ * tone and the brand-color icon blocks left untouched.
+ *
+ * That variant used to be produced in the browser: fetch logo.png, run a
+ * 6.2-megapixel canvas pass over it, re-encode to a PNG data URL, cache in
+ * localStorage. It was a synchronous multi-megapixel main-thread operation
+ * on every first visit (plus a second network fetch of the raw PNG), all to
+ * recompute a file that never changes. It is now generated once, as a build
+ * artifact, by the same thresholds the old canvas pass used.
  */
 export function Logo({
   className,
@@ -20,6 +27,7 @@ export function Logo({
   imgId,
   priority = false,
   forceLight = false,
+  sizes = "256px",
 }: {
   className?: string;
   imgClassName?: string;
@@ -28,12 +36,15 @@ export function Logo({
   /** Use the light-wordmark variant — for spots (like the transparent-
    * over-hero nav) that sit on a dark background. */
   forceLight?: boolean;
+  /** CSS width the lockup actually renders at, so Next picks a matching
+   * srcset candidate. Without it, `width={4920}` below makes Next assume
+   * the image can fill the viewport and generate a 3840px variant — for a
+   * lockup that is never wider than ~280px on screen. The nav's copy is
+   * `priority`, so that oversized file was also being preloaded at high
+   * priority in <head>, competing with the hero for bandwidth. */
+  sizes?: string;
 }) {
-  // Precomputed eagerly/idly on mount regardless of `forceLight` — see
-  // lib/useDarkLogoSrc.ts for why (it must not start its expensive canvas
-  // work for the first time exactly when it's actually needed).
-  const darkSrc = useDarkLogoSrc();
-  const src = forceLight && darkSrc ? darkSrc : "/logo.png";
+  const src = forceLight ? "/logo-dark.png" : "/logo.png";
 
   return (
     <span className={cn("inline-flex items-center", className)}>
@@ -43,8 +54,8 @@ export function Logo({
         alt="Matterpixel"
         width={4920}
         height={1256}
+        sizes={sizes}
         priority={priority}
-        unoptimized={src.startsWith("data:")}
         // The source PNG has ~7.36% transparent padding baked in on both
         // sides, so the visible mark sits inset from the image's actual
         // edge — shift it left to align flush with surrounding text.

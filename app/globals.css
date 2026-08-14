@@ -218,6 +218,29 @@
   }
 }
 
+@keyframes hero-line-reveal {
+  from {
+    clip-path: inset(0% 0% 100% 0%);
+  }
+  to {
+    clip-path: inset(0% 0% 0% 0%);
+  }
+}
+
+/* Hero headline wipe, CSS-only (see components/Hero.tsx) — the LCP
+   candidate can't sit gated behind JS hydration + framer-motion's mount
+   animation, so this reveal runs off the browser's own paint clock
+   instead, starting the instant the server HTML paints. */
+.hero-line {
+  animation: hero-line-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-line {
+    animation: none;
+  }
+}
+
 /* First-paint black screen the whole site emerges from — see the
    comment on #mp-load-mask in app/layout.tsx. Pure CSS: opacity 1 (via
    the `backwards` fill) from the very first frame, holds briefly, then

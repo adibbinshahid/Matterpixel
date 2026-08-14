@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Pre-optimization source assets, kept locally as a fallback if any
+# re-encode ever needs redoing. ~10MB — deliberately untracked so it
+# doesn't live in git history forever.
+/public/videos/*.original.*
+/public/WhoWeWorkFor/.orig/
