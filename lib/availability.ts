@@ -52,7 +52,11 @@ const WEEKDAY_INDEX: Record<string, number> = {
 
 /** Day of week (0 = Sunday) for `instant` as seen in `timeZone`. */
 export function zonedWeekday(instant: Date, timeZone: string): number {
-  const label = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" }).format(instant);
+  // Written as `timeZone: timeZone` (not shorthand) — the shorthand form
+  // triggers a production-minifier bug where inlining this function drops
+  // the renamed reference but keeps the literal key, throwing a genuine
+  // ReferenceError in the built bundle (never reproduces in dev).
+  const label = new Intl.DateTimeFormat("en-US", { timeZone: timeZone, weekday: "short" }).format(instant);
   return WEEKDAY_INDEX[label] ?? 0;
 }
 
