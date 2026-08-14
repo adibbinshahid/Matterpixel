@@ -6,6 +6,7 @@ import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { Accordion } from "@/components/ui/Accordion";
 import { services, getServiceBySlug } from "@/content/services";
 import { siteUrl } from "@/content/siteConfig";
+import { WebDevServicePage } from "@/components/services/webdev/WebDevServicePage";
 
 const WHY_MATTERPIXEL = [
   "Senior-led from strategy to final delivery",
@@ -50,6 +51,27 @@ export default async function ServiceDetailPage({
   const service = getServiceBySlug(slug);
   if (!service) notFound();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: service.title,
+    description: service.intro,
+    provider: { "@type": "Organization", name: "Matterpixel" },
+    url: `${siteUrl}/services/${service.slug}`,
+  };
+
+  if (service.slug === "web-app-development") {
+    return (
+      <>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <WebDevServicePage service={service} />
+      </>
+    );
+  }
+
   const breakdownSections = [
     { title: "Capabilities", items: service.capabilities },
     { title: "Performance", items: service.performance },
@@ -62,15 +84,6 @@ export default async function ServiceDetailPage({
     { title: "Frequently requested", items: service.frequentlyRequested },
     { title: "Why clients choose this service", items: service.whyChooseUs },
   ].filter((s): s is { title: string; items: string[] } => !!s.items?.length);
-
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "Service",
-    name: service.title,
-    description: service.intro,
-    provider: { "@type": "Organization", name: "Matterpixel" },
-    url: `${siteUrl}/services/${service.slug}`,
-  };
 
   return (
     <>

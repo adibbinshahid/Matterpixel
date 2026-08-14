@@ -2237,7 +2237,7 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
   const reduced = useReducedMotion();
   const waRaw = formatPhone(footer.contact.whatsapp);
   const waNumber = footer.contact.whatsapp.replace(/[^\d]/g, "");
-  const email = "info@matterpixel.com";
+  const email = footer.contact.email;
 
   const copy = async (key: "whatsapp" | "email", value: string) => {
     try {

@@ -299,7 +299,7 @@ export const footer = {
   foundingLine: "Now taking a select few founding clients.",
   copyright: `© ${brand.year} Matterpixel. All rights reserved.`,
   contact: {
-    email: "adib.bin.shahid@gmail.com",
+    email: "hello@matterpixel.com",
     whatsapp: "+8801707555755",
     telegram: "+8801707555755",
     location: "Working globally, HQ based on Dhaka",

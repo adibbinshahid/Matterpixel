@@ -1,11 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import Link from "next/link";
 import { motion, useScroll, useTransform } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
 import { proofBoard } from "@/content/servicesPage";
-import { servicesCta } from "@/content/siteConfig";
 import { EASE } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
@@ -17,21 +14,13 @@ import { useReducedMotion } from "@/lib/useReducedMotion";
  * Visual grammar: blue-dominant, but through *typography* rather than a
  * full-bleed blue fill — Process further down already owns the blue panel,
  * and two blue slabs in one page would flatten the rhythm. Here the blue
- * mass is the numerals themselves, set at three different scales on an
- * irregular grid, with the two largest cropped by the right edge of the
- * viewport. Nothing is a card.
- *
- * The result reads as a board someone pinned evidence to, not a stat row.
+ * mass is the numerals themselves, all set at one flat size on a single
+ * baseline so the row reads as one stat block. Nothing is a card.
  */
 
-/** Type scale per `metric.scale` tier. Tier 1 is the headline evidence,
- * tier 3 the supporting marks — a flat scale is what makes a stat row look
- * like a component instead of a composition. */
-const SIZE_BY_SCALE: Record<number, string> = {
-  1: "text-[clamp(3.5rem,9vw,7.5rem)]",
-  2: "text-[clamp(2.75rem,6vw,5rem)]",
-  3: "text-[clamp(2.25rem,4.2vw,3.5rem)]",
-};
+/** One flat size for every metric — six figures on one baseline read as a
+ * single stat row, not a hierarchy. */
+const METRIC_SIZE = "text-[clamp(2.75rem,5vw,4.5rem)]";
 
 function Metric({
   metric,
@@ -43,7 +32,7 @@ function Metric({
   const reduced = useReducedMotion();
 
   return (
-    <div className={metric.bleed ? "lg:-mr-24 xl:-mr-32" : undefined}>
+    <div>
       {/* The numeral rises into a fixed mask rather than fading in — the
           figure uncovers from its own baseline, which reads as a value
           being set rather than content appearing.
@@ -55,7 +44,7 @@ function Metric({
           padding, cancelled by an equal negative margin, keeps the mask
           off glyph descenders without changing layout. */}
       <motion.p
-        className={`${SIZE_BY_SCALE[metric.scale]} -mb-[0.08em] overflow-hidden pb-[0.08em] font-extrabold leading-[0.82] tracking-[-0.045em] text-blue`}
+        className={`${METRIC_SIZE} -mb-[0.08em] overflow-hidden pb-[0.08em] font-extrabold leading-[0.82] tracking-[-0.045em] text-blue`}
         // The in-view trigger MUST sit on the mask, not on the moving
         // numeral. The mask hides the numeral completely at its start
         // position, so an observer attached to the numeral would report it
@@ -113,19 +102,9 @@ export function ProofBoard() {
     offset: ["start end", "end start"],
   });
 
-  // The oversized heading tracks slightly against the scroll. Small
-  // amplitude on purpose: it should register as the board having depth,
-  // not as the headline sliding around.
-  const headingY = useTransform(scrollYProgress, [0, 1], [40, -40]);
   // The faint pixel column in the gutter travels further, so the two
   // layers separate visibly as the section passes.
   const gutterY = useTransform(scrollYProgress, [0, 1], [90, -90]);
-
-  const [tier1, tier2, tier3] = [
-    proofBoard.metrics.filter((m) => m.scale === 1),
-    proofBoard.metrics.filter((m) => m.scale === 2),
-    proofBoard.metrics.filter((m) => m.scale === 3),
-  ];
 
   return (
     <section
@@ -153,89 +132,13 @@ export function ProofBoard() {
       </motion.div>
 
       <div className="section-shell py-14 lg:py-16">
-        {/* ── Heading ────────────────────────────────────────────────── */}
-        <motion.div style={reduced ? undefined : { y: headingY }} className="relative z-10">
-          <p className="label-eyebrow mb-3 inline-flex items-center gap-2">
-            {proofBoard.eyebrow}
-            <span className="h-px w-5 bg-blue" />
-            <span className="h-1 w-1 rounded-full bg-magenta" />
-          </p>
-
-          <h2 className="max-w-[16ch] text-[clamp(1.875rem,3.6vw,2.75rem)] font-extrabold leading-[0.95] tracking-tight text-ink">
-            {proofBoard.heading[0]}{" "}
-            <span className="text-magenta">{proofBoard.heading[1]}</span>
-          </h2>
-
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-ink-soft">
-            {proofBoard.body}
-          </p>
-        </motion.div>
-
-        {/* ── Tier 1: the two headline figures ───────────────────────── */}
-        {/* Asymmetric column split (5/7), and the second figure bleeds past
-            the container's right edge — the crop is what stops this reading
-            as a two-up grid. */}
-        <div className="mt-10 grid gap-8 lg:mt-12 lg:grid-cols-12 lg:gap-8">
-          {tier1.map((m, i) => (
-            <div
-              key={m.value + m.unit}
-              // Alternating span + a top offset on every second figure:
-              // the stagger is what breaks the row, so it survives the list
-              // growing or shrinking rather than depending on exactly two.
-              className={i % 2 === 0 ? "lg:col-span-5" : "lg:col-span-7 lg:pt-5"}
-            >
+        {/* ── Single row, all six figures on one baseline ────────────── */}
+        <div className="flex flex-wrap items-start gap-x-10 gap-y-10 lg:flex-nowrap lg:gap-x-8">
+          {proofBoard.metrics.map((m, i) => (
+            <div key={m.value + m.unit} className="min-w-[6.5rem] flex-1">
               <Metric metric={m} index={i} />
             </div>
           ))}
-        </div>
-
-        {/* ── Tier 2: mid-scale, offset right ────────────────────────── */}
-        <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-12 lg:gap-8">
-          {/* Empty leading column on desktop — the negative space is doing
-              structural work, indenting tier 2 away from tier 1's edge. */}
-          <div className="hidden lg:col-span-3 lg:block" />
-          {tier2.map((m, i) => (
-            <div key={m.value + m.unit} className="lg:col-span-4">
-              <Metric metric={m} index={tier1.length + i} />
-            </div>
-          ))}
-        </div>
-
-        {/* ── Tier 3: supporting marks, back at the left edge ────────── */}
-        <div className="mt-8 grid gap-8 lg:mt-10 lg:grid-cols-12 lg:gap-8">
-          {tier3.map((m, i) => (
-            <div key={m.value + m.unit} className="lg:col-span-3">
-              <Metric metric={m} index={tier1.length + tier2.length + i} />
-            </div>
-          ))}
-
-          {/* The board's closing move: the section's conversion action sits
-              in the last column as a peer of the metrics, not as a banner
-              bolted underneath them. */}
-          <div className="lg:col-span-5 lg:col-start-9 lg:self-start">
-            <motion.div
-              className="border-t border-ink/15 pt-2"
-              initial={reduced ? false : { opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.6, ease: EASE }}
-            >
-              <div className="flex flex-wrap gap-x-5 gap-y-2">
-                {servicesCta.badges.map((b) => (
-                  <span
-                    key={b}
-                    className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-ink-soft"
-                  >
-                    {b}
-                  </span>
-                ))}
-              </div>
-              <Link href="/contact?tab=booking" className="btn-brand group mt-4 w-fit">
-                {servicesCta.button}
-                <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
-            </motion.div>
-          </div>
         </div>
       </div>
     </section>

@@ -15,8 +15,9 @@ import {
 import { logger } from "@/lib/logger";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
-const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "info@matterpixel.com";
-const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "Matterpixel <hello@matterpixel.com>";
+const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "no-reply@matterpixel.com";
+const FROM_ADDRESS = process.env.CONTACT_FROM_ADDRESS || "hello@matterpixel.com";
+const CONFIRMATION_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || `Matterpixel <${FROM_ADDRESS}>`;
 
 let resendClient: Resend | null = null;
 function getResendClient(): Resend {
@@ -102,7 +103,7 @@ export async function POST(request: Request) {
   try {
     const resend = getResendClient();
     const notification = await resend.emails.send({
-      from: FROM_EMAIL,
+      from: `${data.fullName} via Matterpixel <${FROM_ADDRESS}>`,
       to: TO_EMAIL,
       replyTo: data.email,
       subject: `Discovery call request from ${data.fullName}`,
@@ -137,7 +138,7 @@ export async function POST(request: Request) {
     logger.info("book.received", { ip, email: data.email, messageId: notification.data?.id });
 
     const confirmation = await resend.emails.send({
-      from: FROM_EMAIL,
+      from: CONFIRMATION_FROM_EMAIL,
       to: data.email,
       subject: "We've got your call request — Matterpixel",
       text: [

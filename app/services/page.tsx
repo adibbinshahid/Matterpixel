@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Services } from "@/components/Services";
 import { ServicesHero } from "@/components/services/ServicesHero";
-import { TheStandard } from "@/components/services/TheStandard";
 import { ProofBoard } from "@/components/services/ProofBoard";
 import { FounderEditorial } from "@/components/services/FounderEditorial";
 import { ProcessSystem } from "@/components/services/ProcessSystem";
@@ -19,9 +18,8 @@ export const metadata: Metadata = {
  * grammar, so the page never resolves into one repeated layout:
  *
  *   ServicesHero    cursor-reactive pixel field, giant headline
- *   TheStandard     two-column editorial ledger, hairline rules
- *   Services        the six-service card system (unchanged)
  *   ProofBoard      oversized blue numerals on an irregular, cropped grid
+ *   Services        the six-service card system (unchanged)
  *   FounderEditorial portrait plate bled off-edge, counter-parallax type
  *   ProcessSystem   blue full-bleed, sticky rail + scroll-driven connector
  *   FinalCta        magenta full-bleed close — distinct copy/grammar from
@@ -40,13 +38,11 @@ export default function ServicesPage() {
     <>
       <ServicesHero />
 
-      <TheStandard />
+      <ProofBoard />
 
       {/* The service system itself. `showCta` is off because the blue
           banner closes the page below rather than interrupting here. */}
       <Services showHeading={false} showCta={false} />
-
-      <ProofBoard />
 
       <FounderEditorial />
 

@@ -7,8 +7,9 @@ import { servicesIntro } from "@/content/siteConfig";
 
 /**
  * The hero, unchanged in concept: same eyebrow, same
- * "end-to-end pixel-perfect execution." headline at the same GiantHeading
- * scale, same supporting statement.
+ * "end-to-end pixel-perfect execution." headline, uncapped GiantHeading
+ * scale (matches the homepage's edge-to-edge giant headings), same
+ * supporting statement.
  *
  * What's new is underneath it — PixelField lays a near-invisible pixel
  * lattice across the whole opening, and only the pixels within reach of the
@@ -23,10 +24,10 @@ import { servicesIntro } from "@/content/siteConfig";
  */
 export function ServicesHero() {
   return (
-    // Bottom padding (the original had none) gives the pixel field enough
-    // vertical room to actually be a field rather than a band — the detail
-    // is only discoverable if there's space to move the cursor through.
-    <section className="relative overflow-hidden px-6 pb-14 pt-32 sm:px-8 lg:px-12 lg:pb-20">
+    // Bottom padding kept modest — ProofBoard sits directly beneath with
+    // its own top padding, so this only needs enough room for the pixel
+    // field to read as a field rather than a band, not a full section gap.
+    <section className="relative overflow-hidden px-6 pb-6 pt-32 sm:px-8 lg:px-12 lg:pb-8">
       {/* Field sits behind the content and is pointer-events-none
           throughout, so it can never intercept a click on the headline. */}
       <PixelField className="pointer-events-none absolute inset-0 z-0" />
@@ -42,7 +43,6 @@ export function ServicesHero() {
             <GiantHeading
               lines={[servicesIntro.headingLines[0]]}
               highlight="pixel-perfect"
-              maxFontSize={56}
             />
           </h1>
           <p className="mt-3 max-w-3xl text-lg leading-relaxed text-ink-soft sm:whitespace-nowrap">
