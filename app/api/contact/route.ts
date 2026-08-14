@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { inquirySchema, normalizeWebsite } from "@/lib/schema";
+import { renderConfirmationEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
-const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "no-reply@matterpixel.com";
 const FROM_ADDRESS = process.env.CONTACT_FROM_ADDRESS || "hello@matterpixel.com";
 const CONFIRMATION_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || `Matterpixel <${FROM_ADDRESS}>`;
+const CONFIRMATION_CC_EMAIL = process.env.CONTACT_CC_EMAIL || "adib@matterpixel.com";
 
 // Constructed lazily (only once we know the key exists) — the Resend
 // constructor throws synchronously on a missing key, which would otherwise
@@ -58,68 +59,47 @@ export async function POST(request: Request) {
 
   try {
     const resend = getResendClient();
-    const notification = await resend.emails.send({
-      from: `${data.fullName} via Matterpixel <${FROM_ADDRESS}>`,
-      to: TO_EMAIL,
-      replyTo: data.workEmail,
-      subject: `New project inquiry from ${data.fullName}`,
-      text: [
-        `Name: ${data.fullName}`,
-        `Email: ${data.workEmail}`,
-        data.whatsapp ? `WhatsApp: ${data.whatsapp}` : null,
-        data.company ? `Company: ${data.company}` : null,
-        data.website ? `Website: ${normalizeWebsite(data.website)}` : null,
-        `Budget: ${data.budget}`,
-        `Timeline: ${data.timeline}`,
-        `Project Type: ${data.projectType}`,
-        `Services: ${data.serviceTypes.join(", ")}`,
-        `Goals: ${data.projectGoals.join(", ")}`,
-        data.otherGoalDetails ? `Other goal details: ${data.otherGoalDetails}` : null,
-        "",
-        "Project details:",
-        data.projectDetails,
-      ]
-        .filter(Boolean)
-        .join("\n"),
+
+    const { html, text } = renderConfirmationEmail({
+      heading: "We've got your message.",
+      intro:
+        "Thanks for reaching us — your query is very important to us. We'll be reverting to you in a very short time.",
+      rows: [
+        ["Name", data.fullName],
+        ["Work Email", data.workEmail],
+        ["WhatsApp", data.whatsapp],
+        ["Company", data.company],
+        ["Website", data.website ? normalizeWebsite(data.website) : undefined],
+        ["Budget", data.budget],
+        ["Timeline", data.timeline],
+        ["Project Type", data.projectType],
+        ["Services", data.serviceTypes.join(", ")],
+        ["Goals", data.projectGoals.join(", ")],
+        ["Other Goal Details", data.otherGoalDetails],
+        ["Project Details", data.projectDetails],
+      ],
+      closing: "We'll review your requirements and get back to you within 24 hours.",
     });
 
-    if (notification.error) {
-      logger.error("contact.send_failed", { ip, error: notification.error.message });
+    const confirmation = await resend.emails.send({
+      from: CONFIRMATION_FROM_EMAIL,
+      to: data.workEmail,
+      cc: CONFIRMATION_CC_EMAIL,
+      replyTo: FROM_ADDRESS,
+      subject: "We've got your message — Matterpixel",
+      html,
+      text,
+    });
+
+    if (confirmation.error) {
+      logger.error("contact.send_failed", { ip, error: confirmation.error.message });
       return NextResponse.json(
         { ok: false, error: "Something went wrong. Please try again shortly." },
         { status: 502 },
       );
     }
 
-    logger.info("contact.received", { ip, email: data.workEmail, messageId: notification.data?.id });
-
-    const confirmation = await resend.emails.send({
-      from: CONFIRMATION_FROM_EMAIL,
-      to: data.workEmail,
-      subject: "We've got your message — Matterpixel",
-      text: [
-        `Hi ${data.fullName},`,
-        "",
-        "Thanks for reaching out to Matterpixel. We've received your project details and will reply within 24 hours.",
-        "",
-        "Here's a copy of what you sent us:",
-        `Budget: ${data.budget}`,
-        `Timeline: ${data.timeline}`,
-        `Project Type: ${data.projectType}`,
-        `Services: ${data.serviceTypes.join(", ")}`,
-        `Goals: ${data.projectGoals.join(", ")}`,
-        data.projectDetails,
-        "",
-        "Talk soon,",
-        "The Matterpixel team",
-      ].join("\n"),
-    });
-
-    if (confirmation.error) {
-      // Visitor's inquiry is already in — a failed courtesy email shouldn't
-      // surface as a submission failure.
-      logger.warn("contact.confirmation_failed", { ip, error: confirmation.error.message });
-    }
+    logger.info("contact.received", { ip, email: data.workEmail, messageId: confirmation.data?.id });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

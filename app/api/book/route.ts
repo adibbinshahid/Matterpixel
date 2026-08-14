@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { bookingSchema } from "@/lib/schema";
+import { renderConfirmationEmail } from "@/lib/email";
 import {
   AVAILABILITY,
   HORIZON_DAYS,
@@ -15,9 +16,9 @@ import {
 import { logger } from "@/lib/logger";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
-const TO_EMAIL = process.env.CONTACT_TO_EMAIL || "no-reply@matterpixel.com";
 const FROM_ADDRESS = process.env.CONTACT_FROM_ADDRESS || "hello@matterpixel.com";
 const CONFIRMATION_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || `Matterpixel <${FROM_ADDRESS}>`;
+const CONFIRMATION_CC_EMAIL = process.env.CONTACT_CC_EMAIL || "adib@matterpixel.com";
 
 let resendClient: Resend | null = null;
 function getResendClient(): Resend {
@@ -102,64 +103,48 @@ export async function POST(request: Request) {
 
   try {
     const resend = getResendClient();
-    const notification = await resend.emails.send({
-      from: `${data.fullName} via Matterpixel <${FROM_ADDRESS}>`,
-      to: TO_EMAIL,
-      replyTo: data.email,
-      subject: `Discovery call request from ${data.fullName}`,
-      text: [
-        `Name: ${data.fullName}`,
-        `Email: ${data.email}`,
-        `WhatsApp: ${data.whatsapp || "—"}`,
-        `Company: ${data.company || "—"}`,
-        `Website: ${data.website || "—"}`,
-        `Role: ${data.role}`,
-        `Audit focus: ${data.auditFocus.join(", ")}`,
-        `Biggest challenge: ${data.challenge}`,
-        `Budget: ${data.budget}`,
-        `Timeline: ${data.timeline}`,
-        "",
-        `Slot (their time): ${slotLocal}`,
-        `Slot (UTC): ${slotUtcLabel}`,
-        `ISO: ${slot.toISOString()}`,
-        "",
-        `Notes: ${data.notes || "—"}`,
-      ].join("\n"),
+
+    const { html, text } = renderConfirmationEmail({
+      heading: "We've got your call request.",
+      intro:
+        "Thanks for reaching us — your query is very important to us. We'll be reverting to you in a very short time.",
+      rows: [
+        ["Name", data.fullName],
+        ["Email", data.email],
+        ["WhatsApp", data.whatsapp],
+        ["Company", data.company],
+        ["Website", data.website],
+        ["Role", data.role],
+        ["Audit Focus", data.auditFocus.join(", ")],
+        ["Biggest Challenge", data.challenge],
+        ["Budget", data.budget],
+        ["Timeline", data.timeline],
+        ["Preferred Slot", slotLocal],
+        ["Slot (UTC)", slotUtcLabel],
+        ["Notes", data.notes],
+      ],
+      closing: `${AVAILABILITY.callsLong} We'll confirm shortly and send over a Google Meet link.`,
     });
 
-    if (notification.error) {
-      logger.error("book.send_failed", { ip, error: notification.error.message });
+    const confirmation = await resend.emails.send({
+      from: CONFIRMATION_FROM_EMAIL,
+      to: data.email,
+      cc: CONFIRMATION_CC_EMAIL,
+      replyTo: FROM_ADDRESS,
+      subject: "We've got your call request — Matterpixel",
+      html,
+      text,
+    });
+
+    if (confirmation.error) {
+      logger.error("book.send_failed", { ip, error: confirmation.error.message });
       return NextResponse.json(
         { ok: false, error: "Something went wrong. Please try again shortly." },
         { status: 502 },
       );
     }
 
-    logger.info("book.received", { ip, email: data.email, messageId: notification.data?.id });
-
-    const confirmation = await resend.emails.send({
-      from: CONFIRMATION_FROM_EMAIL,
-      to: data.email,
-      subject: "We've got your call request — Matterpixel",
-      text: [
-        `Hi ${data.fullName},`,
-        "",
-        "Thanks for requesting a discovery call. We've noted your preferred slot:",
-        slotLocal,
-        `That's ${slotUtcLabel}.`,
-        "",
-        AVAILABILITY.callsLong,
-        "",
-        "We'll confirm shortly and send over a Google Meet link.",
-        "",
-        "Talk soon,",
-        "The Matterpixel team",
-      ].join("\n"),
-    });
-
-    if (confirmation.error) {
-      logger.warn("book.confirmation_failed", { ip, error: confirmation.error.message });
-    }
+    logger.info("book.received", { ip, email: data.email, messageId: confirmation.data?.id });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
