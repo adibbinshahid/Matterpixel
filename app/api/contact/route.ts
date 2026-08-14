@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { inquirySchema, normalizeWebsite } from "@/lib/schema";
-import { renderConfirmationEmail } from "@/lib/email";
+import { renderConfirmationEmail, toTitleCase } from "@/lib/email";
 import { logger } from "@/lib/logger";
 import { getClientIp, isRateLimited } from "@/lib/rate-limit";
 
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       to: data.workEmail,
       cc: CONFIRMATION_CC_EMAIL,
       replyTo: FROM_ADDRESS,
-      subject: "We've got your message — Matterpixel",
+      subject: `Thank You for Reaching Out, ${toTitleCase(data.fullName)} | Matterpixel`,
       html,
       text,
     });

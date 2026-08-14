@@ -8,6 +8,16 @@ function escapeHtml(value: string): string {
 
 export type EmailDetailRow = [label: string, value: string | null | undefined];
 
+/** "jane VAN doe" -> "Jane Van Doe" — for names dropped into a subject line,
+ * where inconsistent visitor casing (all-caps, all-lower) reads as unpolished. */
+export function toTitleCase(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
 /** Renders a client-facing confirmation as a clean, table-based HTML email
  * (inline styles only — most mail clients strip <style> blocks) alongside a
  * plain-text fallback, so the visitor gets a professional-looking copy of

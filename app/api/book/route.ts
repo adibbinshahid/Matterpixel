@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { bookingSchema } from "@/lib/schema";
-import { renderConfirmationEmail } from "@/lib/email";
+import { renderConfirmationEmail, toTitleCase } from "@/lib/email";
 import {
   AVAILABILITY,
   HORIZON_DAYS,
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
       to: data.email,
       cc: CONFIRMATION_CC_EMAIL,
       replyTo: FROM_ADDRESS,
-      subject: "We've got your call request — Matterpixel",
+      subject: `Thank You for Reaching Out, ${toTitleCase(data.fullName)} | Matterpixel`,
       html,
       text,
     });
