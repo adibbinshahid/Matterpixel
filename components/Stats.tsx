@@ -24,12 +24,17 @@ function ServicesBleed() {
 
 /** Compact chip, not the old tall card — number + label side by side, no
  * desc paragraph (a marquee's items are read at a glance while passing by,
- * not lingered on). */
+ * not lingered on).
+ *
+ * Roughly half scale below `sm` (type, padding and gap all step down): at
+ * full size only about two chips fit across a phone, so most of the row was
+ * a single half-cut capsule. Halved, four to five are in view at once,
+ * which is what makes a marquee read as a marquee. Desktop is unchanged. */
 function StatChip({ stat }: { stat: (typeof stats)[number] }) {
   return (
-    <div className="glass-card flex shrink-0 items-center gap-3 whitespace-nowrap rounded-2xl px-5 py-3">
-      <span className="text-2xl font-bold leading-none tracking-tight text-paper sm:text-3xl">{stat.value}</span>
-      <span className="text-xs font-semibold uppercase leading-tight tracking-[0.08em] text-paper/75">
+    <div className="glass-card flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 py-1.5 sm:gap-3 sm:rounded-2xl sm:px-5 sm:py-3">
+      <span className="text-base font-bold leading-none tracking-tight text-paper sm:text-3xl">{stat.value}</span>
+      <span className="text-[0.55rem] font-semibold uppercase leading-tight tracking-[0.08em] text-paper/75 sm:text-xs">
         {stat.label}
       </span>
     </div>
@@ -62,7 +67,7 @@ function MarqueeRow({ reverse, duration }: { reverse?: boolean; duration: number
       }}
     >
       <div
-        className="flex w-max shrink-0 gap-4"
+        className="flex w-max shrink-0 gap-2 sm:gap-4"
         style={reduced ? undefined : { animation: `marquee ${duration}s linear infinite${reverse ? " reverse" : ""}` }}
       >
         {[...stats, ...stats].map((stat, i) => (

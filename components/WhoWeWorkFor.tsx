@@ -173,7 +173,10 @@ export function WhoWeWorkFor() {
       pausedUntilRef.current = 0;
       return;
     }
-    if (reducedMotion) return;
+    // Below `md` every card is open at once (see `isOpen` in the render),
+    // so there is no active card for the autoplay to advance — ticking
+    // would just churn state behind an unchanged layout.
+    if (reducedMotion || !isDesktop) return;
     // Wait a beat after scrolling in before autoplay kicks off, so the
     // section doesn't start animating the instant it's crossed into view.
     const startTimeout = setTimeout(() => {
@@ -188,10 +191,11 @@ export function WhoWeWorkFor() {
       clearTimeout(startTimeout);
       clearInterval(interval);
     };
-  }, [inView, reducedMotion]);
+  }, [inView, reducedMotion, isDesktop]);
 
   function handleClick(i: number) {
-    if (i === activeIndex) return;
+    // Nothing to select on mobile — every card is already open.
+    if (!isDesktop || i === activeIndex) return;
     setActiveIndex(i);
     pausedUntilRef.current = Date.now() + CLICK_PAUSE_MS;
   }
@@ -214,8 +218,9 @@ export function WhoWeWorkFor() {
           </h2>
         </div>
 
-        {/* Progress dots */}
-        <div className="mt-8 flex items-center justify-center gap-2" aria-hidden="true">
+        {/* Progress dots — desktop only; below `md` nothing cycles, so there
+           is no position for them to report. */}
+        <div className="mt-8 hidden items-center justify-center gap-2 md:flex" aria-hidden="true">
           {segments.map((_, i) => (
             <span
               key={i}
@@ -232,7 +237,14 @@ export function WhoWeWorkFor() {
         <div className="relative mt-10">
           <div className="flex flex-col gap-3 md:flex-row md:items-stretch md:gap-3">
             {segments.map((segment, i) => {
-              const isActive = reducedMotion ? i === 0 : i === activeIndex;
+              // Below `md` there is no accordion at all: all four cards render
+              // in their open state, permanently. The collapsed treatment
+              // exists to buy horizontal room in the desktop row, and a
+              // vertical phone stack has no such constraint — it just made
+              // three of the four segments unreadable until tapped. Nothing
+              // transitions on mobile either, since `isOpen` never changes
+              // there and every animation below is `initial={false}`.
+              const isOpen = !isDesktop || (reducedMotion ? i === 0 : i === activeIndex);
               // Width-only tween on explicit flex properties (grow/basis) — no `layout`
               // prop here, since its automatic FLIP also interpolates height, and a
               // fixed-height row with `items-stretch` meant that whenever the active
@@ -245,7 +257,7 @@ export function WhoWeWorkFor() {
                   initial={false}
                   animate={
                     isDesktop
-                      ? { flexGrow: isActive ? 1 : 0, flexBasis: isActive ? "0%" : "64px" }
+                      ? { flexGrow: isOpen ? 1 : 0, flexBasis: isOpen ? "0%" : "64px" }
                       : { flexGrow: 0, flexBasis: "auto" }
                   }
                   transition={{
@@ -257,7 +269,7 @@ export function WhoWeWorkFor() {
                     // columns to the shrinking width underneath it, which read as the list
                     // "jumping to another spot" for a moment. Expanding card still grows
                     // immediately (delay 0) so clicks feel instant, not laggy.
-                    delay: reducedMotion || isActive ? 0 : 0.15,
+                    delay: reducedMotion || isOpen ? 0 : 0.15,
                   }}
                   className="group relative w-full shrink-0 overflow-hidden rounded-[22px] text-left transition-shadow duration-500"
                   style={{
@@ -272,7 +284,7 @@ export function WhoWeWorkFor() {
                       "linear-gradient(165deg, color-mix(in srgb, white 92%, transparent) 0%, color-mix(in srgb, white 65%, transparent) 100%)",
                     backdropFilter: "blur(20px) saturate(160%)",
                     WebkitBackdropFilter: "blur(20px) saturate(160%)",
-                    boxShadow: isActive
+                    boxShadow: isOpen
                       ? "none"
                       : "inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -1px 1px rgba(0,0,0,0.04), inset 0 0 0 1px rgba(255,255,255,0.6), 0 18px 40px -16px rgba(15,15,35,0.22), 0 4px 10px -4px rgba(15,15,35,0.1)",
                   }}
@@ -284,7 +296,7 @@ export function WhoWeWorkFor() {
                     className="pointer-events-none absolute inset-0 h-full w-full blur-2xl"
                     style={blobStyle(i)}
                     initial={false}
-                    animate={{ opacity: isActive ? 0 : 1 }}
+                    animate={{ opacity: isOpen ? 0 : 1 }}
                     transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.6, ease: LIQUID_EASE }}
                   />
 
@@ -298,7 +310,7 @@ export function WhoWeWorkFor() {
                         "linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 28%, transparent 55%)",
                     }}
                     initial={false}
-                    animate={{ opacity: isActive ? 0 : 1 }}
+                    animate={{ opacity: isOpen ? 0 : 1 }}
                     transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.6, ease: LIQUID_EASE }}
                   />
 
@@ -310,7 +322,7 @@ export function WhoWeWorkFor() {
                     className="pointer-events-none absolute inset-0"
                     style={{ background: "var(--blue)" }}
                     initial={false}
-                    animate={{ opacity: isActive ? 1 : 0 }}
+                    animate={{ opacity: isOpen ? 1 : 0 }}
                     transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.6, ease: LIQUID_EASE }}
                   />
 
@@ -326,7 +338,7 @@ export function WhoWeWorkFor() {
                       transform: "scale(1.03)",
                     }}
                     initial={false}
-                    animate={{ opacity: isActive ? 1 : 0 }}
+                    animate={{ opacity: isOpen ? 1 : 0 }}
                     transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.6, ease: LIQUID_EASE }}
                   />
 
@@ -340,16 +352,16 @@ export function WhoWeWorkFor() {
                         "linear-gradient(180deg, color-mix(in srgb, var(--blue) 55%, black 25%) 0%, color-mix(in srgb, var(--blue) 60%, black 45%) 100%)",
                     }}
                     initial={false}
-                    animate={{ opacity: isActive ? 0.82 : 0 }}
+                    animate={{ opacity: isOpen ? 0.82 : 0 }}
                     transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.6, ease: LIQUID_EASE }}
                   />
 
                   <button
                     type="button"
                     onClick={() => handleClick(i)}
-                    aria-expanded={isActive}
+                    aria-expanded={isOpen}
                     className={`relative z-10 flex h-full w-full flex-col text-left ${
-                      isActive ? "p-6" : "p-4 md:p-6 md:px-2"
+                      isOpen ? "p-6" : "p-4 md:p-6 md:px-2"
                     }`}
                   >
                     {/* 88px of reserved inner height plus 24px of padding made
@@ -361,7 +373,7 @@ export function WhoWeWorkFor() {
                     <div className="relative flex h-full min-h-[40px] flex-col md:h-[250px]">
                       <div
                         className={`flex items-start justify-between gap-3 ${
-                          isActive ? "md:flex-col md:items-start" : ""
+                          isOpen ? "md:flex-col md:items-start" : ""
                         }`}
                       >
                         {/* Number and title are each independently absolute-positioned off the
@@ -369,11 +381,11 @@ export function WhoWeWorkFor() {
                             at the exact same pinned spot regardless of what the title does. */}
                         <motion.span
                           className={`text-xs font-semibold ${
-                            !isActive ? "md:absolute md:left-1/2 md:top-6 md:-translate-x-1/2" : ""
+                            !isOpen ? "md:absolute md:left-1/2 md:top-6 md:-translate-x-1/2" : ""
                           }`}
                           initial={false}
                           animate={{
-                            color: isActive ? "rgba(255,255,255,0.75)" : "color-mix(in srgb, var(--ink-soft) 60%, transparent)",
+                            color: isOpen ? "rgba(255,255,255,0.75)" : "color-mix(in srgb, var(--ink-soft) 60%, transparent)",
                           }}
                           transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.4, ease: LIQUID_EASE }}
                         >
@@ -402,7 +414,7 @@ export function WhoWeWorkFor() {
                           initial={false}
                           animate={
                             isDesktop
-                              ? { top: "0%", left: "0%", width: isActive ? "70%" : "100%", height: isActive ? "28%" : "100%" }
+                              ? { top: "0%", left: "0%", width: isOpen ? "70%" : "100%", height: isOpen ? "28%" : "100%" }
                               : {}
                           }
                           transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S, ease: LIQUID_EASE }}
@@ -415,15 +427,15 @@ export function WhoWeWorkFor() {
                           // can't reintroduce the ancestor-resize FLIP conflict — it doesn't touch
                           // the top/left/width/height tween at all.
                           className={`min-h-[1.75em] w-full md:absolute md:flex md:items-center ${
-                            isActive ? "md:justify-start" : "md:justify-center"
+                            isOpen ? "md:justify-start" : "md:justify-center"
                           }`}
                         >
                           <motion.span
                             initial={false}
                             animate={{
-                              rotate: isDesktop ? (isActive ? 0 : -90) : 0,
-                              scale: isDesktop ? (isActive ? 1.25 : 0.4) : 1,
-                              color: isActive ? "#FFFFFF" : "#1A1A1A",
+                              rotate: isDesktop ? (isOpen ? 0 : -90) : 0,
+                              scale: isDesktop ? (isOpen ? 1.25 : 0.4) : 1,
+                              color: isOpen ? "#FFFFFF" : "#1A1A1A",
                             }}
                             transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S, ease: LIQUID_EASE }}
                             // Default transform-origin is the span's own center — scaling up from
@@ -433,8 +445,8 @@ export function WhoWeWorkFor() {
                             // origin so it only grows rightward. Collapsed keeps center since it's
                             // still center-justified within its own full-card band.
                             style={{
-                              transformOrigin: isActive ? "left center" : "center",
-                              textShadow: isActive ? "0 2px 12px rgba(0,0,0,0.35)" : undefined,
+                              transformOrigin: isOpen ? "left center" : "center",
+                              textShadow: isOpen ? "0 2px 12px rgba(0,0,0,0.35)" : undefined,
                             }}
                             // whitespace-nowrap only for collapsed — that's the vertical-rl case
                             // where the browser's shrink-to-fit width otherwise wraps long labels
@@ -443,7 +455,7 @@ export function WhoWeWorkFor() {
                             // wrapping to a second line is the correct, unsurprising behavior for
                             // a heading — forcing nowrap there risked clipping it instead.
                             className={`block font-bold tracking-tight md:text-4xl ${
-                              isActive ? "text-2xl text-left" : "text-base whitespace-nowrap"
+                              isOpen ? "text-2xl text-left" : "text-base whitespace-nowrap"
                             }`}
                           >
                             {segment.label}
@@ -452,7 +464,7 @@ export function WhoWeWorkFor() {
                       </div>
 
                       <AnimatePresence initial={false}>
-                        {isActive && (
+                        {isOpen && (
                           <motion.div
                             initial={false}
                             exit={reducedMotion ? undefined : { opacity: 0, transition: { duration: 0.15 } }}
@@ -470,7 +482,11 @@ export function WhoWeWorkFor() {
                           >
                             <motion.div
                               variants={listContainer}
-                              initial={reducedMotion ? "visible" : "hidden"}
+                              // Mobile skips the staggered entrance outright:
+                              // the cards aren't expanding into view there,
+                              // they're simply open, so there's nothing for a
+                              // reveal to be timed against.
+                              initial={reducedMotion || !isDesktop ? "visible" : "hidden"}
                               animate="visible"
                               className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3"
                             >

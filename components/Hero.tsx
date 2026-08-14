@@ -145,15 +145,21 @@ export function Hero() {
              size below `sm` is `vw`-driven (not a fixed rem step) so it
              scales down continuously with the viewport instead of
              wrapping or overflowing on narrower phones. */}
+          {/* `mt-10` below `sm`: the column is vertically centered in the
+             viewport, which on a phone put this badge right up against the
+             fixed nav bar. The offset drops the whole stack clear of it;
+             above `sm` the bar is further from the centered block already. */}
           <p
-            className="hero-rise relative mb-4 flex max-w-full flex-nowrap items-center justify-center gap-x-0.5 whitespace-nowrap rounded-full px-2 py-1.5 backdrop-blur-xl backdrop-saturate-150 sm:mb-6 sm:gap-x-1.5 sm:px-4 sm:py-2.5"
+            className="hero-rise relative mb-4 mt-10 flex max-w-full flex-nowrap items-center justify-center gap-x-0.5 whitespace-nowrap rounded-full px-2 py-1.5 backdrop-blur-xl backdrop-saturate-150 sm:mb-6 sm:mt-0 sm:gap-x-1.5 sm:px-4 sm:py-2.5"
             style={{ background: "rgba(255,255,255,0.1)" }}
           >
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-magenta" aria-hidden="true" />
             {hero.eyebrow.split(" · ").map((phrase) => (
               <span key={phrase} className="inline-flex shrink-0 items-center gap-1 sm:gap-1.5">
                 <span
-                  className="text-[1.55vw] font-extrabold uppercase tracking-[0.01em] text-white sm:text-[0.9375rem] sm:tracking-[0.06em]"
+                  // 1.86vw is 1.55vw + 20%. Still vw-driven below `sm` so the
+                  // four phrases keep fitting one line as the phone narrows.
+                  className="text-[1.86vw] font-extrabold uppercase tracking-[0.01em] text-white sm:text-[0.9375rem] sm:tracking-[0.06em]"
                   style={{ textShadow: "0 1px 6px rgba(0,0,0,0.45)" }}
                 >
                   {phrase}
@@ -187,16 +193,20 @@ export function Hero() {
           </p>
 
           <div
-            className="hero-rise mt-6 flex flex-wrap items-center justify-center gap-4 sm:mt-10"
+            // flex-nowrap + .btn-compact below `sm`: at full button size the
+            // pair is ~379px wide against a ~345px content column, so the
+            // secondary wrapped onto its own line. Compacted, both hold one
+            // row on a 393px phone.
+            className="hero-rise mt-6 flex flex-nowrap items-center justify-center gap-2 sm:mt-10 sm:flex-wrap sm:gap-4"
             style={{ animationDelay: "0.4s" }}
           >
-            <Link href="/contact?tab=booking" className="btn-brand group">
+            <Link href="/contact?tab=booking" className="btn-brand btn-compact group">
               {hero.ctaPrimary}
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 sm:h-4 sm:w-4" />
             </Link>
-            <Link href="/projects" className="btn-outline group">
+            <Link href="/projects" className="btn-outline btn-compact group">
               View Projects
-              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+              <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1 sm:h-4 sm:w-4" />
             </Link>
           </div>
 
