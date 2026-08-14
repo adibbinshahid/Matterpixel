@@ -104,13 +104,23 @@ export function Hero() {
          dark backdrop instead of falling through to the page's light
          `bg-paper`, which read as a broken/blank hero. */}
       <div className="absolute inset-0 -z-10 bg-[#0b0b0d]">
+        {/* `poster` is frame 0 of the clip itself at 6KB, so the hero's
+            backdrop is fully painted from the first frame instead of
+            holding on flat #0b0b0d until enough of the 1.4MB video has
+            arrived to show anything. The video then starts on the exact
+            image the poster is already showing, so the handoff is
+            invisible — no fade, no pop, nothing to compromise. */}
         <video
           ref={videoRef}
           autoPlay
           muted
           loop
           playsInline
-          preload="auto"
+          poster="/videos/HeroBG1-poster.webp"
+          // `metadata`, not `auto`: autoplay still pulls what it needs to
+          // start, but this stops the browser from racing to buffer the
+          // whole clip against the hero's own text/font on first paint.
+          preload="metadata"
           aria-hidden="true"
           className="h-full w-full scale-105 object-cover opacity-40"
         >
