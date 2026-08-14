@@ -45,14 +45,32 @@ function seededRand(seed: number, salt: number) {
   return mulberry32(seed + salt)();
 }
 
+/**
+ * The lower bound of each clamp is the phone-width size, and it used to be
+ * set purely by the tier ratios — which put the M tier at 10px and L at
+ * 13px on a 393px screen, i.e. below body copy, in light grey, at angles.
+ * The floors are raised so the smallest tier still reads at ~14px; the
+ * tiers stay visually ranked, just over a compressed range at the narrow
+ * end. The upper bounds (the desktop treatment) are untouched.
+ */
 const SIZE_CLASS: Record<ProblemSize, string> = {
-  xxl: "text-[clamp(1.4rem,0.8rem+2.4vw,2.6rem)] leading-[1.02]",
-  xl: "text-[clamp(1.04rem,0.68rem+1.6vw,1.76rem)] leading-[1.04]",
-  l: "text-[clamp(0.8rem,0.58rem+0.96vw,1.24rem)] leading-[1.08]",
-  m: "text-[clamp(0.62rem,0.5rem+0.6vw,0.88rem)] leading-[1.12]",
+  xxl: "text-[clamp(1.5rem,0.8rem+2.4vw,2.6rem)] leading-[1.02]",
+  xl: "text-[clamp(1.15rem,0.68rem+1.6vw,1.76rem)] leading-[1.04]",
+  l: "text-[clamp(1rem,0.58rem+0.96vw,1.24rem)] leading-[1.08]",
+  m: "text-[clamp(0.9rem,0.5rem+0.6vw,0.88rem)] leading-[1.12]",
 };
 
-const REST_COLOR = "#C2C2CA";
+/** Tiers dropped below `sm`. Raising the floors above makes every phrase
+ * legible but also makes 24 of them far too dense for a phone — the
+ * lowest-weight tier sits out on narrow screens, leaving the 15 phrases
+ * that carry the section's point. */
+const MOBILE_HIDDEN_SIZES: ProblemSize[] = ["m"];
+
+// Rest grey was #C2C2CA — about 1.9:1 on white, under the 3:1 floor for
+// large text and genuinely hard to read on a phone held at arm's length.
+// Darkened just far enough to clear it while staying clearly recessive
+// against the magenta/blue active states.
+const REST_COLOR = "#A3A3AF";
 const PULSE_COLOR = "#2c4bff";
 const HOVER_COLOR = "#ff2e93";
 
@@ -208,7 +226,10 @@ function Word({
               { type: "spring", stiffness: 420, damping: 14, mass: 0.5, delay: entranceDelay }
             : { duration: 0.01 }
       }
-      className="inline-block"
+      // Hidden tiers are hidden on the *outer* box, not the inner text: the
+      // flex container's gap would otherwise still be spent on a zero-width
+      // wrapper, leaving stray holes in the cloud.
+      className={MOBILE_HIDDEN_SIZES.includes(size) ? "hidden sm:inline-block" : "inline-block"}
       style={{ transformOrigin: "center" }}
     >
       <span
@@ -509,7 +530,7 @@ export function ProblemCloud() {
       data-nav-scrim="light"
     >
       <div className="mx-auto max-w-[1400px] px-6 text-center sm:px-8 lg:px-12">
-        <p className="mb-1.5 font-semibold uppercase tracking-[0.12em] text-ink" style={{ fontSize: "1.5rem" }}>
+        <p className="mb-1.5 font-semibold uppercase tracking-[0.12em] text-ink" style={{ fontSize: "clamp(0.875rem, 0.6rem + 1.2vw, 1.5rem)" }}>
           {problemCloudIntro.eyebrow}
         </p>
         <h2>

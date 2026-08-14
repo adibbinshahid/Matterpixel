@@ -103,7 +103,7 @@ export function ProcessSystem() {
             {/* .label-eyebrow hardcodes var(--blue) — invisible on a blue
                 panel, so it takes an explicit override here. Same handling
                 as components/Process.tsx. */}
-            <p className="label-eyebrow mb-4" style={{ fontSize: "1.5rem", color: "#fff" }}>
+            <p className="label-eyebrow mb-4" style={{ fontSize: "clamp(0.875rem, 0.6rem + 1.2vw, 1.5rem)", color: "#fff" }}>
               {processMethod.eyebrow}
             </p>
             <h2>

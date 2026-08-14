@@ -202,7 +202,7 @@ export function WhoWeWorkFor() {
         <div className="text-center">
           <p
             className="mb-4 font-semibold uppercase tracking-[0.12em] text-ink"
-            style={{ fontSize: "1.5rem" }}
+            style={{ fontSize: "clamp(0.875rem, 0.6rem + 1.2vw, 1.5rem)" }}
           >
             Service ACROSS EVERY INDUSTRY
           </p>
@@ -348,11 +348,17 @@ export function WhoWeWorkFor() {
                     type="button"
                     onClick={() => handleClick(i)}
                     aria-expanded={isActive}
-                    className={`relative z-10 flex h-full w-full flex-col p-6 text-left ${
-                      !isActive ? "md:px-2" : ""
+                    className={`relative z-10 flex h-full w-full flex-col text-left ${
+                      isActive ? "p-6" : "p-4 md:p-6 md:px-2"
                     }`}
                   >
-                    <div className="relative flex h-full min-h-[88px] flex-col md:h-[250px]">
+                    {/* 88px of reserved inner height plus 24px of padding made
+                       every collapsed card ~136px tall on a phone to hold a
+                       single title line — on a four-card stack that is most of
+                       a screen spent on nothing. Collapsed cards on mobile now
+                       size to their content; the desktop's fixed 250px
+                       equal-height row is unchanged. */}
+                    <div className="relative flex h-full min-h-[40px] flex-col md:h-[250px]">
                       <div
                         className={`flex items-start justify-between gap-3 ${
                           isActive ? "md:flex-col md:items-start" : ""

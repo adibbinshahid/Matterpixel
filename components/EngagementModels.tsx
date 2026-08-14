@@ -136,7 +136,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
     >
       <div className="mx-auto max-w-[1400px]">
         <div className="text-center">
-          <p className="mb-4 font-semibold uppercase tracking-[0.12em] text-ink" style={{ fontSize: "1.5rem" }}>
+          <p className="mb-4 font-semibold uppercase tracking-[0.12em] text-ink" style={{ fontSize: "clamp(0.875rem, 0.6rem + 1.2vw, 1.5rem)" }}>
             {engagementModelsIntro.eyebrow}
           </p>
           <h2>

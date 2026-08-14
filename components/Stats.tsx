@@ -51,9 +51,14 @@ function MarqueeRow({ reverse, duration }: { reverse?: boolean; duration: number
   return (
     <div
       className="overflow-hidden"
+      // Percentage stops: 8% is ~110px of fade on a desktop row but only
+      // ~31px on a 393px phone, which isn't enough runway to hide a chip
+      // being cut — chips read as sliced off at both edges rather than
+      // fading out. A px-based stop gives every viewport the same real fade
+      // distance, which on a phone is proportionally much wider.
       style={{
-        maskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
-        WebkitMaskImage: "linear-gradient(to right, transparent, black 8%, black 92%, transparent)",
+        maskImage: "linear-gradient(to right, transparent, black 72px, black calc(100% - 72px), transparent)",
+        WebkitMaskImage: "linear-gradient(to right, transparent, black 72px, black calc(100% - 72px), transparent)",
       }}
     >
       <div

@@ -103,7 +103,7 @@ export function Nav() {
     <header className="fixed inset-x-0 top-0 z-50">
       <nav
         data-nav-theme={navTheme}
-        className="nav-bar relative flex h-[4.992rem] w-full items-center justify-between px-4 transition-colors duration-500 sm:px-8"
+        className="nav-bar relative flex h-16 w-full items-center justify-between px-4 transition-colors duration-500 sm:h-[4.992rem] sm:px-8"
       >
         {/* Apple-glass bar — genuinely translucent (real backdrop-filter,
            not the opaque --glass-bg-strong material used elsewhere): blur +
@@ -127,8 +127,12 @@ export function Nav() {
           <div className="nav-grain" />
         </div>
 
-        <Link href="/" className="relative flex items-center">
-          <Logo forceLight={overDarkHero} priority imgId="nav-logo-mark" imgClassName="h-[3.84rem] w-auto" />
+        <Link href="/" className="relative flex min-h-11 items-center">
+          {/* The full-size lockup renders 241px wide — 61% of a 393px phone
+             viewport — inside a bar that also has to hold the menu button.
+             Half height below `sm` (~172px wide) leaves the bar breathing
+             room and lets it shrink to h-16 with it. */}
+          <Logo forceLight={overDarkHero} priority imgId="nav-logo-mark" imgClassName="h-10 w-auto sm:h-[3.84rem]" />
         </Link>
 
         {/* Absolutely centered on the bar itself, not `justify-between`'s
@@ -218,7 +222,10 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
             aria-hidden="true"
           />
           <motion.div
-            className="fixed inset-x-4 top-[6.25rem] z-[90] overflow-hidden rounded-[2rem] border border-white/50 lg:hidden"
+            // Anchored just under the bar, which is h-16 (4rem) below `sm`
+            // and h-[4.992rem] above it — the panel is `lg:hidden`, so it
+            // has to track both of those, not just the desktop height.
+            className="fixed inset-x-4 top-[5.25rem] z-[90] overflow-hidden rounded-[2rem] border border-white/50 sm:top-[6.25rem] lg:hidden"
             style={{
               background: "linear-gradient(165deg, rgba(255,255,255,0.75), rgba(255,255,255,0.45))",
               backdropFilter: "blur(28px) saturate(180%)",

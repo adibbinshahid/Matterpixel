@@ -34,6 +34,17 @@ import { useLayoutEffect, useRef, useState } from "react";
 const SERVICES_MAX_WIDTH = 1400;
 const SERVICES_GUTTER = { base: 16, sm: 24 }; // px-4 / sm:px-6, from ServicesHeading
 
+/**
+ * Floor for the fitted size, in px. Fitting a long single line to a ~360px
+ * container solves to body-copy sizes — a heading like "which one is holding
+ * your business back?" landed at 16px on a 393px viewport, smaller than the
+ * uppercase eyebrow sitting directly above it, so the section label outranked
+ * its own headline. Below this floor the heading stops shrinking and wraps
+ * onto multiple lines instead (see `wrap` below); edge-to-edge fitting is a
+ * wide-viewport treatment, and on a phone the readable size wins.
+ */
+const MIN_FONT_SIZE = 28;
+
 function servicesContainerWidth() {
   const gutter = window.innerWidth >= 640 ? SERVICES_GUTTER.sm : SERVICES_GUTTER.base;
   // Padding applies to the *outer* container, and only then does the
@@ -66,6 +77,9 @@ export function GiantHeading({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [fontSize, setFontSize] = useState<number | null>(null);
+  // True once the fit has bottomed out at MIN_FONT_SIZE — the lines no longer
+  // fit on one row at that size, so they're allowed to wrap.
+  const [wrap, setWrap] = useState(false);
   const measureLines = sizeRef ?? lines;
 
   useLayoutEffect(() => {
@@ -83,6 +97,12 @@ export function GiantHeading({
       const widest = Math.max(...measureLines.map((line) => ctx.measureText(line).width));
       let next = widest > 0 ? (cw / widest) * REF : REF;
       if (maxFontSize) next = Math.min(next, maxFontSize);
+      // A caller that caps its size below the floor (a page-hero h1) keeps
+      // its own cap — `maxFontSize` is an explicit instruction, the floor is
+      // a default.
+      const floor = maxFontSize ? Math.min(MIN_FONT_SIZE, maxFontSize) : MIN_FONT_SIZE;
+      setWrap(next < floor);
+      next = Math.max(next, floor);
       setFontSize((prev) => (prev !== null && Math.abs(prev - next) < 0.5 ? prev : next));
     }
 
@@ -97,7 +117,12 @@ export function GiantHeading({
       {lines.map((line) => (
         <div
           key={line}
-          className="whitespace-nowrap font-extrabold leading-[0.94] tracking-tight text-ink"
+          // 0.94 leading is for single giant lines that never wrap; once a
+          // line breaks onto several rows that tight a leading collides
+          // ascenders into descenders, so wrapped mode loosens it.
+          className={`font-extrabold tracking-tight text-ink ${
+            wrap ? "text-balance leading-[1.06]" : "whitespace-nowrap leading-[0.94]"
+          }`}
           style={{ fontSize: fontSize ? `${fontSize}px` : "1px", opacity: fontSize ? 1 : 0 }}
         >
           {highlight ? highlightSubstring(line, highlight, highlightGradient) : line}

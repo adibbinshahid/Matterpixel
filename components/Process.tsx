@@ -150,7 +150,7 @@ export function Process() {
                section's own token reassignment (panel-blue) only touches
                --ink/--ink-soft/etc, so this needs an explicit override or
                it's blue eyebrow text on a blue background. */}
-            <p className="label-eyebrow mb-4" style={{ fontSize: "1.5rem", color: "#fff" }}>
+            <p className="label-eyebrow mb-4" style={{ fontSize: "clamp(0.875rem, 0.6rem + 1.2vw, 1.5rem)", color: "#fff" }}>
               {processMethod.eyebrow}
             </p>
             <h2>
@@ -190,7 +190,10 @@ export function Process() {
                 aria-controls={`process-panel-${s.id}`}
                 id={`process-tab-${s.id}`}
                 onClick={() => selectStep(i)}
-                className="group relative flex flex-col items-center gap-1 outline-none"
+                // min-w-11: the collapsed numerals are only ~38px wide, under
+                // the 44px touch minimum, and this stepper is tapped rather
+                // than hovered on mobile.
+                className="group relative flex min-w-11 flex-col items-center gap-1 outline-none"
               >
                 <span
                   className={`text-[0.6rem] font-semibold uppercase tracking-[0.15em] transition-colors duration-300 ${
@@ -248,7 +251,12 @@ export function Process() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.2, ease: EASE }}
               >
-                <p className="whitespace-nowrap text-center text-sm font-medium leading-relaxed text-white sm:text-xl lg:text-3xl">
+                {/* `whitespace-nowrap` only from `lg` up: at mobile widths the
+                   step description is far wider than the viewport, so forcing
+                   one line pushed the whole document ~23px wider than the
+                   screen (sideways scroll on every homepage section) and cut
+                   the sentence off mid-word. It wraps below `lg`. */}
+                <p className="text-center text-sm font-medium leading-relaxed text-white sm:text-xl lg:whitespace-nowrap lg:text-3xl">
                   {step.desc}
                 </p>
               </motion.div>

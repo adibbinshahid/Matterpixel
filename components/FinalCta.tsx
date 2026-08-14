@@ -14,7 +14,12 @@ export function FinalCta() {
   return (
     <section className="relative overflow-hidden px-6 py-10 sm:px-8 sm:py-12 lg:px-12">
       <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
-      <Reveal className="relative mx-auto flex w-full max-w-[1400px] flex-col items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
+      {/* `flex-col-reverse` below `lg`: the DOM order (button, then copy) is
+         the desktop left-to-right reading order, but stacked vertically it
+         put "Get a Free Audit" above the sentence explaining what the audit
+         is. Reversing the column restores headline-then-button on phones
+         without disturbing the desktop row. */}
+      <Reveal className="relative mx-auto flex w-full max-w-[1400px] flex-col-reverse items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
         <Link
           href="/contact?tab=booking"
           className="btn-brand btn-on-brand on-magenta group shrink-0"

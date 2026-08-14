@@ -12,7 +12,7 @@ const SOCIAL_ICONS: Record<string, typeof FaFacebook> = {
 };
 
 const contactButton =
-  "hover-lift font-avenir inline-flex w-fit items-center gap-2 rounded-full bg-paper/10 px-4 py-2 text-sm text-paper hover:bg-paper/20";
+  "hover-lift font-avenir inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-paper/10 px-4 py-2 text-sm text-paper hover:bg-paper/20";
 
 export function Footer() {
   const waNumber = footer.contact.whatsapp.replace(/[^\d]/g, "");
@@ -32,13 +32,20 @@ export function Footer() {
           </div>
 
           <div className="flex flex-wrap gap-x-16 gap-y-8">
-            <div className="flex flex-col gap-3">
-              <span className="label-eyebrow !text-paper/70">Navigate</span>
+            {/* Tighter gap than its sibling columns: the links below now carry
+               their own 44px tap height, so the old 12px gap on top of that
+               made the column half again as tall for no visual gain. */}
+            <div className="flex flex-col gap-0.5">
+              <span className="label-eyebrow mb-2 !text-paper/70">Navigate</span>
               {footer.links.map((l) => (
                 <Link
                   key={l.href}
                   href={l.href}
-                  className="inline-block w-fit origin-left text-sm text-paper/80 transition-all duration-300 hover:scale-105 hover:text-paper"
+                  // min-h-11 (44px) + centering rather than a taller font:
+                  // these rendered as 20px-tall targets, under the 44px iOS
+                  // minimum. The row gap absorbs the extra height, so the
+                  // list reads the same while each link is actually tappable.
+                  className="inline-flex min-h-11 w-fit origin-left items-center text-sm text-paper/80 transition-all duration-300 hover:scale-105 hover:text-paper"
                 >
                   {l.label}
                 </Link>
@@ -84,7 +91,7 @@ export function Footer() {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={s.label}
-                      className="hover-lift flex h-9 w-9 items-center justify-center rounded-full bg-paper/10 text-paper hover:bg-paper/20"
+                      className="hover-lift flex h-11 w-11 items-center justify-center rounded-full bg-paper/10 text-paper hover:bg-paper/20"
                     >
                       <Icon className="h-4 w-4" />
                     </a>

@@ -533,7 +533,7 @@ function PinnedServicesRow({ reduced }: { reduced: boolean }) {
              yet, intermittently capturing a stale, offset position.
              Opacity/blur-only avoids the transform entirely. */}
           <Reveal y={0}>
-            <p className="mb-4 font-semibold uppercase tracking-[0.12em] text-ink" style={{ fontSize: "1.5rem" }}>
+            <p className="mb-4 font-semibold uppercase tracking-[0.12em] text-ink" style={{ fontSize: "clamp(0.875rem, 0.6rem + 1.2vw, 1.5rem)" }}>
               {servicesIntro.eyebrow}
             </p>
             <h2

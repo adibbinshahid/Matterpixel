@@ -75,7 +75,7 @@ export function WorkGrid({ limit }: { limit?: number } = {}) {
               role="tab"
               aria-selected={active === tag}
               onClick={() => setActive(tag)}
-              className={`hover-lift font-avenir rounded-full border px-4 py-2 text-sm ${
+              className={`hover-lift font-avenir inline-flex min-h-11 items-center rounded-full border px-4 py-2 text-sm ${
                 active === tag
                   ? "border-blue bg-blue text-paper"
                   : "border-line bg-paper text-ink-soft hover:border-blue hover:text-ink"
@@ -135,7 +135,7 @@ export function WorkGrid({ limit }: { limit?: number } = {}) {
                   <div className="mt-6 flex flex-wrap items-center gap-6">
                     <Link
                       href={`/projects/${project.slug}`}
-                      className="group/link inline-flex items-center gap-2 text-sm font-semibold text-ink transition-transform duration-300 hover:scale-105"
+                      className="group/link inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-ink transition-transform duration-300 hover:scale-105"
                     >
                       View Case Study
                       <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover/link:translate-x-1" />
@@ -144,7 +144,7 @@ export function WorkGrid({ limit }: { limit?: number } = {}) {
                       href={project.liveDemoUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="group/link inline-flex items-center gap-2 text-sm font-semibold text-blue transition-transform duration-300 hover:scale-105"
+                      className="group/link inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-blue transition-transform duration-300 hover:scale-105"
                     >
                       Live Demo
                       <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover/link:translate-x-0.5 group-hover/link:-translate-y-0.5" />
