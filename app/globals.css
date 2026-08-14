@@ -235,8 +235,54 @@
   animation: hero-line-reveal 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+/* CSS twin of Hero's old framer-motion `item` variant — same 24px rise,
+   same 8px blur-to-sharp, same duration and curve, same 0.1s stagger
+   (applied per element via animation-delay).
+
+   It has to be CSS rather than a mount animation because every one of
+   these elements is above the fold, and a framer variant leaves them at
+   opacity:0 in the server HTML until hydration runs. On a mid-range phone
+   over slow 4G that was ~2.4s of "element render delay" — the hero
+   subheadline was the LCP element, and it was invisible for that whole
+   window while the markup sat there fully parsed and ready to paint. */
+.hero-rise {
+  animation: hero-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Scroll cue's idle bob. Was a framer `repeat: Infinity` loop, which
+   meant shipping the animation to the client just to nudge a chevron. */
+@keyframes hero-cue-bob {
+  from {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  to {
+    transform: translateY(7px);
+    opacity: 0.9;
+  }
+}
+
+.hero-cue {
+  animation: hero-cue-bob 1.5s ease-in-out infinite alternate;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .hero-line {
+  .hero-line,
+  .hero-rise,
+  .hero-cue {
     animation: none;
   }
 }

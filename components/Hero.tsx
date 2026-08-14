@@ -2,26 +2,26 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { motion, type Variants } from "motion/react";
 import { ArrowUpRight, ArrowRight, ChevronDown, Gauge, Star, ShieldCheck, Wallet, type LucideIcon } from "lucide-react";
 import { hero, trust } from "@/content/siteConfig";
 import { WEB_STACK } from "@/components/TechMarquee";
 import { useReducedMotion } from "@/lib/useReducedMotion";
-import { DURATIONS, EASE } from "@/lib/utils";
 import { setHeroVideo } from "@/lib/heroVideoRef";
 import { loadGsap, refreshScrollTrigger } from "@/lib/loadGsap";
 
 /**
  * Text Reveal System (see Reveal.tsx) — the same blur-to-sharp + upward-
- * settle recipe and shared duration/easing constants, staggered across the
- * manifesto's own lines rather than scroll-triggered: Hero is already in
- * view at first paint, so a plain mount animation is the right trigger
- * here, not `whileInView`.
+ * settle recipe, but authored in CSS (`.hero-rise` / `.hero-line` in
+ * globals.css) rather than as framer-motion variants, and staggered via
+ * animation-delay instead of `staggerChildren`.
+ *
+ * Everything in this hero is above the fold, so a mount animation is the
+ * right trigger — but a JS-driven one leaves all of it at opacity:0 in the
+ * server HTML until hydration runs. That made the subheadline the LCP
+ * element with ~2.4s of pure render delay on a mid-range phone. CSS starts
+ * the same motion off the browser's paint clock, so the text is on screen
+ * immediately and the animation is decoration rather than a gate.
  */
-const container: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.1 } },
-};
 
 const TRUST_BADGE_ICONS: Record<string, LucideIcon> = {
   "90+ Google PageSpeed Score": Gauge,
@@ -29,16 +29,6 @@ const TRUST_BADGE_ICONS: Record<string, LucideIcon> = {
   "NDA Friendly": ShieldCheck,
   "No Surprise Budget Increase": Wallet,
 };
-const item: Variants = {
-  hidden: { opacity: 0, y: 24, filter: "blur(8px)" },
-  visible: {
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { duration: DURATIONS.standard, ease: EASE },
-  },
-};
-
 export function Hero() {
   const reduced = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -141,12 +131,7 @@ export function Hero() {
          instead of the section's height being purely a function of its own
          content/fixed rem padding. py-28 is breathing room, not sizing. */}
       <div className="section-shell relative w-full py-16 sm:py-28">
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={container}
-          className="mx-auto flex max-w-5xl flex-col items-center text-center"
-        >
+        <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
           {/* Flat translucent label, not glass-button styling — no
              border, no shadow, no specular sheen (dropped `.nav-glass`
              and its ::before/::after highlight pseudo-elements). The
@@ -160,9 +145,8 @@ export function Hero() {
              size below `sm` is `vw`-driven (not a fixed rem step) so it
              scales down continuously with the viewport instead of
              wrapping or overflowing on narrower phones. */}
-          <motion.p
-            variants={item}
-            className="relative mb-4 flex max-w-full flex-nowrap items-center justify-center gap-x-0.5 whitespace-nowrap rounded-full px-2 py-1.5 backdrop-blur-xl backdrop-saturate-150 sm:mb-6 sm:gap-x-1.5 sm:px-4 sm:py-2.5"
+          <p
+            className="hero-rise relative mb-4 flex max-w-full flex-nowrap items-center justify-center gap-x-0.5 whitespace-nowrap rounded-full px-2 py-1.5 backdrop-blur-xl backdrop-saturate-150 sm:mb-6 sm:gap-x-1.5 sm:px-4 sm:py-2.5"
             style={{ background: "rgba(255,255,255,0.1)" }}
           >
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-magenta" aria-hidden="true" />
@@ -177,13 +161,13 @@ export function Hero() {
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-magenta" aria-hidden="true" />
               </span>
             ))}
-          </motion.p>
+          </p>
 
           <h1 className="text-hero-headline lowercase overflow-hidden text-ink">
-            <span className="hero-line block overflow-hidden">
+            <span className="hero-line block overflow-hidden" style={{ animationDelay: "0.1s" }}>
               We <span className="text-blue">build</span> what matters.
             </span>
-            <span className="hero-line block overflow-hidden" style={{ animationDelay: "0.08s" }}>
+            <span className="hero-line block overflow-hidden" style={{ animationDelay: "0.18s" }}>
               Down to the <span className="text-magenta">pixel</span>.
             </span>
           </h1>
@@ -194,12 +178,18 @@ export function Hero() {
              instead of wherever the container width happens to wrap it.
              max-w-2xl (up from xl) so each half fits on its own line
              instead of wrapping again within the forced break. */}
-          <motion.p variants={item} className="mt-4 max-w-2xl text-base leading-relaxed text-ink-soft sm:mt-6 sm:text-lg">
+          <p
+            className="hero-rise mt-4 max-w-2xl text-base leading-relaxed text-ink-soft sm:mt-6 sm:text-lg"
+            style={{ animationDelay: "0.3s" }}
+          >
             From premium websites and AI automation to content creation and digital growth,
             <br className="hidden sm:block" /> we craft digital experiences that people trust, remember and choose.
-          </motion.p>
+          </p>
 
-          <motion.div variants={item} className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:mt-10">
+          <div
+            className="hero-rise mt-6 flex flex-wrap items-center justify-center gap-4 sm:mt-10"
+            style={{ animationDelay: "0.4s" }}
+          >
             <Link href="/contact?tab=booking" className="btn-brand group">
               {hero.ctaPrimary}
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
@@ -208,7 +198,7 @@ export function Hero() {
               View Projects
               <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
-          </motion.div>
+          </div>
 
           {/* Static tech-stack row — same icon set as Trust's TechMarquee,
              but here it's a fixed one-of-each strip (no scroll, no
@@ -217,9 +207,9 @@ export function Hero() {
              column's own width (max-w-3xl, inherited from the parent) on
              one line at any desktop size; below `sm` the icons/gaps shrink
              instead of wrapping so all 13 still fit one line on a phone. */}
-          <motion.div
-            variants={item}
-            className="mt-10 flex w-full flex-nowrap items-center justify-center gap-0.5 border-t border-line pt-6 sm:mt-14 sm:gap-6"
+          <div
+            className="hero-rise mt-10 flex w-full flex-nowrap items-center justify-center gap-0.5 border-t border-line pt-6 sm:mt-14 sm:gap-6"
+            style={{ animationDelay: "0.5s" }}
           >
             {WEB_STACK.map(({ name, Icon }) => (
               <Icon
@@ -229,13 +219,16 @@ export function Hero() {
                 style={{ color: "var(--ink-soft)", opacity: 0.5 }}
               />
             ))}
-          </motion.div>
+          </div>
 
           {/* Credentials — same badges as Trust.tsx (content/siteConfig's
              trust.badges), reused rather than re-declared. flex-nowrap +
              shrunk text/padding below `sm` so all four badges hold to one
              line on a phone instead of wrapping. */}
-          <motion.div variants={item} className="mt-6 flex flex-nowrap items-center justify-center gap-1 sm:gap-3">
+          <div
+            className="hero-rise mt-6 flex flex-nowrap items-center justify-center gap-1 sm:gap-3"
+            style={{ animationDelay: "0.6s" }}
+          >
             {trust.badges.map((badge) => {
               const Icon = TRUST_BADGE_ICONS[badge] ?? ShieldCheck;
               return (
@@ -248,27 +241,24 @@ export function Hero() {
                 </span>
               );
             })}
-          </motion.div>
+          </div>
 
           {/* Scroll cue — mirrored yoyo (not a 3-keyframe loop resetting
              abruptly at each cycle) so the chevron eases down and back up
              smoothly both directions, read as a slow breathing motion
              rather than a bounce. Purely a visual hint, not a link/button
              — nothing to click, so no interactive semantics needed. */}
-          <motion.div
-            variants={item}
-            className="mt-10 flex flex-col items-center gap-2 text-white/50"
+          <div
+            className="hero-rise mt-10 flex flex-col items-center gap-2 text-white/50"
+            style={{ animationDelay: "0.7s" }}
             aria-hidden="true"
           >
             <span className="text-[0.65rem] font-semibold uppercase tracking-[0.22em]">Scroll to explore</span>
-            <motion.div
-              animate={{ y: [0, 7], opacity: [0.35, 0.9] }}
-              transition={{ duration: 1.5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
-            >
+            <div className="hero-cue">
               <ChevronDown className="h-4 w-4" />
-            </motion.div>
-          </motion.div>
-        </motion.div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
