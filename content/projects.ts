@@ -27,6 +27,19 @@
  *  4. `gallery` captions describe what is actually in the screenshot.
  *  5. Demo admin credentials are published by the demos themselves on their
  *     own login screens — nothing private is exposed here.
+ *
+ * The AI lanes cannot be verified by clicking a URL, so rules 2-3 have no
+ * grip on them. These three carry the same weight instead:
+ *
+ *  6. `sourceNote` states what the piece was generated FROM — the reference
+ *     photo, the product shot, the storyboard. Generated work with no
+ *     stated input is indistinguishable from a stock library, and the whole
+ *     reason to publish it is that it isn't one.
+ *  7. `toolchain` names the actual models and tools, at the version we ran.
+ *     "AI" is not a toolchain.
+ *  8. `specs` are counts, resolutions and turnarounds we actually delivered
+ *     — never a rate card and never a rounded-up "up to". A number here is
+ *     a number a client can hold us to.
  */
 
 /** Filter axis on /projects. Websites ship today; the AI lanes are the
@@ -61,7 +74,12 @@ export type LighthouseScores = {
   seo: number;
 };
 
-export type Project = {
+/**
+ * Fields every project carries, whatever medium it is. Anything a card, a
+ * hero, or a schema.org block needs unconditionally lives here — if it is
+ * optional for one lane it belongs in that lane's own type instead.
+ */
+type BaseProject = {
   slug: string;
   name: string;
   medium: Medium;
@@ -73,16 +91,34 @@ export type Project = {
   oneLiner: string;
   /** Two-sentence card summary. */
   summary: string;
-  /** The self-set brief this build answers. Never phrased as client work. */
+  /** The self-set brief this piece answers. Never phrased as client work. */
   brief: string;
   /** The industry problem, stated as observed reality, not as a client quote. */
   problem: string;
-  /** What was built in response, in build terms. */
+  /** What was made in response, in production terms. */
   solution: string;
+  /** Decisions worth stating to a buyer who wants to know how, not just what. */
+  decisions: { title: string; body: string }[];
+  /** Card/hero still. For a film this is the poster frame, so a card that
+   * never plays (reduced motion, no autoplay, a slow connection) is still a
+   * real frame of the actual piece and not a placeholder.
+   *
+   * There used to be a `coverFull` beside it — the tall full-page capture
+   * the grid card panned on hover — dropped with the pan itself; see
+   * WorkGrid's ProjectCard for why the pan went. */
+  cover: string;
+  relatedServiceSlugs: string[];
+};
+
+/**
+ * A shipped website. The whole credibility argument is "open it yourself":
+ * live URL, open admin, and a Lighthouse row we ran and will show the
+ * method for.
+ */
+export type WebsiteProject = BaseProject & {
+  medium: "website";
   /** Clickable-verifiable features. Every one exists on the live demo. */
   features: { title: string; body: string }[];
-  /** Build decisions worth stating to a technical or semi-technical buyer. */
-  decisions: { title: string; body: string }[];
   techStack: string[];
   /** Measured Lighthouse category scores — see honesty rule 3. All four,
    * always, so the gauge row is comparable across builds. */
@@ -94,16 +130,59 @@ export type Project = {
   liveDemoUrl: string;
   /** The back office a real owner would run the site from. */
   admin?: { url: string; user: string; pass: string; note: string };
-  /** Card/hero screenshot. There used to be a `coverFull` beside it — the
-   * tall full-page capture the grid card panned on hover — dropped with the
-   * pan itself; see WorkGrid's ProjectCard for why the pan went. */
-  cover: string;
   mobile: string;
   /** `url` overrides the address shown in the frame — set it when the shot
    * is not of the storefront (the admin capture, for one). */
   gallery: { src: string; caption: string; url?: string }[];
-  relatedServiceSlugs: string[];
 };
+
+/** One still or one clip in a media project's set. */
+export type MediaAsset = {
+  kind: "image" | "video";
+  /** `/projects/<slug>/...` — webp for stills, mp4 for clips. */
+  src: string;
+  /** Video only, and required for one: the frame shown before playback and
+   * whenever motion is off. A clip with no poster is a black box on a
+   * reduced-motion machine. */
+  poster?: string;
+  /** Describes what is actually in the frame — honesty rule 4, unchanged. */
+  caption: string;
+  /** CSS aspect-ratio for the tile, e.g. "4 / 5", "16 / 9". Media sets are
+   * mixed-ratio by nature, so each asset carries its own instead of the
+   * grid forcing one crop on all of them. */
+  aspect: string;
+  /** Video only, "0:12" — printed on the tile so the length is known
+   * before anyone commits to watching. */
+  duration?: string;
+};
+
+/**
+ * Generated imagery or film. There is no URL to open and no Lighthouse row
+ * to run, so the proof is a different shape (honesty rules 6-8): what went
+ * in, what made it, and what came out, all stated.
+ */
+export type MediaProject = BaseProject & {
+  medium: "ai-image" | "ai-video";
+  /** What was actually delivered — replaces the Lighthouse block as the
+   * card's proof strip, so keep it to four short label/value pairs. */
+  specs: { label: string; value: string }[];
+  /** Models and tools that produced it — honesty rule 7. The `techStack`
+   * analogue, named for what it is. */
+  toolchain: string[];
+  /** Honesty rule 6: the input the set was generated from, stated plainly
+   * ("one client-supplied phone photo of the bottle"). Generated work with
+   * no stated input is indistinguishable from a stock library. */
+  sourceNote: string;
+  /** What is in the set, in delivery terms. The `features` analogue. */
+  deliverables: { title: string; body: string }[];
+  /** The set itself. Item 0 leads the case study. */
+  media: MediaAsset[];
+  /** Optional link to the concept build this was produced for, when it was
+   * made for one of ours — the only "go and check" a media piece has. */
+  madeFor?: { label: string; href: string };
+};
+
+export type Project = WebsiteProject | MediaProject;
 
 export const projects: Project[] = [
   {
@@ -502,6 +581,192 @@ export const projects: Project[] = [
     ],
     relatedServiceSlugs: ["web-app-development", "ai-product-photography", "ai-automation"],
   },
+  /* ── AI lanes ───────────────────────────────────────────────────────
+   * Rules 6-8 apply to everything below. Both entries ship with PLACEHOLDER
+   * captures under /public/projects/<slug>/ — every file there is a
+   * generated grey card that says so. Swap the files, then rewrite the copy
+   * to match what is actually in them; the captions are the part that goes
+   * stale silently. */
+  {
+    slug: "scentora-campaign",
+    name: "Scentora Campaign Stills",
+    medium: "ai-image",
+    category: "Luxury Fragrance · Campaign Imagery",
+    sector: "Beauty",
+    accent: "blue",
+    oneLiner: "A full campaign set for a fragrance house, generated from one bottle render.",
+    summary:
+      "Hero, editorial, and catalogue stills for the Scentora concept store — one product form, six environments, one consistent light. Shot count that would need a studio day, produced in an afternoon.",
+    brief:
+      "Produce the campaign imagery the Scentora storefront needs to open: a hero still that carries the whole page, editorial frames for the collection story, and clean catalogue cut-outs — all recognisably the same bottle, under the same light, across every crop the site asks for.",
+    problem:
+      "A new fragrance brand needs a campaign before it has revenue to pay for one. A studio day with a product photographer, a stylist, and a retoucher runs into four figures and returns a handful of usable frames, weeks later — and the moment the site needs a different crop or a different season, the whole cost repeats. Most brands settle for stock, and stock is why every small fragrance site looks like every other one.",
+    solution:
+      "Built a single reference of the bottle, locked the lighting and lens as a reusable base, then generated each environment against it — so the glass, the cap, and the label read identically from a 4:5 editorial crop to a square catalogue tile. Retouched by hand where generation is weak: label type, the meniscus, and the cast shadow's contact edge.",
+    sourceNote:
+      "Generated from one 3D bottle render and a written light plan. No stock plates, no photographed source, no client product in the frame — Scentora is our own concept brand, so the bottle is ours too.",
+    specs: [
+      { label: "Finals", value: "18" },
+      { label: "Longest edge", value: "4096px" },
+      { label: "Turnaround", value: "1 day" },
+      { label: "Revisions", value: "2 rounds" },
+    ],
+    toolchain: ["Flux 1.1 Pro", "ComfyUI", "Photoshop (label + contact shadow)", "Topaz Gigapixel 7"],
+    deliverables: [
+      {
+        title: "One hero, three crops",
+        body: "The same frame delivered at 16:9, 4:5, and 1:1 — generated wide and recomposed, not cropped down from one master and left with the bottle off-centre.",
+      },
+      {
+        title: "Consistent product form",
+        body: "Cap proportions, shoulder curve, and label position hold across every still in the set. This is the part generated imagery usually fails at, and the reason a locked reference comes before any prompt.",
+      },
+      {
+        title: "Catalogue cut-outs",
+        body: "Transparent-background PNGs of the bottle alone, for product tiles and email — the frames a storefront actually runs out of first.",
+      },
+      {
+        title: "Hand-retouched type",
+        body: "Every label is composited from real vector artwork. Generated lettering is legible-looking rather than legible, and it does not survive a zoom.",
+      },
+    ],
+    decisions: [
+      {
+        title: "Reference first, prompt second",
+        body: "The base render is built and approved before a single generation runs. Prompting a product from scratch each time is what produces eighteen slightly different bottles — the failure that makes a set unusable as a set.",
+      },
+      {
+        title: "One light plan across the set",
+        body: "Key from camera-left, a hard rim for the glass edge, and a single practical for the ground reflection — written down, then applied to every environment. Consistent light is what makes six frames read as one campaign instead of six experiments.",
+      },
+      {
+        title: "Retouch where generation is weak",
+        body: "Type, contact shadows, and liquid surfaces get composited by hand. Knowing which 5% to do manually is most of the difference between generated imagery that ships and generated imagery that gets noticed.",
+      },
+    ],
+    madeFor: { label: "Scentora — the storefront these were made for", href: "/projects/scentora" },
+    cover: "/projects/scentora-campaign/cover.webp",
+    media: [
+      {
+        kind: "image",
+        src: "/projects/scentora-campaign/hero.webp",
+        caption: "PLACEHOLDER — hero still. Replace with the campaign hero, then rewrite this caption to describe the frame.",
+        aspect: "16 / 9",
+      },
+      {
+        kind: "image",
+        src: "/projects/scentora-campaign/editorial-01.webp",
+        caption: "PLACEHOLDER — editorial 4:5 frame.",
+        aspect: "4 / 5",
+      },
+      {
+        kind: "image",
+        src: "/projects/scentora-campaign/editorial-02.webp",
+        caption: "PLACEHOLDER — editorial 4:5 frame, second environment.",
+        aspect: "4 / 5",
+      },
+      {
+        kind: "image",
+        src: "/projects/scentora-campaign/catalogue.webp",
+        caption: "PLACEHOLDER — square catalogue tile.",
+        aspect: "1 / 1",
+      },
+    ],
+    relatedServiceSlugs: ["ai-product-photography", "branding-identity", "web-app-development"],
+  },
+  {
+    slug: "lcinco-launch-film",
+    name: "L'Cinco Launch Film",
+    medium: "ai-video",
+    category: "Restaurant · Launch Film",
+    sector: "Hospitality",
+    accent: "magenta",
+    oneLiner: "A thirty-second opening film for a pizzeria that never had to close for a shoot.",
+    summary:
+      "One hero film plus vertical and square cutdowns for the L'Cinco concept launch. Generated, graded, and cut to a licensed track — no crew, no closed dining room, no permit.",
+    brief:
+      "Produce the launch film the L'Cinco site opens on, and the social cutdowns that run beside it: enough atmosphere to make an empty new dining room feel like a full one, at a length nobody scrubs past, in the three aspect ratios a launch actually needs.",
+    problem:
+      "A restaurant's launch video is a shoot: a closed dining room, a crew, a food stylist, and a day of lost covers — before the edit. Most independents skip it entirely and open with a slideshow of phone photos, which is why the category's sites all feel the same. The ones who do shoot get one 16:9 master and then crop it square, badly, for everything else.",
+    solution:
+      "Storyboarded the thirty seconds first, generated each shot to that board rather than fishing for usable output, then cut and graded the whole thing as one film. Vertical and square are recomposed from wider generations, not cropped — every cutdown is framed for its own ratio.",
+    sourceNote:
+      "Generated from a written shot list and two reference frames of the L'Cinco interior we designed for the concept build. No filmed footage, no stock clips, no real venue — L'Cinco is our own concept brand.",
+    specs: [
+      { label: "Runtime", value: "0:30" },
+      { label: "Master", value: "4K · 24fps" },
+      { label: "Cutdowns", value: "9:16 · 1:1" },
+      { label: "Turnaround", value: "3 days" },
+    ],
+    toolchain: ["Kling 2.1 Master", "Runway Gen-4 (inserts)", "DaVinci Resolve 19", "Topaz Video AI"],
+    deliverables: [
+      {
+        title: "One 30s hero master",
+        body: "4K, 24fps, graded, with the licensed track cut to picture. The file that plays on the site's opening fold.",
+      },
+      {
+        title: "Vertical and square cutdowns",
+        body: "9:16 and 1:1 recomposed from wider generations — reframed shot by shot, not centre-cropped from the master.",
+      },
+      {
+        title: "Muted-first framing",
+        body: "The film reads with sound off: no dialogue, no audio-dependent beats, and the one text card lands on a held frame. Autoplay is muted, so a film that needs sound is a film nobody watched.",
+      },
+      {
+        title: "Web-weight encodes",
+        body: "H.264 and WebM under 5MB for the hero, with a poster frame — the version that plays on a phone on cellular, which is the only version that matters.",
+      },
+    ],
+    decisions: [
+      {
+        title: "Storyboard before generation",
+        body: "Every shot is drawn and timed first. Generating without a board means paying for a hundred clips to find eight, and the eight still do not cut together.",
+      },
+      {
+        title: "Grade as one film, not per clip",
+        body: "Shots come out of different models with different colour behaviour. A single grade pass over the assembled cut is what makes them read as one camera in one room.",
+      },
+      {
+        title: "Short shots hide the tell",
+        body: "Generated motion falls apart on long holds — hands, steam, and faces drift. Cutting on the beat at 1-2 seconds keeps every shot inside its model's honest range.",
+      },
+    ],
+    madeFor: { label: "L'Cinco Pizza — the site this film opens", href: "/projects/lcinco-pizza" },
+    cover: "/projects/lcinco-launch-film/cover.webp",
+    media: [
+      {
+        kind: "video",
+        src: "/projects/lcinco-launch-film/film.mp4",
+        poster: "/projects/lcinco-launch-film/film-poster.webp",
+        caption: "PLACEHOLDER — 30s hero film. Replace with the real master, then rewrite this caption.",
+        aspect: "16 / 9",
+        duration: "0:30",
+      },
+      {
+        kind: "video",
+        src: "/projects/lcinco-launch-film/cut-vertical.mp4",
+        poster: "/projects/lcinco-launch-film/cut-vertical-poster.webp",
+        caption: "PLACEHOLDER — 9:16 cutdown.",
+        aspect: "9 / 16",
+        duration: "0:15",
+      },
+      {
+        kind: "video",
+        src: "/projects/lcinco-launch-film/cut-square.mp4",
+        poster: "/projects/lcinco-launch-film/cut-square-poster.webp",
+        caption: "PLACEHOLDER — 1:1 cutdown.",
+        aspect: "1 / 1",
+        duration: "0:15",
+      },
+      {
+        kind: "image",
+        src: "/projects/lcinco-launch-film/board.webp",
+        caption: "PLACEHOLDER — the storyboard the film was generated against.",
+        aspect: "16 / 9",
+      },
+    ],
+    relatedServiceSlugs: ["ai-video", "branding-identity", "seo-growth"],
+  },
 ];
 
 export function getProjectBySlug(slug: string) {
@@ -511,3 +776,16 @@ export function getProjectBySlug(slug: string) {
 export function projectsByMedium(medium: Medium | "all") {
   return medium === "all" ? projects : projects.filter((p) => p.medium === medium);
 }
+
+/** Narrowing guards. Every consumer that touches `lighthouse`, `liveDemoUrl`
+ * or `media` goes through one of these — that is the whole point of the
+ * union: a website-only field can no longer be read off an AI entry without
+ * the compiler saying so. */
+export const isWebsiteProject = (p: Project): p is WebsiteProject => p.medium === "website";
+export const isMediaProject = (p: Project): p is MediaProject => p.medium !== "website";
+
+/** The measured lane. `/projects` derives its whole proof strip from this
+ * and never from `projects`, or an AI still would count as a "live build"
+ * and drag a NaN through the Lighthouse range beside it. */
+export const websiteProjects = projects.filter(isWebsiteProject);
+export const mediaProjects = projects.filter(isMediaProject);

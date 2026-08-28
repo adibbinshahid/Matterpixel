@@ -2,9 +2,12 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { GiantHeading } from "@/components/GiantHeading";
 import { Reveal } from "@/components/Reveal";
-import { projects } from "@/content/projects";
+import { websiteProjects } from "@/content/projects";
 
-const work = projects.filter((p) => p.relatedServiceSlugs.includes("web-app-development"));
+/* Websites only, and from the narrowed list rather than from `projects`:
+ * the table's whole right-hand column is a Lighthouse score, which the AI
+ * lanes do not have and must never be given a placeholder for. */
+const work = websiteProjects.filter((p) => p.relatedServiceSlugs.includes("web-app-development"));
 
 /** Compact proof table — one row per build, real metric attached, no
  * decorative panels. Replaces the old alternating full-bleed editorial

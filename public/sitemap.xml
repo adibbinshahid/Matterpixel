@@ -51,6 +51,16 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://matterpixel.com/projects/scentora-campaign</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://matterpixel.com/projects/lcinco-launch-film</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://matterpixel.com/services/web-app-development</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

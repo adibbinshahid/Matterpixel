@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence, type Variants } from "motion/react";
-import { ArrowRight, ArrowUpRight, FileText, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUpRight, FileText, Images, Play, Sparkles } from "lucide-react";
 import { LighthouseScores } from "@/components/LighthouseScores";
+import { SpecStrip } from "@/components/ProjectMedia";
 import { projects, mediums, type Medium, type Project } from "@/content/projects";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { EASE, cn } from "@/lib/utils";
@@ -61,6 +62,78 @@ const reducedCardVariants: Variants = {
   hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { duration: 0.12 } },
 };
+
+/**
+ * What sits in the card's well.
+ *
+ * A website is a screenshot and stays one. A film is a film: the card holds
+ * its poster frame at rest and plays the lead cut on hover, muted and
+ * looping, so a lane of AI video is a lane of stills until a pointer picks
+ * one out. Autoplaying six clips in a grid is six decoders, a scroll that
+ * drops frames, and six loops at six different points — noise, not work.
+ *
+ * It borrows the website card's own classes (`.project-card-shot`, and the
+ * veil and rake below it) rather than the richer `.media-tile` cascade used
+ * on the case study. At grid scale every card should light up the same way
+ * whatever is inside it; the medium changes the content, not the choreography.
+ *
+ * `preload="none"` is load-bearing — without it every clip in the lane is
+ * fetched on mount to display a poster the browser already has.
+ */
+function CardWell({ project, index }: { project: Project; index: number }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const lead = project.medium === "website" ? null : project.media.find((m) => m.kind === "video");
+
+  const play = useCallback(() => {
+    /* Swallowed: play() rejects on a backgrounded tab or a busy decoder, and
+       a fast pointer sweep across the grid would otherwise log one unhandled
+       rejection per card it crossed. */
+    void videoRef.current?.play().catch(() => {});
+  }, []);
+  const stop = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.pause();
+    v.currentTime = 0;
+  }, []);
+
+  if (!lead) {
+    return (
+      <Image
+        src={project.cover}
+        alt={project.medium === "website" ? `${project.name} homepage` : `${project.name} — lead frame`}
+        fill
+        sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
+        className="project-card-shot origin-top object-cover object-top will-change-[scale]"
+        priority={index < 3}
+      />
+    );
+  }
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        src={lead.src}
+        poster={lead.poster ?? project.cover}
+        muted
+        loop
+        playsInline
+        preload="none"
+        aria-label={`${project.name} — ${lead.caption}`}
+        onMouseEnter={play}
+        onMouseLeave={stop}
+        className="project-card-shot h-full w-full origin-top object-cover object-top will-change-[scale]"
+      />
+      {/* Says "this moves" before anyone hovers to find out — the only cue a
+          poster frame cannot give on its own. */}
+      <span className="pointer-events-none absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,19,0.72)] px-2.5 py-1 font-mono text-[11px] tracking-tight text-[#f5f3ee] backdrop-blur-sm">
+        <Play className="h-3 w-3" aria-hidden="true" />
+        {lead.duration ?? "film"}
+      </span>
+    </>
+  );
+}
 
 /**
  * One project as a grid card: framed screenshot, sector, name, one line of
@@ -129,14 +202,7 @@ function ProjectCard({ project, index, reduced }: { project: Project; index: num
       )}
     >
       <div className="relative aspect-[16/11] overflow-hidden rounded-[0.875rem] bg-paper-2">
-        <Image
-          src={project.cover}
-          alt={`${project.name} homepage`}
-          fill
-          sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 100vw"
-          className="project-card-shot origin-top object-cover object-top will-change-[scale]"
-          priority={index < 3}
-        />
+        <CardWell project={project} index={index} />
         {/* Resting veil. A hair of ink over the capture keeps the four
             screenshots reading as one set at grid scale — they are four
             different sites with four different palettes — and clearing it
@@ -191,11 +257,20 @@ function ProjectCard({ project, index, reduced }: { project: Project; index: num
               full is what makes them checkable. Fixed width at lg so the
               four boxes stay square-ish and every card's block lines up
               across the row regardless of how long its summary runs. */}
-          <LighthouseScores
-            scores={project.lighthouse}
-            size="sm"
-            className="w-full lg:w-[11rem] lg:shrink-0"
-          />
+          {project.medium === "website" ? (
+            <LighthouseScores
+              scores={project.lighthouse}
+              size="sm"
+              className="w-full lg:w-[11rem] lg:shrink-0"
+            />
+          ) : (
+            /* Same 2x2, same width, same hover beat — see SpecStrip. What
+               changes is what a number can honestly be: a Lighthouse score
+               is reproducible by the visitor, a shot count is only
+               reproducible by us, so these are stated as delivery facts and
+               never dressed up as an audit. */
+            <SpecStrip specs={project.specs} className="w-full lg:w-[11rem] lg:shrink-0" />
+          )}
         </div>
 
         <div className="mt-5 flex items-center justify-between gap-3 border-t border-line pt-1">
@@ -210,15 +285,27 @@ function ProjectCard({ project, index, reduced }: { project: Project; index: num
             Case study
             <ArrowRight className="project-card-arrow h-4 w-4" />
           </Link>
-          <a
-            href={project.liveDemoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-blue btn-sm group/live relative z-10 min-h-11"
-          >
-            Live site
-            <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 ease-[var(--ease-site)] group-hover/live:translate-x-0.5 group-hover/live:-translate-y-0.5" />
-          </a>
+          {project.medium === "website" ? (
+            <a
+              href={project.liveDemoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-blue btn-sm group/live relative z-10 min-h-11"
+            >
+              Live site
+              <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 ease-[var(--ease-site)] group-hover/live:translate-x-0.5 group-hover/live:-translate-y-0.5" />
+            </a>
+          ) : (
+            /* Deliberately not a link. A media project's only destination is
+               the case study the whole card already points at, and a second
+               button going to the same place is a decision the visitor has
+               to make twice. This states the size of the set instead — the
+               one thing the card cannot show. */
+            <span className="inline-flex min-h-11 items-center gap-1.5 text-[13px] font-semibold text-ink-soft">
+              <Images className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              {project.media.length} {project.medium === "ai-video" ? "cuts" : "stills"}
+            </span>
+          )}
         </div>
       </div>
     </motion.article>

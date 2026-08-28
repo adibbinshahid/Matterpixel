@@ -8,7 +8,9 @@ import { RevealGroup, RevealItem } from "@/components/Reveal";
 import { projects } from "@/content/projects";
 
 // Fixed 3 + "view all" arrow card — not a filterable/variable-length grid
-// (that's WorkGrid, used on /projects). Always the first 3 in content order.
+// (that's WorkGrid, used on /projects). Always the first 3 in content order,
+// which is why nothing here reads a medium-specific field: reorder the file
+// and an AI still can land in this row.
 const featured = projects.slice(0, 3);
 
 /**
@@ -31,7 +33,7 @@ export function WorkTeaser() {
             <PixelResolve trigger="view" className="absolute inset-0">
               <Image
                 src={project.cover}
-                alt={`${project.name} homepage`}
+                alt={project.medium === "website" ? `${project.name} homepage` : `${project.name} — lead frame`}
                 fill
                 sizes="(min-width: 1024px) 25vw, 50vw"
                 className="object-cover object-left-top"

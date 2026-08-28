@@ -467,6 +467,30 @@ body {
   transform: scale(1.1);
 }
 
+/* The CTA on the two non-featured cards. Those cards are light at rest and
+   go dark under a photo on hover, so the button has to invert with them.
+
+   This cannot be `group-hover:text-white` at the call site: `.btn-line`
+   further down sets `color` as unlayered CSS, and unlayered beats every
+   layered `@layer utilities` declaration regardless of specificity — the
+   same trap called out above .pricing-card-media. The utilities were on the
+   Link and simply never applied, which is why the button read as a ghost.
+
+   Colours are literals, not --ink/--paper: the card is dark under the photo
+   in both themes, but those tokens invert in dark mode and would flip this
+   to light-on-white. */
+.group:hover .pricing-card-cta {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+}
+/* Pointer actually on the button, card already dark — fill it so it reads as
+   the solid primary rather than .btn-line:hover's dark-on-dark. */
+.group:hover .pricing-card-cta:hover {
+  color: #16161c;
+  background: #fff;
+  border-color: #fff;
+}
+
 /* ------------------------------------------------------------------------
    Project grid card (components/WorkGrid.tsx) — the hover cascade.
 
@@ -598,6 +622,116 @@ body {
 .project-card:hover .project-card-score:nth-child(4),
 .project-card:focus-within .project-card-score:nth-child(4) {
   transition-delay: 270ms;
+}
+
+/* ── Media tiles (the AI lanes) ──────────────────────────────────────────
+   The website card's hover is a rake of light across glass — right for a
+   screenshot, wrong for a film. A clip announces itself the way a projector
+   does: the still it was holding dips back, playback comes up underneath
+   it, and a transport hairline runs the length of the piece.
+
+   All of it lives here rather than in Tailwind hover utilities for the same
+   reason .project-card's cascade does: the beats are staggered against each
+   other and one of them is a keyframed animation, neither of which a
+   utility can express. */
+.media-tile {
+  transition:
+    translate 420ms var(--ease-site),
+    box-shadow 420ms var(--ease-site),
+    border-color 420ms var(--ease-site);
+}
+.media-tile:hover,
+.media-tile:focus-visible {
+  translate: 0 -5px;
+  border-color: color-mix(in srgb, var(--accent, var(--blue)) 45%, transparent);
+  box-shadow:
+    0 28px 60px -26px color-mix(in srgb, var(--accent, var(--blue)) 50%, transparent),
+    0 10px 24px -14px rgba(22, 22, 28, 0.24);
+}
+
+/* Slower and shallower than the website card's 1.045: a generated frame is
+   the product itself, and pushing hard into it starts showing the upscale.
+   The screenshot can take a firmer zoom because nobody is inspecting its
+   grain. */
+.media-tile-shot {
+  transition: scale 900ms var(--ease-site);
+}
+.media-tile:hover .media-tile-shot,
+.media-tile:focus-visible .media-tile-shot {
+  scale: 1.03;
+}
+
+/* The poster travels WITH the video underneath it — without this the still
+   sits dead still while the frame behind it pushes in, and the crossfade
+   reads as two images sliding past each other. */
+.media-tile-poster {
+  transition:
+    opacity 500ms var(--ease-site),
+    scale 900ms var(--ease-site);
+}
+.media-tile:hover .media-tile-poster,
+.media-tile:focus-visible .media-tile-poster {
+  scale: 1.03;
+}
+
+.media-tile-veil {
+  transition: opacity 500ms var(--ease-site);
+}
+.media-tile:hover .media-tile-veil,
+.media-tile:focus-visible .media-tile-veil {
+  opacity: 0;
+}
+
+/* Duration comes from the asset, inline, so the bar finishes exactly when
+   the clip loops. Name and timing function are the only parts that can live
+   in CSS. */
+@keyframes media-transport {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+.media-tile-transport {
+  scale: 0 1;
+}
+.media-tile:hover .media-tile-transport,
+.media-tile:focus-visible .media-tile-transport {
+  animation-name: media-transport;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.media-tile-badge,
+.media-tile-expand {
+  opacity: 0;
+  translate: 0 6px;
+  transition:
+    opacity 420ms var(--ease-site),
+    translate 420ms var(--ease-site);
+}
+.media-tile:hover .media-tile-badge,
+.media-tile:focus-visible .media-tile-badge,
+.media-tile:hover .media-tile-expand,
+.media-tile:focus-visible .media-tile-expand {
+  opacity: 1;
+  translate: 0 0;
+  transition-delay: 80ms;
+}
+
+/* A clip that never plays has to say so at rest, or the tile is a still
+   with a mystery badge that appears on a hover the visitor cannot perform. */
+@media (prefers-reduced-motion: reduce) {
+  .media-tile-badge,
+  .media-tile-expand {
+    opacity: 1;
+    translate: 0 0;
+  }
+  .media-tile:hover .media-tile-transport,
+  .media-tile:focus-visible .media-tile-transport {
+    animation: none;
+  }
 }
 
 /* Apple "Liquid Glass" specular treatment for the nav capsule — the same

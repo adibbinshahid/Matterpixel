@@ -3,13 +3,13 @@ import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { WorkGrid } from "@/components/WorkGrid";
 import { PixelField } from "@/components/PixelField";
-import { projects } from "@/content/projects";
+import { projects, websiteProjects, mediaProjects } from "@/content/projects";
 import { workIntro, siteUrl } from "@/content/siteConfig";
 
 export const metadata: Metadata = {
   title: "Projects",
   description:
-    "Four production-quality concept builds you can open and use right now — luxury eCommerce, a psychiatry clinic platform, restaurant ordering, and multi-category retail. Every one live, with its admin panel open.",
+    "Production-quality concept work you can check for yourself — live sites with their admin panels open, plus the AI campaign stills and launch films made for them. Nothing here is a mockup.",
   alternates: { canonical: "/projects" },
 };
 
@@ -19,11 +19,21 @@ export const metadata: Metadata = {
  * inline strip rather than a four-column block: the grid below is the point
  * of the page and should land in the first viewport, so the proof runs as
  * one line of type instead of ~200px of stacked stats. */
-const perfScores = projects.map((p) => p.lighthouse.performance);
+/* Scoped to the measured lane, never to `projects`. An AI still has no
+ * Lighthouse score and is not a "live build", and counting it as either
+ * would put a NaN in the range and a lie next to it. */
+const perfScores = websiteProjects.map((p) => p.lighthouse.performance);
+
+/* Counted across the AI lanes rather than typed, so publishing a set moves
+ * this number and nobody has to remember to. */
+const mediaPieces = mediaProjects.reduce((n, p) => n + p.media.length, 0);
 
 const proofPoints = [
-  { value: `${projects.length}`, label: "live builds" },
-  { value: `${projects.filter((p) => p.admin).length}`, label: "admin panels" },
+  { value: `${websiteProjects.length}`, label: "live builds" },
+  {
+    value: `${websiteProjects.filter((p) => p.admin).length}`,
+    label: "admin panels",
+  },
   /* Derived, not typed: this range and the gauge row below it come from the
    * same numbers, so a re-measured build can never leave a stale span
    * sitting at the top of the page contradicting the cards. */
@@ -31,7 +41,13 @@ const proofPoints = [
     value: `${Math.min(...perfScores)}–${Math.max(...perfScores)}`,
     label: "Lighthouse performance",
   },
-  { value: "0", label: "stock mockups" },
+  /* Replaces the old "0 stock mockups" line, which said what the section is
+   * not. With the AI lanes published the same claim is better made as a
+   * count of pieces we generated ourselves — and it collapses back to the
+   * old line if those lanes are ever emptied. */
+  mediaPieces > 0
+    ? { value: `${mediaPieces}`, label: "AI stills & cuts" }
+    : { value: "0", label: "stock mockups" },
 ];
 
 export default function WorkPage() {
