@@ -1,9 +1,10 @@
 import Image from "next/image";
 
 /**
- * Matterpixel pixel-block mark (public/mark.png) — icon-only spots:
- * hero visual, playground reduced-motion fallback. Non-square (5:3),
- * always size with one axis + `w-auto`/`h-auto` on the other.
+ * Matterpixel mark (public/mark.svg) — the two inward-facing brand wedges,
+ * for icon-only spots: hero visual, playground reduced-motion fallback.
+ * Non-square (3:2), always size with one axis + `w-auto`/`h-auto` on the
+ * other. Vector, so it stays crisp at any size.
  */
 export function MarkImg({
   className,
@@ -14,10 +15,10 @@ export function MarkImg({
 }) {
   return (
     <Image
-      src="/mark.png"
+      src="/mark.svg"
       alt="Matterpixel mark"
-      width={2094}
-      height={1256}
+      width={300}
+      height={200}
       priority={priority}
       className={className}
     />

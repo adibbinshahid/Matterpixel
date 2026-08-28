@@ -128,11 +128,11 @@ export function Nav() {
         </div>
 
         <Link href="/" className="relative flex min-h-11 items-center">
-          {/* The full-size lockup renders 241px wide — 61% of a 393px phone
+          {/* The full-size lockup renders ~240px wide — 61% of a 393px phone
              viewport — inside a bar that also has to hold the menu button.
-             Half height below `sm` (~172px wide) leaves the bar breathing
-             room and lets it shrink to h-16 with it. */}
-          <Logo forceLight={overDarkHero} priority imgId="nav-logo-mark" imgClassName="h-10 w-auto sm:h-[3.84rem]" />
+             The smaller height below `sm` (~156px wide) leaves the bar
+             breathing room and lets it shrink to h-16 with it. */}
+          <Logo forceLight={overDarkHero} priority imgId="nav-logo-mark" imgClassName="h-11 w-auto sm:h-[4.224rem]" />
         </Link>
 
         {/* Absolutely centered on the bar itself, not `justify-between`'s

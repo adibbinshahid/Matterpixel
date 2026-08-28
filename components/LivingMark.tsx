@@ -4,18 +4,31 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
-/** Same rects as the delivered mark (100x60 logical space, §mark.png). */
-const MARK_RECTS: { x: number; y: number; w: number; h: number; color: "blue" | "magenta" }[] = [
-  { x: 0, y: 0, w: 40, h: 20, color: "blue" },
-  { x: 60, y: 0, w: 40, h: 20, color: "magenta" },
-  { x: 0, y: 20, w: 20, h: 40, color: "blue" },
-  { x: 40, y: 20, w: 20, h: 40, color: "blue" },
-  { x: 80, y: 20, w: 20, h: 40, color: "magenta" },
+/**
+ * Same two wedges as the delivered mark (300x200 logical space, §mark.svg).
+ * The mark is no longer a pixel grid, so particle homes are found by
+ * sampling this outline rather than by walking rects — the rounded outer
+ * corners are close enough to square at this cell size to ignore.
+ */
+type Poly = { color: "blue" | "magenta"; points: [number, number][] };
+const MARK_POLYS: Poly[] = [
+  { color: "blue", points: [[0, 0], [59, 0], [145, 100], [59, 200], [0, 200]] },
+  { color: "magenta", points: [[300, 0], [241, 0], [155, 100], [241, 200], [300, 200]] },
 ];
 
-const CELL = 4; // sampling grid in the 100x60 logical space (~250 particles)
-const LOGICAL_W = 100;
-const LOGICAL_H = 60;
+const CELL = 12; // sampling grid in the 300x200 logical space (~280 particles)
+const LOGICAL_W = 300;
+const LOGICAL_H = 200;
+
+function insidePoly(points: [number, number][], px: number, py: number) {
+  let hit = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+    const [xi, yi] = points[i];
+    const [xj, yj] = points[j];
+    if (yi > py !== yj > py && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) hit = !hit;
+  }
+  return hit;
+}
 
 type ParticleState = "assembling" | "idle" | "dissolving" | "scattered" | "reforming";
 
@@ -56,13 +69,14 @@ function buildParticles(
   skipIntro: boolean,
 ): Particle[] {
   const particles: Particle[] = [];
-  for (const rect of MARK_RECTS) {
-    const cols = Math.round(rect.w / CELL);
-    const rows = Math.round(rect.h / CELL);
+  const cols = Math.round(LOGICAL_W / CELL);
+  const rows = Math.round(LOGICAL_H / CELL);
+  for (const poly of MARK_POLYS) {
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        const lx = rect.x + (c + 0.5) * (rect.w / cols);
-        const ly = rect.y + (r + 0.5) * (rect.h / rows);
+        const lx = (c + 0.5) * (LOGICAL_W / cols);
+        const ly = (r + 0.5) * (LOGICAL_H / rows);
+        if (!insidePoly(poly.points, lx, ly)) continue;
         const hx = offsetX + lx * scale;
         const hy = offsetY + ly * scale;
         // Scatter start point: random point outside the mark's footprint,
@@ -77,7 +91,7 @@ function buildParticles(
           hy,
           x: skipIntro ? hx : startX,
           y: skipIntro ? hy : startY,
-          color: rect.color,
+          color: poly.color,
           size: Math.max(2, CELL * scale * 0.72),
           phase: Math.random() * Math.PI * 2,
           freq: 0.4 + Math.random() * 0.5,

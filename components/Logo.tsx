@@ -12,21 +12,24 @@ import { cn } from "@/lib/utils";
  * The raster wordmark (baked dark-gray ink) is illegible over a dark
  * background — `forceLight` swaps it for public/logo-dark.png, which is the
  * same lockup with only the near-gray wordmark pixels remapped to a light
- * tone and the brand-color icon blocks left untouched.
+ * tone and the brand-color icon blocks left untouched. Both files are built
+ * from the delivered brand art in brand/, not recolored in the browser.
  *
- * That variant used to be produced in the browser: fetch logo.png, run a
- * 6.2-megapixel canvas pass over it, re-encode to a PNG data URL, cache in
- * localStorage. It was a synchronous multi-megapixel main-thread operation
- * on every first visit (plus a second network fetch of the raw PNG), all to
- * recompute a file that never changes. It is now generated once, as a build
- * artifact, by the same thresholds the old canvas pass used.
+ * `variant="wordmark"` drops the mark and renders the text-only lockup —
+ * for spots that already carry the mark next to it.
  */
+const VARIANTS = {
+  lockup: { light: "/logo.png", dark: "/logo-dark.png", width: 1824, height: 514 },
+  wordmark: { light: "/wordmark.png", dark: "/wordmark-dark.png", width: 1888, height: 607 },
+} as const;
+
 export function Logo({
   className,
   imgClassName = "h-8 w-auto",
   imgId,
   priority = false,
   forceLight = false,
+  variant = "lockup",
   sizes = "256px",
 }: {
   className?: string;
@@ -36,30 +39,32 @@ export function Logo({
   /** Use the light-wordmark variant — for spots (like the transparent-
    * over-hero nav) that sit on a dark background. */
   forceLight?: boolean;
+  /** "lockup" = mark + wordmark; "wordmark" = the text alone. */
+  variant?: keyof typeof VARIANTS;
   /** CSS width the lockup actually renders at, so Next picks a matching
-   * srcset candidate. Without it, `width={4920}` below makes Next assume
-   * the image can fill the viewport and generate a 3840px variant — for a
-   * lockup that is never wider than ~280px on screen. The nav's copy is
-   * `priority`, so that oversized file was also being preloaded at high
+   * srcset candidate. Without it, the intrinsic `width` below makes Next
+   * assume the image can fill the viewport and generate a 3840px variant —
+   * for a lockup that is never wider than ~280px on screen. The nav's copy
+   * is `priority`, so that oversized file was also being preloaded at high
    * priority in <head>, competing with the hero for bandwidth. */
   sizes?: string;
 }) {
-  const src = forceLight ? "/logo-dark.png" : "/logo.png";
+  const art = VARIANTS[variant];
 
   return (
     <span className={cn("inline-flex items-center", className)}>
       <Image
         id={imgId}
-        src={src}
+        src={forceLight ? art.dark : art.light}
         alt="Matterpixel"
-        width={4920}
-        height={1256}
+        width={art.width}
+        height={art.height}
         sizes={sizes}
         priority={priority}
-        // The source PNG has ~7.36% transparent padding baked in on both
-        // sides, so the visible mark sits inset from the image's actual
-        // edge — shift it left to align flush with surrounding text.
-        className={cn("-translate-x-[7.36%]", imgClassName)}
+        // Both files carry 8.11% transparent clear space on each side, so
+        // the visible lockup sits inset from the image's actual edge —
+        // shift it left to align flush with surrounding text.
+        className={cn("-translate-x-[8.11%]", imgClassName)}
       />
     </span>
   );

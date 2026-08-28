@@ -83,7 +83,7 @@ run `npm run sitemap` to regenerate it manually during development.
 - `lib/` — `posts.ts` (MDX reading/TOC), `schema.ts` (contact form Zod
   schema), reduced-motion/in-view hooks.
 - `scripts/generate-sitemap.ts` — static sitemap/robots generator.
-- `public/logo.png` / `public/mark.png` — brand assets (see below).
+- `public/logo.png` / `public/mark.svg` — brand assets (see below).
 
 ## Brand tokens
 
@@ -94,15 +94,26 @@ one place: the `:root` block at the top of that file.
 
 ## Brand assets
 
+Source art as delivered by the designer lives in `brand/` (outside
+`public/`, so it is never served). The files under `public/` are built from
+it — see the header comment in `components/Logo.tsx`.
+
 - **`public/logo.png`** — master lockup (mark + wordmark), rendered via
   `<Logo>` (`components/Logo.tsx`) in the nav, mobile menu, and footer.
-- **`public/mark.png`** — mark alone, rendered via `<MarkImg>`
-  (`components/MarkImg.tsx`) in the hero visual and the playground's
-  reduced-motion fallback.
-- **`components/Loader.tsx`** draws the intro assembly animation from
-  hand-coded `<div>` blocks (not the PNG) so each block can animate
-  independently — the coordinates match `mark.png`'s layout. If the mark
-  ever changes shape, update the `BLOCKS` array there too.
+  `public/logo-dark.png` is the same lockup with only the wordmark ink
+  remapped to a light tone, for dark backgrounds (`<Logo forceLight>`).
+- **`public/wordmark.png`** / **`public/wordmark-dark.png`** — the text
+  alone, via `<Logo variant="wordmark">`.
+- **`public/mark.svg`** — mark alone (the two inward-facing wedges, 3:2),
+  rendered via `<MarkImg>` (`components/MarkImg.tsx`) in the hero visual
+  and the playground's reduced-motion fallback.
+- Both lockup PNGs carry 8.11% transparent clear space on each side; `<Logo>`
+  cancels the left half of it with a `-translate-x-[8.11%]`. Regenerating the
+  art with different padding means updating that number.
+- The mark's outline is duplicated in three places that draw it rather than
+  load it: `public/favicon.svg`, `app/api/og/route.tsx`, and the
+  `MARK_POLYS` array in `components/LivingMark.tsx` (which samples the
+  outline into particles). If the mark ever changes shape, update all three.
 - **Work mockups:** `components/WorkMockup.tsx` is an original CSS device
   mockup (no third-party imagery). Replace with real product screenshots
   via `next/image` if/when available — keep using `<PixelResolve>` as the

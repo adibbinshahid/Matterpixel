@@ -17,36 +17,11 @@ export async function GET() {
           padding: "80px",
         }}
       >
-        <div style={{ display: "flex", position: "relative", width: 132, height: 132, marginBottom: 32 }}>
-          {[
-            { x: 0, y: 0, c: "#2C4BFF" },
-            { x: 0, y: 26.4, c: "#2C4BFF" },
-            { x: 0, y: 52.8, c: "#2C4BFF" },
-            { x: 0, y: 79.2, c: "#2C4BFF" },
-            { x: 0, y: 105.6, c: "#2C4BFF" },
-            { x: 26.4, y: 26.4, c: "#2C4BFF" },
-            { x: 52.8, y: 52.8, c: "#2C4BFF" },
-            { x: 105.6, y: 0, c: "#FF2E93" },
-            { x: 105.6, y: 26.4, c: "#FF2E93" },
-            { x: 105.6, y: 52.8, c: "#FF2E93" },
-            { x: 105.6, y: 79.2, c: "#FF2E93" },
-            { x: 105.6, y: 105.6, c: "#FF2E93" },
-            { x: 79.2, y: 26.4, c: "#FF2E93" },
-          ].map((b, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                position: "absolute",
-                left: b.x,
-                top: b.y,
-                width: 26.4,
-                height: 26.4,
-                background: b.c,
-              }}
-            />
-          ))}
-        </div>
+        {/* Matterpixel mark — same paths as public/mark.svg. */}
+        <svg width={198} height={132} viewBox="0 0 300 200" style={{ marginBottom: 32 }}>
+          <path fill="#2C4BFF" d="M12 0h47l86 100-86 100H12A12 12 0 0 1 0 188V12A12 12 0 0 1 12 0Z" />
+          <path fill="#FF2E93" d="M288 0h-47l-86 100 86 100h47a12 12 0 0 0 12-12V12a12 12 0 0 0-12-12Z" />
+        </svg>
         <div
           style={{
             fontSize: 72,
