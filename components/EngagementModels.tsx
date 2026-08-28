@@ -42,9 +42,10 @@ function ModelCard({ model }: { model: (typeof engagementModels)[number] }) {
         <div
           aria-hidden="true"
           data-visible={model.featured ? "true" : "false"}
-          className="pricing-card-media pointer-events-none absolute inset-0 bg-cover bg-center"
+          className="pricing-card-media pointer-events-none absolute inset-0 bg-cover"
           style={{
             backgroundImage: `url(${encodeURI(model.image)})`,
+            backgroundPosition: model.imagePosition,
             maskImage: "linear-gradient(180deg, transparent 0%, black 55%)",
             WebkitMaskImage: "linear-gradient(180deg, transparent 0%, black 55%)",
           }}
@@ -108,12 +109,12 @@ function ModelCard({ model }: { model: (typeof engagementModels)[number] }) {
             href="/contact"
             /* Featured card is dark at rest, so it takes the primary pill.
                The other two are light at rest and go dark only on hover —
-               hence .btn-line plus a group-hover inversion, rather than
-               .btn-outline (white glass, invisible on a light card). */
+               hence .btn-line plus the .pricing-card-cta inversion, rather
+               than .btn-outline (white glass, invisible on a light card).
+               That inversion lives in globals.css because .btn-line sets
+               `color` in unlayered CSS and beats any utility written here. */
             className={`group mx-auto mt-8 w-fit ${
-              model.featured
-                ? "btn-brand"
-                : "btn-line group-hover:border-white/45 group-hover:text-white"
+              model.featured ? "btn-brand" : "btn-line pricing-card-cta"
             }`}
           >
             {model.cta}

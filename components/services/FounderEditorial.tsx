@@ -42,7 +42,7 @@ export function FounderEditorial() {
       ref={sectionRef}
       className="relative overflow-hidden border-t border-line bg-paper"
     >
-      <div className="section-shell py-12 lg:py-9">
+      <div className="section-shell py-12">
         <p className="label-eyebrow mb-4 inline-flex items-center gap-2">
           {founderEditorial.eyebrow}
           <span className="h-px w-5 bg-blue" />
@@ -59,7 +59,7 @@ export function FounderEditorial() {
             style={reduced ? undefined : { y: portraitY }}
             className="relative"
           >
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[var(--mp-radius-md)] bg-ink lg:h-[27svh] lg:max-h-[270px] lg:w-auto">
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[var(--mp-radius-md)] bg-ink lg:h-[34svh] lg:max-h-[350px] lg:w-auto">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={founder.photo ?? "/founder.webp"}
@@ -73,16 +73,16 @@ export function FounderEditorial() {
             </div>
 
             <div className="mt-3 border-t-2 border-ink pt-2.5">
-              <p className="text-base font-extrabold tracking-tight text-ink">
+              <p className="text-lg font-extrabold tracking-tight text-ink">
                 {founder.name}
               </p>
-              <p className="text-xs font-semibold text-ink-soft">{founder.role}</p>
+              <p className="text-sm font-semibold text-ink-soft">{founder.role}</p>
             </div>
           </motion.div>
 
           {/* ── Statement + supporting detail ────────────────────────── */}
           <motion.div style={reduced ? undefined : { y: typeY }}>
-            <h2 className="text-[clamp(1.375rem,2.5vw,2rem)] font-extrabold leading-[1] tracking-[-0.03em] text-ink">
+            <h2 className="text-[clamp(2rem,3.55vw,3.3rem)] font-extrabold leading-[1.02] tracking-[-0.03em] text-ink">
               {founderEditorial.heading.map((line, i) => (
                 <motion.span
                   key={line}
@@ -102,7 +102,7 @@ export function FounderEditorial() {
               ))}
             </h2>
 
-            <p className="mt-3 max-w-xl text-sm leading-snug text-ink-soft">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-ink-soft lg:text-[1.0625rem]">
               {founderEditorial.body}
             </p>
 
@@ -110,7 +110,7 @@ export function FounderEditorial() {
                 stretches to the row's full width even with two short items,
                 which read as a stray rule running across the page. Flex
                 sizes each entry to its own content and packs them together. */}
-            <dl className="mt-4 flex flex-wrap gap-x-8 gap-y-3">
+            <dl className="mt-5 flex flex-wrap gap-x-8 gap-y-3">
               {founderEditorial.annotations.map((a, i) => (
                 <motion.div
                   key={a.label}
@@ -120,17 +120,17 @@ export function FounderEditorial() {
                   viewport={{ once: true, amount: 0.2 }}
                   transition={{ duration: 0.45, delay: i * 0.05, ease: EASE }}
                 >
-                  <dt className="font-mono text-[0.5625rem] uppercase tracking-[0.16em] text-ink/35">
+                  <dt className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-ink/35">
                     {a.label}
                   </dt>
-                  <dd className="mt-1 text-xs font-bold leading-tight text-ink">
+                  <dd className="mt-1 text-sm font-bold leading-tight text-ink">
                     {a.value}
                   </dd>
                 </motion.div>
               ))}
             </dl>
 
-            <Link href={founderEditorial.cta.href} className="btn-brand btn-sm group mt-4 w-fit">
+            <Link href={founderEditorial.cta.href} className="btn-brand group mt-5 w-fit">
               {founderEditorial.cta.label}
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>
