@@ -296,7 +296,7 @@ export const footer = {
   ],
   description:
     "Matterpixel is a digital studio building high-performance websites, apps, and AI-powered content for brands that want to stand out.",
-  foundingLine: "Now taking a select few founding clients.",
+  foundingLine: "Let’s build your next win together.",
   copyright: `© ${brand.year} Matterpixel. All rights reserved.`,
   contact: {
     email: "hello@matterpixel.com",
