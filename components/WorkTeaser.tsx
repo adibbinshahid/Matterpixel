@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight, ImageOff } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { PixelResolve } from "@/components/PixelResolve";
 import { RevealGroup, RevealItem } from "@/components/Reveal";
 import { projects } from "@/content/projects";
@@ -29,20 +29,13 @@ export function WorkTeaser() {
             className="group hover-lift relative block aspect-square overflow-hidden rounded-[var(--mp-radius-md)] border border-line bg-paper-2"
           >
             <PixelResolve trigger="view" className="absolute inset-0">
-              {project.previewImage ? (
-                <Image
-                  src={project.previewImage}
-                  alt={`${project.name} preview`}
-                  fill
-                  sizes="(min-width: 1024px) 25vw, 50vw"
-                  className="scale-110 object-cover"
-                />
-              ) : (
-                <div className="flex h-full flex-col items-center justify-center gap-2 px-4 text-center">
-                  <ImageOff className="h-5 w-5 text-ink-soft/50" aria-hidden="true" />
-                  <p className="label-eyebrow">{project.category}</p>
-                </div>
-              )}
+              <Image
+                src={project.cover}
+                alt={`${project.name} homepage`}
+                fill
+                sizes="(min-width: 1024px) 25vw, 50vw"
+                className="object-cover object-left-top"
+              />
             </PixelResolve>
 
             <div

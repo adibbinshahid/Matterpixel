@@ -467,6 +467,139 @@ body {
   transform: scale(1.1);
 }
 
+/* ------------------------------------------------------------------------
+   Project grid card (components/WorkGrid.tsx) — the hover cascade.
+
+   Written here as unlayered CSS rather than as Tailwind hover utilities at
+   the call site, for the same reason .pricing-card-media above is: the bare
+   `*` rule near the top of this file is unlayered, and unlayered CSS
+   outranks EVERY layered `@layer utilities` declaration no matter the
+   specificity. So `transition-transform duration-700` on an element writes
+   transition-property: transform — and then loses it to that `*` rule's
+   own transition-property list, which names only colour and shadow. The
+   utility looks right in the markup, computes to nothing, and the hover
+   lands in one frame. (The comment on that `*` rule claims a single-class
+   selector beats it; that was true under plain CSS cascade rules and is not
+   true across layers.)
+
+   `translate` and `scale` are animated as their own properties and never
+   through `transform`, because motion writes `transform` on the article
+   every frame during the grid's entry stagger and a CSS transition on the
+   same property would fight it mid-flight. Separate properties compose
+   without either side having to know about the other.
+
+   The beats, in the order light would reach them: the card lifts and blooms
+   a shadow in its own accent; the veil over the capture clears; the capture
+   pushes in (the slowest thing here, still settling when the rest has
+   arrived); a specular rake crosses it once; the rule draws under the name;
+   and the four score boxes light in sequence, 60ms apart. Reduced motion is
+   already handled globally — the media query at the foot of this file zeroes
+   every transition-duration with !important.
+
+   `--accent` is published by the article (the project's own sector hue) and
+   `--band` by each score box (its Lighthouse pass/average/fail colour). */
+.project-card {
+  transition:
+    translate 420ms var(--ease-site),
+    box-shadow 420ms var(--ease-site),
+    border-color 420ms var(--ease-site);
+}
+.project-card:hover,
+.project-card:focus-within {
+  translate: 0 -7px;
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  box-shadow:
+    0 28px 60px -26px color-mix(in srgb, var(--accent) 45%, transparent),
+    0 10px 24px -14px rgba(22, 22, 28, 0.2);
+}
+
+.project-card-shot {
+  transition: scale 900ms var(--ease-site);
+}
+.project-card:hover .project-card-shot,
+.project-card:focus-within .project-card-shot {
+  scale: 1.045;
+}
+
+.project-card-veil {
+  transition: opacity 500ms var(--ease-site);
+}
+.project-card:hover .project-card-veil,
+.project-card:focus-within .project-card-veil {
+  opacity: 0;
+}
+
+/* One pass of light across the capture, the way a sheet of glass catches a
+   lamp as you lean towards it. The bar sits off the left edge at rest, so
+   there is nothing to fade in or out — and the return trip is instant
+   (`transition: none` at rest) because it snaps back to a position the well
+   already clips. That is why this is a slide and not the usual opacity
+   pulse: a pulse has to animate in both directions, and the reverse sweep
+   always reads as a mistake. */
+.project-card-rake {
+  transition: none;
+}
+.project-card:hover .project-card-rake {
+  translate: 400% 0;
+  transition: translate 1000ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
+}
+
+/* background-size on a flat gradient, so the rule under the name animates
+   on the compositor and never reflows the heading the way an animated
+   border or pseudo-element width would. */
+.project-card-rule {
+  background-image: linear-gradient(to right, var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: 0% 1.5px;
+  transition: background-size 600ms var(--ease-site);
+}
+.project-card:hover .project-card-rule,
+.project-card:focus-within .project-card-rule {
+  background-size: 100% 1.5px;
+  transition-delay: 60ms;
+}
+
+.project-card-arrow {
+  transition: translate 420ms var(--ease-site);
+}
+.project-card:hover .project-card-arrow {
+  translate: 6px 0;
+}
+
+/* Last beat, and the one that makes the whole move read as the audit
+   lighting up rather than as a card that moved. */
+.project-card-score {
+  transition:
+    translate 500ms var(--ease-site),
+    border-color 500ms var(--ease-site),
+    background-color 500ms var(--ease-site),
+    box-shadow 500ms var(--ease-site);
+}
+.project-card:hover .project-card-score,
+.project-card:focus-within .project-card-score {
+  translate: 0 -3px;
+  border-color: color-mix(in srgb, var(--band) 48%, transparent);
+  background-color: color-mix(in srgb, var(--band) 5%, var(--paper));
+  box-shadow: 0 12px 24px -16px var(--band);
+}
+.project-card:hover .project-card-score:nth-child(1),
+.project-card:focus-within .project-card-score:nth-child(1) {
+  transition-delay: 90ms;
+}
+.project-card:hover .project-card-score:nth-child(2),
+.project-card:focus-within .project-card-score:nth-child(2) {
+  transition-delay: 150ms;
+}
+.project-card:hover .project-card-score:nth-child(3),
+.project-card:focus-within .project-card-score:nth-child(3) {
+  transition-delay: 210ms;
+}
+.project-card:hover .project-card-score:nth-child(4),
+.project-card:focus-within .project-card-score:nth-child(4) {
+  transition-delay: 270ms;
+}
+
 /* Apple "Liquid Glass" specular treatment for the nav capsule — the same
    top-shine/bottom-glow technique as .glass-card above, so the nav's
    glass reads as the same family of surface as every other glass panel
@@ -781,7 +914,8 @@ html.lenis body {
 .btn-brand,
 .btn-line,
 .btn-primary,
-.btn-outline {
+.btn-outline,
+.btn-blue {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -807,19 +941,22 @@ html.lenis body {
 .btn-brand:hover,
 .btn-line:hover,
 .btn-primary:hover,
-.btn-outline:hover {
+.btn-outline:hover,
+.btn-blue:hover {
   transform: translateY(-2px) scale(1.035);
 }
 .btn-brand:active,
 .btn-line:active,
 .btn-primary:active,
-.btn-outline:active {
+.btn-outline:active,
+.btn-blue:active {
   transform: translateY(0) scale(1.01);
 }
 .btn-brand:disabled,
 .btn-line:disabled,
 .btn-primary:disabled,
-.btn-outline:disabled {
+.btn-outline:disabled,
+.btn-blue:disabled {
   transform: none;
   box-shadow: none;
   opacity: 0.55;
@@ -922,6 +1059,25 @@ html.lenis body {
 .btn-outline:hover {
   background: rgba(255, 255, 255, 0.18);
   border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Solid brand blue — the third role, and deliberately not a fourth look:
+   same pill, same padding scale, same lift, only the fill is flat rather
+   than the primary's animated gradient. It exists for actions that must
+   read as a *button* while a .btn-brand is either absent or would outrank
+   them — the project cards' "Live site", where the gradient primary is
+   reserved for the page's real conversion CTA and a second gradient pill
+   per card would turn a four-card grid into eight competing primaries. */
+.btn-blue {
+  color: #fff;
+  background-color: var(--blue);
+}
+.btn-blue:hover {
+  background-color: color-mix(in srgb, var(--blue) 88%, #000);
+  box-shadow: 0 12px 26px -12px color-mix(in srgb, var(--blue) 70%, transparent);
+}
+.btn-blue:disabled {
+  box-shadow: none;
 }
 
 /* Text-only tertiary — inline links styled as an action, no pill. Not part

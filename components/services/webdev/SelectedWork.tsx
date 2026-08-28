@@ -44,8 +44,8 @@ export function SelectedWork() {
                   <td className="py-4 pr-4 align-top text-sm text-white/70">{project.oneLiner}</td>
                   <td className="py-4 pr-4 align-top">
                     <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/70">
-                      <span className="font-semibold text-white">{project.highlights[0].value}</span>{" "}
-                      {project.highlights[0].label.toLowerCase()}
+                      <span className="font-semibold text-white">{project.lighthouse.performance}</span>{" "}
+                      performance
                     </span>
                   </td>
                   <td className="py-4 align-top">
