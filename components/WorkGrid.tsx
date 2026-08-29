@@ -7,16 +7,15 @@ import { motion, AnimatePresence, type Variants } from "motion/react";
 import { ArrowRight, ArrowUpRight, FileText, Images, Play, Sparkles } from "lucide-react";
 import { LighthouseScores } from "@/components/LighthouseScores";
 import { SpecStrip } from "@/components/ProjectMedia";
-import { projects, mediums, type Medium, type Project } from "@/content/projects";
+/* Type-only, so none of the project content follows this import into the
+   client bundle — the cards and the lane labels both arrive as props. */
+import type { Medium, WorkCard } from "@/content/projects";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { EASE, cn } from "@/lib/utils";
 
 type Filter = Medium | "all";
 
-const FILTERS: { id: Filter; label: string }[] = [
-  { id: "all", label: "All" },
-  ...mediums.map((m) => ({ id: m.id as Filter, label: m.label })),
-];
+type Lane = { id: Medium; label: string; empty: string };
 
 /**
  * The whole result set animates as one keyed lane, driven from the parent
@@ -80,9 +79,9 @@ const reducedCardVariants: Variants = {
  * `preload="none"` is load-bearing — without it every clip in the lane is
  * fetched on mount to display a poster the browser already has.
  */
-function CardWell({ project, index }: { project: Project; index: number }) {
+function CardWell({ project, index }: { project: WorkCard; index: number }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const lead = project.medium === "website" ? null : project.media.find((m) => m.kind === "video");
+  const lead = project.leadVideo;
 
   const play = useCallback(() => {
     /* Swallowed: play() rejects on a backgrounded tab or a busy decoder, and
@@ -184,7 +183,7 @@ function CardWell({ project, index }: { project: Project; index: number }) {
  * Scroll parallax on the screenshot is also deliberately absent: drift
  * loosens a tight grid, where the cards need one firm baseline.
  */
-function ProjectCard({ project, index, reduced }: { project: Project; index: number; reduced: boolean }) {
+function ProjectCard({ project, index, reduced }: { project: WorkCard; index: number; reduced: boolean }) {
   return (
     <motion.article
       variants={reduced ? reducedCardVariants : cardVariants}
@@ -257,7 +256,7 @@ function ProjectCard({ project, index, reduced }: { project: Project; index: num
               full is what makes them checkable. Fixed width at lg so the
               four boxes stay square-ish and every card's block lines up
               across the row regardless of how long its summary runs. */}
-          {project.medium === "website" ? (
+          {project.lighthouse ? (
             <LighthouseScores
               scores={project.lighthouse}
               size="sm"
@@ -269,7 +268,7 @@ function ProjectCard({ project, index, reduced }: { project: Project; index: num
                is reproducible by the visitor, a shot count is only
                reproducible by us, so these are stated as delivery facts and
                never dressed up as an audit. */
-            <SpecStrip specs={project.specs} className="w-full lg:w-[11rem] lg:shrink-0" />
+            <SpecStrip specs={project.specs ?? []} className="w-full lg:w-[11rem] lg:shrink-0" />
           )}
         </div>
 
@@ -285,7 +284,7 @@ function ProjectCard({ project, index, reduced }: { project: Project; index: num
             Case study
             <ArrowRight className="project-card-arrow h-4 w-4" />
           </Link>
-          {project.medium === "website" ? (
+          {project.liveDemoUrl ? (
             <a
               href={project.liveDemoUrl}
               target="_blank"
@@ -303,7 +302,7 @@ function ProjectCard({ project, index, reduced }: { project: Project; index: num
                one thing the card cannot show. */
             <span className="inline-flex min-h-11 items-center gap-1.5 text-[13px] font-semibold text-ink-soft">
               <Images className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              {project.media.length} {project.medium === "ai-video" ? "cuts" : "stills"}
+              {project.mediaCount} {project.medium === "ai-video" ? "cuts" : "stills"}
             </span>
           )}
         </div>
@@ -315,8 +314,7 @@ function ProjectCard({ project, index, reduced }: { project: Project; index: num
 /** Honest state for a filter that has nothing published yet — says what is
  * coming and where to read about the discipline meanwhile, rather than
  * rendering an empty grid or hiding the tab. */
-function EmptyLane({ medium, reduced }: { medium: Medium; reduced: boolean }) {
-  const lane = mediums.find((m) => m.id === medium);
+function EmptyLane({ lane, reduced }: { lane?: Lane; reduced: boolean }) {
   if (!lane) return null;
   return (
     <motion.div
@@ -337,14 +335,20 @@ function EmptyLane({ medium, reduced }: { medium: Medium; reduced: boolean }) {
   );
 }
 
-export function WorkGrid() {
+export function WorkGrid({ cards, lanes }: { cards: WorkCard[]; lanes: Lane[] }) {
   const reduced = useReducedMotion();
-  /** Websites, not All: every published build is a website today, so the two
-   * lanes render the same four cards — but landing on Websites shows which
-   * medium the work actually is, and leaves All as the wider view a visitor
-   * opts into once the other lanes fill up. */
-  const [active, setActive] = useState<Filter>("website");
-  const visible = active === "all" ? projects : projects.filter((p) => p.medium === active);
+  const filters: { id: Filter; label: string }[] = [
+    { id: "all", label: "All" },
+    ...lanes.map((l) => ({ id: l.id as Filter, label: l.label })),
+  ];
+  /** All, now that the AI lanes carry most of the work. This used to open on
+   * Websites, back when the other two lanes were empty and landing on them
+   * would have shown a visitor a notice instead of a portfolio. With every
+   * lane published, opening on Websites would hide two thirds of the shelf
+   * behind a tab — so the wide view is the default and the lanes are the
+   * filter, which is the way round a filter is supposed to work. */
+  const [active, setActive] = useState<Filter>("all");
+  const visible = active === "all" ? cards : cards.filter((p) => p.medium === active);
 
   /** Live height of whatever lane is currently mounted. A ResizeObserver
    * rather than a measurement keyed off `active`: under `mode="wait"` the
@@ -378,8 +382,8 @@ export function WorkGrid() {
         role="tablist"
         aria-label="Filter builds by medium"
       >
-        {FILTERS.map((f) => {
-          const count = f.id === "all" ? projects.length : projects.filter((p) => p.medium === f.id).length;
+        {filters.map((f) => {
+          const count = f.id === "all" ? cards.length : cards.filter((p) => p.medium === f.id).length;
           const isActive = active === f.id;
           return (
             <button
@@ -454,7 +458,7 @@ export function WorkGrid() {
                   <ProjectCard key={project.slug} project={project} index={i} reduced={reduced} />
                 ))
               ) : (
-                <EmptyLane medium={active as Medium} reduced={reduced} />
+                <EmptyLane lane={lanes.find((l) => l.id === active)} reduced={reduced} />
               )}
             </motion.div>
           </AnimatePresence>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
-import { Expand, Pause, Play, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Expand, Pause, Play, X } from "lucide-react";
 import type { MediaAsset } from "@/content/projects";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { EASE, cn } from "@/lib/utils";
@@ -56,7 +57,18 @@ export function SpecStrip({
           <dt className="whitespace-nowrap text-[10px] font-medium leading-none tracking-tight text-ink-soft">
             {s.label}
           </dt>
-          <dd className="m-0 mt-1 whitespace-nowrap text-lg font-extrabold leading-none tracking-tight text-[var(--band)]">
+          {/* Sized by content, not fixed: a box holds "15" and it holds
+              "3:2 · 1:1 +2", and at one size either the short values look
+              timid or the long ones spill out of a ~70px box. Wrapping is
+              allowed for the same reason — the 2x2 is a grid, so a value
+              that takes two lines lifts all four boxes together instead of
+              breaking the row. */}
+          <dd
+            className={cn(
+              "m-0 mt-1 font-extrabold leading-tight tracking-tight text-[var(--band)]",
+              s.value.length > 7 ? "text-[13px]" : "text-lg",
+            )}
+          >
             {s.value}
           </dd>
         </div>
@@ -95,7 +107,8 @@ export function MediaTile({
   priority,
   className,
   onExpand,
-  eager,
+  ratio,
+  compact,
 }: {
   asset: MediaAsset;
   sizes?: string;
@@ -103,9 +116,13 @@ export function MediaTile({
   className?: string;
   /** Provided by MediaGallery; omitted for a bare tile (a grid card). */
   onExpand?: () => void;
-  /** Skip the hover gate and play as soon as the tile is on screen — the
-   * case study's lead asset only, where the film IS the hero. */
-  eager?: boolean;
+  /** Overrides the asset's delivered ratio — the contact-sheet grid squares
+   * every thumbnail so the set reads as one block. The uncropped piece is
+   * one click away in the overlay, which is where the real ratio matters. */
+  ratio?: string;
+  /** Thumbnail scale: smaller radius, smaller chrome, no runtime badge
+   * competing with a 200px tile. */
+  compact?: boolean;
 }) {
   const reduced = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -132,20 +149,6 @@ export function MediaTile({
     setPlaying(false);
   }, []);
 
-  /* The eager lead plays from an IntersectionObserver instead of a pointer,
-     so it also runs on touch — where there is no hover to gate on. */
-  useEffect(() => {
-    if (!eager || reduced || !isVideo) return;
-    const v = videoRef.current;
-    if (!v) return;
-    const io = new IntersectionObserver(
-      ([e]) => (e.isIntersecting ? play() : stop()),
-      { threshold: 0.35 },
-    );
-    io.observe(v);
-    return () => io.disconnect();
-  }, [eager, reduced, isVideo, play, stop]);
-
   /* The frame carries a `layoutId` in gallery mode so the overlay can grow
      out of the exact tile that was clicked — see MediaGallery. A bare tile
      (a grid card) has no overlay to travel to and so takes none: an unpaired
@@ -153,16 +156,19 @@ export function MediaTile({
   const shared = onExpand ? { layoutId: `media-frame-${asset.src}` } : {};
   const rootProps = {
     ...shared,
-    onMouseEnter: eager ? undefined : play,
-    onMouseLeave: eager ? undefined : stop,
-    onFocus: eager ? undefined : play,
-    onBlur: eager ? undefined : stop,
+    onMouseEnter: play,
+    onMouseLeave: stop,
+    onFocus: play,
+    onBlur: stop,
     className: cn(
-      "media-tile group/tile relative block w-full overflow-hidden rounded-[var(--mp-radius-md)] border border-[rgba(255,255,255,0.09)] bg-[#0f0f13] text-left shadow-[0_24px_60px_-24px_rgba(22,22,28,0.55)]",
+      "media-tile group/tile relative block w-full overflow-hidden border border-[rgba(255,255,255,0.09)] bg-[#0f0f13] text-left",
+      compact
+        ? "rounded-[var(--mp-radius-sm)] shadow-[0_10px_24px_-16px_rgba(22,22,28,0.55)]"
+        : "rounded-[var(--mp-radius-md)] shadow-[0_24px_60px_-24px_rgba(22,22,28,0.55)]",
       onExpand && "cursor-zoom-in",
       className,
     ),
-    style: { aspectRatio: asset.aspect },
+    style: { aspectRatio: ratio ?? asset.aspect },
   };
 
   const body = (
@@ -224,9 +230,19 @@ export function MediaTile({
         />
       )}
 
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-3">
+      <div
+        className={cn(
+          "pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-3",
+          compact ? "p-2" : "p-3",
+        )}
+      >
         {isVideo && asset.duration && (
-          <span className="media-tile-badge inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,19,0.72)] px-2.5 py-1 font-mono text-[11px] tracking-tight text-[#f5f3ee] backdrop-blur-sm">
+          <span
+            className={cn(
+              "media-tile-badge inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,19,0.72)] font-mono tracking-tight text-[#f5f3ee] backdrop-blur-sm",
+              compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]",
+            )}
+          >
             {playing ? (
               <Pause className="h-3 w-3" aria-hidden="true" />
             ) : (
@@ -236,8 +252,13 @@ export function MediaTile({
           </span>
         )}
         {onExpand && (
-          <span className="media-tile-expand ml-auto inline-flex h-8 w-8 items-center justify-center rounded-full bg-[rgba(15,15,19,0.72)] text-[#f5f3ee] backdrop-blur-sm">
-            <Expand className="h-3.5 w-3.5" aria-hidden="true" />
+          <span
+            className={cn(
+              "media-tile-expand ml-auto inline-flex items-center justify-center rounded-full bg-[rgba(15,15,19,0.72)] text-[#f5f3ee] backdrop-blur-sm",
+              compact ? "h-6 w-6" : "h-8 w-8",
+            )}
+          >
+            <Expand className={compact ? "h-3 w-3" : "h-3.5 w-3.5"} aria-hidden="true" />
           </span>
         )}
       </div>
@@ -261,6 +282,11 @@ function durationSeconds(duration?: string) {
   const [m, s] = duration.split(":").map(Number);
   const total = Number.isFinite(m) && Number.isFinite(s) ? m * 60 + s : 12;
   return `${total || 12}s`;
+}
+
+/** The still that stands in for an asset in the filmstrip. */
+function thumbSrc(asset: MediaAsset) {
+  return asset.kind === "video" ? asset.poster : asset.src;
 }
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -291,11 +317,28 @@ export function MediaGallery({
   const reduced = useReducedMotion();
   const [open, setOpen] = useState<number | null>(null);
   const active = open === null ? null : items[open];
+  const stripRef = useRef<HTMLDivElement>(null);
+  /* createPortal needs document.body, which does not exist during the
+     server render — so the overlay only mounts after hydration. Nothing is
+     lost: it is closed on first paint anyway. */
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const step = useCallback(
     (delta: number) => setOpen((i) => (i === null ? i : (i + delta + items.length) % items.length)),
     [items.length],
   );
+
+  /* Drag the filmstrip along with the selection. Without this, arrowing past
+     the eighth piece of a seventeen-piece set leaves the strip's highlight
+     off-screen and the visitor loses their place in the set they came to
+     see all of. */
+  useEffect(() => {
+    if (open === null) return;
+    stripRef.current
+      ?.querySelector<HTMLElement>('[data-active="true"]')
+      ?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", inline: "center", block: "nearest" });
+  }, [open, reduced]);
 
   /* Keys and scroll lock live together: both are the overlay's, both have to
      come back the moment it closes, and splitting them across two effects is
@@ -318,104 +361,215 @@ export function MediaGallery({
 
   return (
     <>
-      {/* Columns, not rows: the set is mixed-ratio by design (a 9:16 cutdown
-          beside a 16:9 master), and a row grid would either crop them all to
-          one shape or leave a ragged band of dead space under every short
-          tile. A masonry column keeps every piece at its delivered ratio. */}
-      <div className={cn("columns-1 gap-5 sm:columns-2 [&>*]:mb-5", className)}>
+      {/* A contact sheet, not a showcase. Fifteen frames at half the page
+          width is a scroll long enough that a visitor gives up at six and
+          never learns the set is fifteen — so the grid's job is to fit the
+          whole set in a glance and hand the real viewing to the overlay.
+          Squares are the price: mixed ratios cannot tile without either a
+          ragged masonry (which reintroduces the height) or dead space. The
+          uncropped piece is one click away, and the copy above says so. */}
+      <div
+        className={cn(
+          "grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-4",
+          className,
+        )}
+      >
         {items.map((asset, i) => (
-          <figure key={asset.src} className="break-inside-avoid">
-            <MediaTile
-              asset={asset}
-              onExpand={() => setOpen(i)}
-              sizes="(min-width: 640px) 45vw, 100vw"
-              priority={i === 0}
-            />
-            <figcaption className="mt-3 text-sm leading-relaxed text-ink-soft">
-              {asset.caption}
-            </figcaption>
-          </figure>
+          <MediaTile
+            key={asset.src}
+            asset={asset}
+            onExpand={() => setOpen(i)}
+            ratio="1 / 1"
+            compact
+            sizes="(min-width: 1024px) 22vw, (min-width: 640px) 30vw, 45vw"
+            priority={i < 4}
+          />
         ))}
       </div>
 
-      <AnimatePresence>
-        {active && (
-          <motion.div
-            role="dialog"
-            aria-modal="true"
-            aria-label={active.caption}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-4 sm:p-10"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: reduced ? 0.12 : 0.3, ease: EASE }}
-            onClick={() => setOpen(null)}
-          >
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 bg-[rgba(15,15,19,0.92)] backdrop-blur-md"
-            />
-
-            <button
-              type="button"
-              onClick={() => setOpen(null)}
-              aria-label="Close"
-              className="absolute right-4 top-4 z-10 inline-flex h-11 w-11 items-center justify-center rounded-full border border-[rgba(255,255,255,0.16)] text-[#f5f3ee] transition-colors duration-300 hover:border-[#f5f3ee] sm:right-8 sm:top-8"
-            >
-              <X className="h-5 w-5" />
-            </button>
-
-            <motion.figure
-              /* Stops a click on the piece itself from closing the overlay —
-                 the backdrop owns that gesture. */
-              onClick={(e) => e.stopPropagation()}
-              className="relative z-10 flex max-h-full w-full max-w-5xl flex-col items-center gap-5"
-              transition={{ duration: reduced ? 0.12 : 0.42, ease: EASE }}
-            >
+      {/* Portalled to <body>. The gallery renders inside a Reveal, which is
+          a transformed element and therefore a stacking context — so a
+          `z-[100]` overlay nested in it still loses to the fixed header at
+          z-50, and the close button lands underneath the nav. Escaping to
+          the body is the only fix that does not turn the header's z-index
+          into a number this file has to know about. */}
+      {mounted &&
+        createPortal(
+          <AnimatePresence>
+            {active && (
               <motion.div
-                layoutId={reduced ? undefined : `media-frame-${active.src}`}
-                className="relative w-full overflow-hidden rounded-[var(--mp-radius-md)] bg-[#0f0f13]"
-                style={{ aspectRatio: active.aspect, maxHeight: "72vh" }}
-              >
-                {active.kind === "video" ? (
-                  <video
-                    key={active.src}
-                    src={active.src}
-                    poster={active.poster}
-                    controls
-                    autoPlay={!reduced}
-                    loop
-                    playsInline
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <Image
-                    key={active.src}
-                    src={active.src}
-                    alt={active.caption}
-                    fill
-                    sizes="(min-width: 1024px) 1024px, 100vw"
-                    className="object-contain"
-                  />
-                )}
-              </motion.div>
-
-              <motion.figcaption
-                className="flex w-full items-start justify-between gap-6 text-sm leading-relaxed text-[#f5f3ee]/80"
-                initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
+                role="dialog"
+                aria-modal="true"
+                aria-label={active.caption}
+                /* dvh, not vh: on a phone the URL bar makes 100vh taller
+                   than the screen, which is exactly how a filmstrip ends up
+                   below the fold. */
+                className="fixed inset-0 z-[200] flex h-dvh flex-col items-center justify-center p-3 sm:p-6"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: reduced ? 0.12 : 0.35, ease: EASE, delay: reduced ? 0 : 0.12 }}
+                transition={{ duration: reduced ? 0.12 : 0.3, ease: EASE }}
+                onClick={() => setOpen(null)}
               >
-                <span className="max-w-2xl">{active.caption}</span>
-                <span className="shrink-0 font-mono text-xs tabular-nums text-[#f5f3ee]/50">
-                  {(open ?? 0) + 1} / {items.length}
-                </span>
-              </motion.figcaption>
-            </motion.figure>
-          </motion.div>
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 bg-[rgba(15,15,19,0.94)] backdrop-blur-md"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setOpen(null)}
+                  aria-label="Close"
+                  className="absolute right-3 top-3 z-20 inline-flex h-10 w-10 items-center justify-center rounded-full border border-[rgba(255,255,255,0.16)] bg-[rgba(15,15,19,0.6)] text-[#f5f3ee] backdrop-blur-sm transition-colors duration-300 hover:border-[#f5f3ee] sm:right-6 sm:top-6 sm:h-11 sm:w-11"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+
+                {/* Keyboard arrows already worked, but nothing on screen said
+                    so. These are the visible promise that there is more of
+                    the set behind this frame — the same reason the filmstrip
+                    and the counter are here. */}
+                {items.length > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        step(-1);
+                      }}
+                      aria-label="Previous"
+                      className="absolute left-2 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[rgba(255,255,255,0.16)] bg-[rgba(15,15,19,0.6)] text-[#f5f3ee] backdrop-blur-sm transition-colors duration-300 hover:border-[#f5f3ee] sm:left-6 sm:h-11 sm:w-11"
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        step(1);
+                      }}
+                      aria-label="Next"
+                      className="absolute right-2 top-1/2 z-20 inline-flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[rgba(255,255,255,0.16)] bg-[rgba(15,15,19,0.6)] text-[#f5f3ee] backdrop-blur-sm transition-colors duration-300 hover:border-[#f5f3ee] sm:right-6 sm:h-11 sm:w-11"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  </>
+                )}
+
+                {/* One column that owns the whole viewport height and hands
+                    the leftover to the frame: caption and filmstrip take
+                    what they need (`shrink-0`), the frame takes the rest
+                    (`flex-1 min-h-0`). The old fixed 62vh could not know how
+                    tall the caption wrapped to, so on a short laptop the
+                    strip fell off the bottom. */}
+                <motion.figure
+                  /* Stops a click on the piece itself from closing the
+                     overlay — the backdrop owns that gesture. */
+                  onClick={(e) => e.stopPropagation()}
+                  /* Phone gets no side gutter: a 16:9 piece inside a 390px screen
+                     is small enough already, and the arrows have their own
+                     scrim so overlapping the frame edge costs nothing. On a
+                     desktop the gutter keeps them off the piece entirely. */
+                  className="relative z-10 flex h-full w-full max-w-6xl flex-col items-center gap-3 px-1 sm:gap-4 sm:px-14"
+                  transition={{ duration: reduced ? 0.12 : 0.42, ease: EASE }}
+                >
+                  {/* No matte and no aspect-ratio box here. The frame is
+                      whatever space is left and the piece is `object-contain`
+                      inside it, which is the only sizing that fits a 9:16 and
+                      a 16:9 on the same screen without either one being
+                      cropped or overflowing. The backdrop is already the
+                      matte colour, so nothing is lost visually. */}
+                  <motion.div
+                    layoutId={reduced ? undefined : `media-frame-${active.src}`}
+                    className="relative min-h-0 w-full flex-1"
+                  >
+                    {active.kind === "video" ? (
+                      <video
+                        key={active.src}
+                        src={active.src}
+                        poster={active.poster}
+                        controls
+                        autoPlay={!reduced}
+                        loop
+                        playsInline
+                        className="h-full w-full object-contain"
+                      />
+                    ) : (
+                      <Image
+                        key={active.src}
+                        src={active.src}
+                        alt={active.caption}
+                        fill
+                        sizes="(min-width: 1024px) 1024px, 100vw"
+                        className="object-contain"
+                      />
+                    )}
+                  </motion.div>
+
+                  <motion.figcaption
+                    className="flex w-full shrink-0 items-start justify-between gap-6 text-sm leading-relaxed text-[#f5f3ee]/80"
+                    initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: reduced ? 0.12 : 0.35, ease: EASE, delay: reduced ? 0 : 0.12 }}
+                  >
+                    <span className="max-w-2xl">{active.caption}</span>
+                    <span className="shrink-0 font-mono text-xs tabular-nums text-[#f5f3ee]/50">
+                      {(open ?? 0) + 1} / {items.length}
+                    </span>
+                  </motion.figcaption>
+
+                  {/* The set, laid out flat under the piece being viewed. The
+                      grid above already showed it, but once the overlay is
+                      open the grid is gone — and this is exactly the moment a
+                      visitor decides whether there is anything left to look
+                      at. */}
+                  {items.length > 1 && (
+                    <motion.div
+                      ref={stripRef}
+                      className="flex w-full shrink-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                      initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: reduced ? 0.12 : 0.35, ease: EASE, delay: reduced ? 0 : 0.18 }}
+                    >
+                      {items.map((item, i) => (
+                        <button
+                          key={item.src}
+                          type="button"
+                          data-active={i === open}
+                          onClick={() => setOpen(i)}
+                          aria-label={`View ${i + 1} of ${items.length}: ${item.caption}`}
+                          aria-current={i === open}
+                          className={cn(
+                            "relative h-11 w-11 shrink-0 overflow-hidden rounded-[var(--mp-radius-sm)] bg-[#0f0f13] transition-opacity duration-300 sm:h-14 sm:w-14",
+                            i === open
+                              ? "opacity-100 ring-2 ring-[#f5f3ee]"
+                              : "opacity-45 hover:opacity-80",
+                          )}
+                        >
+                          {/* A clip's poster, never its src — next/image
+                              cannot render an .mp4, and a posterless clip is
+                              better as an empty well than a broken tile. */}
+                          {thumbSrc(item) && (
+                            <Image
+                              src={thumbSrc(item) as string}
+                              alt=""
+                              fill
+                              sizes="56px"
+                              className="object-cover"
+                            />
+                          )}
+                        </button>
+                      ))}
+                    </motion.div>
+                  )}
+                </motion.figure>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
         )}
-      </AnimatePresence>
     </>
   );
 }

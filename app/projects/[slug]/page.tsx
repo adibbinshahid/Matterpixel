@@ -44,7 +44,7 @@ export async function generateMetadata({
  *
  * The branch is also what narrows the union: `WebsiteCaseStudy` takes a
  * `WebsiteProject` and reads `lighthouse`/`liveDemoUrl`/`admin` unguarded,
- * `MediaCaseStudy` takes a `MediaProject` and reads `media`/`toolchain`.
+ * `MediaCaseStudy` takes a `MediaProject` and reads `media`/`specs`.
  * Adding a third medium means a third file here, not another conditional
  * threaded through a 500-line component.
  */

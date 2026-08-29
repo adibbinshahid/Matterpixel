@@ -45,3 +45,9 @@ next-env.d.ts
 # doesn't live in git history forever.
 /public/videos/*.original.*
 /public/WhoWeWorkFor/.orig/
+
+# Raw asset sources. Hundreds of MB of untouched PNG/MP4 that Vercel would
+# clone on every deploy — the optimized exports in /public/projects and
+# /public/services are what ships.
+/brand/projects-source/
+/brand/services-source/

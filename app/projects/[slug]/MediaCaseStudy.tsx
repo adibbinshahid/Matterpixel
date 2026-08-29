@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ArrowUpRight, Info, Layers, Sparkles, Wand2 } from "lucide-react";
+import { ArrowUpRight, Info, Layers, Sparkles } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
-import { MediaGallery, MediaTile } from "@/components/ProjectMedia";
+import { MediaGallery } from "@/components/ProjectMedia";
 import type { MediaProject } from "@/content/projects";
 
 /**
@@ -15,14 +15,20 @@ import type { MediaProject } from "@/content/projects";
  *
  * What it cannot borrow is the proof. A website's band is a Lighthouse row
  * the visitor can re-run; there is no equivalent audit for a still. So the
- * band here states three things that are checkable in a different way —
- * what the piece was made FROM, what MADE it, and what was actually
- * DELIVERED — which is honesty rules 6-8 rendered. It is a weaker claim
- * than a reproducible score and it should look like one: no gauges, no
- * ring, no borrowed authority.
+ * band here states two things instead — what the piece was made FROM, and
+ * what was actually DELIVERED — which is honesty rules 6 and 8 rendered.
+ * What MADE it is deliberately absent: a model name is not checkable by a
+ * visitor either, and naming one invites them to grade the vendor rather
+ * than the work. It is a weaker claim than a reproducible score and it
+ * should look like one: no gauges, no ring, no borrowed authority.
  */
 export function MediaCaseStudy({ project }: { project: MediaProject }) {
-  const lead = project.media[0];
+  /* There is no hero frame. A media case study used to open on one asset at
+     full width, which cost a screen and a half before the visitor saw the
+     second piece — and the second piece is the point: the claim is a SET of
+     fifteen, not one good still. The contact sheet now runs directly under
+     the title, so the whole set is the hero and every frame is one click
+     from full size. */
   const isFilm = project.medium === "ai-video";
 
   return (
@@ -50,22 +56,6 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
               </div>
             )}
           </Reveal>
-
-          {/* The lead piece plays as soon as it is on screen — `eager`. This
-              is the one asset on the page that is allowed to: it is the
-              hero, it is the reason the visitor opened the page, and there
-              is nothing else moving beside it to compete with. Every other
-              clip in the set waits to be asked. */}
-          <Reveal delay={0.1} className="mt-14">
-            <MediaTile
-              asset={lead}
-              eager
-              priority
-              sizes="(min-width: 1400px) 1400px, 100vw"
-              className="mx-auto"
-            />
-            <p className="mt-4 text-sm leading-relaxed text-ink-soft">{lead.caption}</p>
-          </Reveal>
         </div>
       </section>
 
@@ -83,6 +73,30 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
                 footnote: {project.sourceNote}
               </p>
             </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ── The set ──────────────────────────────────────────────────── */}
+      <section className="px-6 pb-20 pt-14 sm:px-8 lg:px-12">
+        <div className="mx-auto max-w-[1400px]">
+          <Reveal>
+            <p className="label-eyebrow">The set</p>
+            <h2 className="mt-4 max-w-2xl text-h2 text-ink">
+              All {project.media.length}, on one sheet.
+            </h2>
+            {/* The thumbnails crop; the pieces do not. Saying which is which
+                is the whole reason this line exists — a squared contact sheet
+                would otherwise read as a set that was re-framed to fit. */}
+            <p className="mt-5 max-w-2xl leading-relaxed text-ink-soft">
+              {isFilm
+                ? "Every clip in the set, squared down to a contact sheet so none of them gets missed. Click any frame to play it full-size at its delivered ratio — a 9:16 cutdown opens at 9:16."
+                : "Every frame in the set, squared down to a contact sheet so none of them gets missed. Click any one to open it full-size and uncropped — nothing is re-framed in the view itself, and you can step through the whole set from there."}
+            </p>
+          </Reveal>
+
+          <Reveal delay={0.05} className="mt-10">
+            <MediaGallery items={project.media} />
           </Reveal>
         </div>
       </section>
@@ -116,47 +130,47 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
               Delivered, not quoted
             </p>
             <h2 className="mt-4 max-w-2xl text-h2 text-ink">
-              The counts are what went out the door, and the toolchain is named.
+              The counts are what went out the door, not what a rate card promises.
             </h2>
           </Reveal>
 
-          {/* Numbers on the left, the tools that produced them on the right,
-              split by the same rule the Lighthouse band uses — so the two
-              case studies put their proof in the same place on the page even
-              though the proof itself is a different kind of thing. */}
+          {/* Four counts, full width. There was a toolchain column here; the
+              models are no longer named anywhere on the site, and a column
+              reading "in-house pipeline" would only tell a visitor a name
+              was being withheld. What the set was made FROM and what came
+              out of it carry the honesty claim on their own. */}
           <Reveal delay={0.05} className="mt-12">
-            <div className="flex flex-col gap-10 rounded-[var(--mp-radius-md)] border border-line bg-paper p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between lg:gap-12">
+            <div className="rounded-[var(--mp-radius-md)] border border-line bg-paper p-6 sm:p-8">
               <dl className="grid grid-cols-2 gap-x-10 gap-y-8 sm:grid-cols-4 lg:gap-x-12">
                 {project.specs.map((s) => (
                   <div key={s.label} className="flex flex-col gap-1">
-                    <dd className="text-3xl font-extrabold tracking-tight text-blue">{s.value}</dd>
+                    {/* 2xl rather than 3xl: three of the four values here are
+                        short numbers, but "up to 4K" and a multi-ratio row
+                        are not, and at 3xl those wrapped mid-token in a
+                        four-column band. */}
+                    <dd className="text-2xl font-extrabold leading-tight tracking-tight text-blue">
+                      {s.value}
+                    </dd>
                     <dt className="text-sm font-semibold text-ink">{s.label}</dt>
                   </div>
                 ))}
               </dl>
-
-              <div className="border-line lg:border-l lg:pl-12">
-                <p className="flex items-center gap-2 text-sm font-semibold text-ink">
-                  <Wand2 className="h-3.5 w-3.5 text-blue" aria-hidden="true" />
-                  Toolchain
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {project.toolchain.map((tool) => (
-                    <span
-                      key={tool}
-                      className="inline-block rounded-full border border-line bg-paper-2 px-3.5 py-1.5 text-xs font-semibold text-ink"
-                    >
-                      {tool}
-                    </span>
-                  ))}
-                </div>
-              </div>
             </div>
           </Reveal>
 
           <Reveal delay={0.1}>
             <p className="mt-10 max-w-2xl text-sm leading-relaxed text-ink-soft">
               {project.sourceNote}
+            </p>
+            {/* The resolution above is the master's, not this page's. Every
+                image on the site is capped at 1600px on the long edge and
+                never upscaled, so a set listed at 4K opens here as a web
+                copy — worth saying plainly rather than letting a visitor
+                find the gap and read it as a stretched number. */}
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-ink-soft">
+              Resolution is the delivered master. The copies on this page are web exports capped at
+              1600px on the long edge, never upscaled &mdash; so a set listed above its cap looks
+              smaller here than what a client receives.
             </p>
           </Reveal>
         </div>
@@ -168,9 +182,7 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
           <Reveal>
             <p className="label-eyebrow">What&rsquo;s in the set</p>
             <h2 className="mt-4 max-w-2xl text-h2 text-ink">
-              {isFilm
-                ? "One film, and every cut a launch actually needs."
-                : "Every crop the site asks for, from one product form."}
+              {isFilm ? "What the reel actually has to do." : "What the set actually has to do."}
             </h2>
           </Reveal>
 
@@ -187,26 +199,6 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
               </RevealItem>
             ))}
           </RevealGroup>
-        </div>
-      </section>
-
-      {/* ── The set ──────────────────────────────────────────────────── */}
-      <section className="border-t border-line px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
-          <Reveal>
-            <p className="label-eyebrow">The set</p>
-            <h2 className="mt-4 max-w-2xl text-h2 text-ink">
-              {isFilm ? "Every cut, at its delivered ratio." : "Every frame, uncropped."}
-            </h2>
-            <p className="mt-5 max-w-2xl leading-relaxed text-ink-soft">
-              Nothing here is re-framed to make the grid tidy — a 9:16 cutdown is shown at 9:16.
-              Open any one of them full-size.
-            </p>
-          </Reveal>
-
-          <Reveal delay={0.05} className="mt-12">
-            <MediaGallery items={project.media} />
-          </Reveal>
         </div>
       </section>
 

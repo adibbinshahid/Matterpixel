@@ -3,13 +3,13 @@ import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { WorkGrid } from "@/components/WorkGrid";
 import { PixelField } from "@/components/PixelField";
-import { projects, websiteProjects, mediaProjects } from "@/content/projects";
+import { projects, mediums, websiteProjects, mediaProjects, toWorkCards } from "@/content/projects";
 import { workIntro, siteUrl } from "@/content/siteConfig";
 
 export const metadata: Metadata = {
   title: "Projects",
   description:
-    "Production-quality concept work you can check for yourself — live sites with their admin panels open, plus the AI campaign stills and launch films made for them. Nothing here is a mockup.",
+    "Production-quality concept work you can check for yourself — four live sites with their admin panels open, plus AI product photography, campaign sets, personas, interiors, cover art, print design and short-form film. Nothing here is a mockup.",
   alternates: { canonical: "/projects" },
 };
 
@@ -100,7 +100,9 @@ export default function WorkPage() {
 
       <section className="px-6 pb-24 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-[1400px]">
-          <WorkGrid />
+          {/* Projected on the server — see toWorkCards for why the grid
+              never imports the project content itself. */}
+          <WorkGrid cards={toWorkCards(projects)} lanes={mediums} />
         </div>
       </section>
 

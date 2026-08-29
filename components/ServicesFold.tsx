@@ -29,16 +29,32 @@ function useIsDesktop() {
 }
 
 /**
- * Placeholder imagery for the pinned left column — no per-service
- * photography exists yet, so these cycle across the 6 cards until real
- * shots are ready. Swap for dedicated per-service images later.
+ * Per-service imagery for the pinned left column, indexed 1:1 against the
+ * pinned card stack — one frame per service in `services` order, plus a
+ * final frame for the closing CTA card. Keyed by slug (not array order)
+ * so reordering `content/services.ts` can't silently desync a card from
+ * its image; `LEFT_IMAGES` below flattens it back into stack order.
  */
-const LEFT_IMAGES = [
-  "/WhoWeWorkFor/Digital First Businesses.webp",
-  "/WhoWeWorkFor/Property & physical goods.webp",
-  "/WhoWeWorkFor/Services businesses.webp",
-  "/WhoWeWorkFor/regulated and relationshion driven.webp",
-];
+const SERVICE_IMAGES: Record<string, string> = {
+  "web-app-development": "/services/web-app-development.webp",
+  "ai-automation": "/services/ai-automation.webp",
+  "branding-identity": "/services/branding-identity.webp",
+  "ai-product-photography": "/services/ai-product-photography.webp",
+  "ai-video": "/services/ai-video.webp",
+  "seo-growth": "/services/seo-growth.webp",
+};
+
+/** Shown while the closing CTA card is active — the stack's 7th slot. */
+const CTA_IMAGE = "/services/built-by-intent.webp";
+
+/** Strength of the magenta wash laid over the left-column imagery — a
+ * unifying brand tint across seven separately-generated frames, low
+ * enough to read as color grade rather than a colored panel. */
+const IMAGE_TINT_OPACITY = 0.12;
+
+/** Stack-order image list: index N is the image for pinned card N, so
+ * `activeIndex` addresses it directly with no modulo cycling. */
+const LEFT_IMAGES = [...services.map((s) => SERVICE_IMAGES[s.slug]), CTA_IMAGE];
 
 
 /** Fixed px sizing for the pinned card stack — px-based rather than a
@@ -552,11 +568,15 @@ function PinnedServicesRow({ reduced }: { reduced: boolean }) {
               className="relative mt-8 aspect-[16/10] overflow-hidden rounded-[var(--mp-radius-md)] border border-line"
             >
               {LEFT_IMAGES.map((src, i) => {
-                const active = i === activeIndex % LEFT_IMAGES.length;
+                // Direct index — LEFT_IMAGES is built in pinned-stack order
+                // and is exactly PINNED_COUNT long, so there is nothing to
+                // wrap around (the old placeholder set was shorter than the
+                // stack and had to cycle).
+                const active = i === activeIndex;
                 return (
                   <Image
                     key={src}
-                    src={encodeURI(src)}
+                    src={src}
                     alt=""
                     fill
                     // Lazy, not eager: this section sits several folds down,
@@ -575,6 +595,18 @@ function PinnedServicesRow({ reduced }: { reduced: boolean }) {
                   />
                 );
               })}
+
+              {/* Brand magenta wash over whichever frame is showing — sits
+                 above the crossfading images (they top out at z-index 1) so
+                 the tint stays constant while frames swap underneath, rather
+                 than fading in and out with each one. Kept as an overlay
+                 rather than baked into the WebP files so the source art
+                 stays neutral and the tint is a one-value change here. */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 z-[2] bg-magenta"
+                style={{ opacity: IMAGE_TINT_OPACITY }}
+              />
             </div>
           </Reveal>
         </div>
