@@ -31,6 +31,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://matterpixel.com/sitemap</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://matterpixel.com/projects/shopsphere</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
@@ -51,12 +56,47 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/scentora-campaign</loc>
+    <loc>https://matterpixel.com/projects/ai-product-photography</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/lcinco-launch-film</loc>
+    <loc>https://matterpixel.com/projects/ai-social-posts</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://matterpixel.com/projects/ai-product-films</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://matterpixel.com/projects/ai-pov-reels</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://matterpixel.com/projects/ai-food-photography</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://matterpixel.com/projects/ai-influencer-personas</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://matterpixel.com/projects/ai-interior-design</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://matterpixel.com/projects/ai-album-art</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://matterpixel.com/projects/ai-tshirt-design</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

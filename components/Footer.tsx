@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, ChevronRight, Mail } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Mail, Network } from "lucide-react";
 import { FaFacebook, FaLinkedin, FaInstagram } from "react-icons/fa6";
 import { SiWhatsapp, SiTelegram } from "react-icons/si";
 import { Logo } from "@/components/Logo";
@@ -170,14 +170,39 @@ export function Footer() {
 
         <div className="h-px w-full bg-white/10" />
 
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Mark in a lit disc — the wordmark already ran up top, so the
                baseline gets the icon alone. */}
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black shadow-[0_0_18px_rgba(255,46,147,0.35)]">
               <MarkImg className="h-3 w-auto brightness-0 invert" />
             </span>
             <span className="text-[11px] text-white/50">{footer.copyright}</span>
+
+            <span aria-hidden className="hidden h-4 w-px bg-white/12 sm:block" />
+
+            {/* The human sitemap, not /sitemap.xml — the XML is for crawlers
+               (robots.txt points them at it) and renders as a raw tree in a
+               browser. The plate borrows the contact rows' language at chip
+               scale: nothing moves but the light and the late arrow. */}
+            <Link
+              href="/sitemap"
+              className={`group relative flex min-h-9 items-center gap-2 rounded-lg border border-white/10 px-2.5 py-1.5 transition-[border-color,background-color] duration-700 ${EASE} hover:border-[var(--magenta)]/45 hover:bg-[var(--magenta)]/8`}
+            >
+              <Network
+                aria-hidden
+                className={`h-3.5 w-3.5 shrink-0 text-[var(--magenta)] transition-[filter] duration-700 ${EASE} group-hover:[filter:drop-shadow(0_0_7px_rgba(255,46,147,0.75))]`}
+              />
+              <span
+                className={`text-[11px] font-semibold text-white/70 transition-colors duration-700 ${EASE} group-hover:text-white`}
+              >
+                Sitemap
+              </span>
+              <ArrowUpRight
+                aria-hidden
+                className={`h-3 w-3 shrink-0 -translate-x-1 text-[var(--magenta)] opacity-0 transition-[opacity,transform] duration-700 ${EASE} group-hover:translate-x-0 group-hover:opacity-100`}
+              />
+            </Link>
           </div>
 
           {/* Pixel lattice, fading out toward the corner — the motif from the

@@ -30,6 +30,10 @@ function buildUrls(): UrlEntry[] {
     { loc: "/about", changefreq: "monthly", priority: "0.8" },
     { loc: "/insights", changefreq: "weekly", priority: "0.8" },
     { loc: "/contact", changefreq: "monthly", priority: "0.8" },
+    // The human sitemap page. Low priority — it exists for visitors who
+    // land on it from the footer, not as a ranking target, and a crawler
+    // reaches everything on it from this file anyway.
+    { loc: "/sitemap", changefreq: "weekly", priority: "0.3" },
   ];
 
   const projectRoutes: UrlEntry[] = projects.map((p) => ({
