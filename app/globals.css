@@ -459,12 +459,24 @@ body {
 .pricing-card-scrim[data-visible="false"] {
   opacity: 0;
 }
-.group:hover .pricing-card-media[data-visible="false"],
-.group:hover .pricing-card-scrim[data-visible="false"] {
-  opacity: 1;
-}
-.group:hover .pricing-card-media {
-  transform: scale(1.1);
+/* Every hover beat on these cards is gated behind `@media (hover: hover)`,
+   which is the exact query Tailwind v4 wraps its own `hover:` /
+   `group-hover:` variants in. Ungated, these plain-CSS rules fired on a
+   touch tap (mobile browsers emit a sticky :hover) while the Tailwind
+   `group-hover:text-white` utilities on the same card did not — the photo
+   and its scrim faded in under text that stayed in its light-card ink
+   colours, so the card went unreadable on phones and looked nothing like
+   the desktop card. Matching the query keeps both halves of the hover
+   state as one unit: on a touch device neither half runs and the card
+   renders exactly as the desktop card does at rest. */
+@media (hover: hover) {
+  .group:hover .pricing-card-media[data-visible="false"],
+  .group:hover .pricing-card-scrim[data-visible="false"] {
+    opacity: 1;
+  }
+  .group:hover .pricing-card-media {
+    transform: scale(1.1);
+  }
 }
 
 /* The CTA on the two non-featured cards. Those cards are light at rest and
@@ -479,16 +491,18 @@ body {
    Colours are literals, not --ink/--paper: the card is dark under the photo
    in both themes, but those tokens invert in dark mode and would flip this
    to light-on-white. */
-.group:hover .pricing-card-cta {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.45);
-}
-/* Pointer actually on the button, card already dark — fill it so it reads as
-   the solid primary rather than .btn-line:hover's dark-on-dark. */
-.group:hover .pricing-card-cta:hover {
-  color: #16161c;
-  background: #fff;
-  border-color: #fff;
+@media (hover: hover) {
+  .group:hover .pricing-card-cta {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.45);
+  }
+  /* Pointer actually on the button, card already dark — fill it so it reads
+     as the solid primary rather than .btn-line:hover's dark-on-dark. */
+  .group:hover .pricing-card-cta:hover {
+    color: #16161c;
+    background: #fff;
+    border-color: #fff;
+  }
 }
 
 /* ------------------------------------------------------------------------
