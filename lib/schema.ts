@@ -22,23 +22,19 @@ export const TIMELINE_OPTIONS = [
   "Not sure yet",
 ] as const;
 
+/** One question for "what are we building", replacing the old separate
+ * project-type and services questions that asked the same thing twice
+ * ("New Website" vs "Web & App Development"). Multi-select. Package and
+ * stack links map onto these (see content/packages.ts). */
 export const PROJECT_TYPE_OPTIONS = [
-  "New Website",
-  "Website Redesign",
-  "AI Automation",
-  "Brand Identity",
-  "Content Creation",
-  "Growth Marketing",
-  "Multiple Services",
-] as const;
-
-export const PROJECT_GOAL_OPTIONS = [
-  "Generate More Leads",
-  "Launch a Product",
-  "Automate Operations",
-  "Improve Branding",
-  "Increase Sales",
-  "Other",
+  "New website",
+  "Website redesign",
+  "Web app or software",
+  "AI automation",
+  "Branding & identity",
+  "AI visuals & video",
+  "SEO & marketing",
+  "Something else",
 ] as const;
 
 /** Adds a scheme to a bare domain so `www.acme.com` parses as a URL. Left
@@ -87,17 +83,16 @@ const inquiryFields = z.object({
     // Not a `.transform` on purpose: that would split this schema's input and
     // output types, which react-hook-form's resolver generics can't take.
     .refine((v) => !v || isValidWebsite(normalizeWebsite(v)), "Enter a valid website, e.g. acme.com"),
-  budget: z.string().min(1, "Pick a budget range."),
-  timeline: z.string().min(1, "Pick a timeline."),
-  projectType: z.string().min(1, "Pick a project type."),
-  serviceTypes: z.array(z.string()).min(1, "Pick at least one service."),
-  projectGoals: z.array(z.string()).min(1, "Pick at least one goal."),
-  otherGoalDetails: z.string().trim().max(300, "Keep it under 300 characters.").optional(),
+  projectTypes: z.array(z.string().max(100)).min(1, "Pick at least one.").max(20),
+  budget: z.string().min(1, "Pick a budget range.").max(100),
   projectDetails: z
     .string()
     .trim()
     .min(10, "A few more details would help.")
     .max(2000, "Keep it under 2000 characters."),
+  /** What the visitor picked before landing here — a package or a built
+   * stack — as the plain-text summary shown on the form. */
+  selection: z.string().trim().max(2000).optional(),
   // Honeypot — real visitors never see or fill this field (see InquiryForm).
   // Any value here means a bot filled every input it could find.
   hp: z.string().max(200).optional(),
@@ -106,13 +101,7 @@ const inquiryFields = z.object({
 /** Per-field schemas, for validating a single wizard answer in isolation. */
 export const inquiryFieldSchemas = inquiryFields.shape;
 
-export const inquirySchema = inquiryFields.refine(
-  (data) => !data.projectGoals.includes("Other") || !!data.otherGoalDetails?.trim(),
-  {
-    message: "Tell us a bit more about your goal.",
-    path: ["otherGoalDetails"],
-  },
-);
+export const inquirySchema = inquiryFields;
 
 export type InquiryValues = z.infer<typeof inquirySchema>;
 

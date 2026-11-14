@@ -14,6 +14,10 @@
  * as 6 mid-count; `unit` sits beside it, `label` under it. */
 export type Stat = { value: number; decimals?: number; unit: string; label: string };
 
+import { BUDGET_OPTIONS, type PROJECT_TYPE_OPTIONS } from "@/lib/schema";
+
+type ProjectType = (typeof PROJECT_TYPE_OPTIONS)[number];
+
 export type ProblemPackage = {
   slug: string;
   /** The chip — the visitor's own words. */
@@ -27,6 +31,9 @@ export type ProblemPackage = {
   items: string[];
   timeline: string;
   priceFrom: number;
+  /** Answers the inquiry's "what do you need" question for a visitor who
+   * arrives from this package, so that step is skipped. */
+  projectTypes: ProjectType[];
   /** Proof card. The project is resolved on the server (name, cover,
    * measured Lighthouse score) so this file never hand-writes a score. */
   proof: { projectSlug: string; label?: string };
@@ -52,6 +59,7 @@ export const problemPackages: ProblemPackage[] = [
     ],
     timeline: "7–14 days",
     priceFrom: 700,
+    projectTypes: ["New website"],
     proof: { projectSlug: "shopsphere" },
   },
   {
@@ -73,6 +81,7 @@ export const problemPackages: ProblemPackage[] = [
     ],
     timeline: "14–21 days",
     priceFrom: 1200,
+    projectTypes: ["New website", "AI automation"],
     proof: { projectSlug: "mindwell" },
   },
   {
@@ -94,6 +103,7 @@ export const problemPackages: ProblemPackage[] = [
     ],
     timeline: "7–14 days",
     priceFrom: 500,
+    projectTypes: ["AI automation"],
     proof: { projectSlug: "lcinco-pizza", label: "L'Cinco Pizza ordering flow" },
   },
   {
@@ -117,6 +127,7 @@ export const problemPackages: ProblemPackage[] = [
     ],
     timeline: "5–10 days",
     priceFrom: 300,
+    projectTypes: ["Branding & identity", "AI visuals & video"],
     proof: { projectSlug: "ai-product-photography", label: "AI visuals gallery" },
   },
 ];
@@ -154,11 +165,15 @@ export type StackItem = {
   /** Typical delivery window in days. Planning estimates for the timeline
    * line, not commitments — the quote fixes the real date. */
   days?: { min: number; max: number };
+  /** The inquiry project type this item answers. Omitted for the care
+   * plan, which is an add-on rather than a project. */
+  projectType?: ProjectType;
 };
 
 export const stackItems: StackItem[] = [
   {
     id: "website",
+    projectType: "New website",
     icon: "website",
     name: "Website",
     benefit: "Fast, mobile-first site built to convert.",
@@ -167,6 +182,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "web-app",
+    projectType: "Web app or software",
     icon: "webapp",
     name: "Web app",
     benefit: "Logins, dashboards and workflows, built custom.",
@@ -175,6 +191,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "ai-chatbot",
+    projectType: "AI automation",
     icon: "chatbot",
     name: "AI chatbot",
     benefit: "Answers customers 24/7, trained on your business.",
@@ -183,6 +200,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "whatsapp",
+    projectType: "AI automation",
     icon: "whatsapp",
     name: "WhatsApp automation",
     benefit: "Auto-replies, order updates and reminders.",
@@ -191,6 +209,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "crm",
+    projectType: "AI automation",
     icon: "crm",
     name: "CRM & pipeline",
     benefit: "Every lead tracked from first message to sale.",
@@ -199,6 +218,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "booking",
+    projectType: "AI automation",
     icon: "booking",
     name: "Booking system",
     benefit: "Online booking with automatic reminders.",
@@ -207,6 +227,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "business-software",
+    projectType: "Web app or software",
     icon: "software",
     name: "Business software",
     benefit: "ERPs, internal tools and portals, scoped to you.",
@@ -215,6 +236,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "branding",
+    projectType: "Branding & identity",
     icon: "branding",
     name: "Branding",
     benefit: "Logo, colour and type that set you apart.",
@@ -223,6 +245,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "ai-visuals",
+    projectType: "AI visuals & video",
     icon: "visuals",
     name: "AI visuals & video",
     benefit: "Campaign-grade product imagery and video ads.",
@@ -231,6 +254,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "seo",
+    projectType: "SEO & marketing",
     icon: "seo",
     name: "SEO setup",
     benefit: "Technical SEO so customers can find you.",
@@ -313,34 +337,63 @@ export function formatEstimate(e: StackEstimate) {
   return range;
 }
 
+/** The budget band a package's starting price falls in — so a visitor who
+ * picked a package isn't asked a question the package already answers. */
+export function budgetForPrice(price: number): (typeof BUDGET_OPTIONS)[number] {
+  if (price < 500) return BUDGET_OPTIONS[0];
+  if (price < 2000) return BUDGET_OPTIONS[1];
+  if (price < 5000) return BUDGET_OPTIONS[2];
+  return BUDGET_OPTIONS[3];
+}
+
+/** What a link to /contact already told us. Anything set here is pre-filled
+ * on the inquiry form, and the steps it answers are skipped. */
+export type InquiryPrefill = {
+  /** "Your selection" card: a heading line, then detail lines. Sent with
+   * the inquiry as one plain-text block. */
+  selection?: string;
+  projectTypes?: string[];
+  budget?: string;
+  details?: string;
+};
+
 /**
  * The inquiry pre-fill for /contact. Built from params only, on the server,
- * so a shared link carries the whole request. Capped at the inquiry
- * schema's 2000-character limit for `projectDetails`.
+ * so a shared link carries the whole request. Text is capped at the
+ * inquiry schema's 2000-character limits.
  */
 export function buildInquiryPrefill(params: {
   packageSlug?: string;
   stack?: string;
   details?: string;
-}): string | undefined {
-  const parts: string[] = [];
+}): InquiryPrefill | undefined {
+  const prefill: InquiryPrefill = {};
+  const selection: string[] = [];
+  const types = new Set<string>();
 
   const pkg = getProblemPackage(params.packageSlug);
-  if (pkg) parts.push(`Package: ${pkg.name} — from ${usd(pkg.priceFrom)}, fixed quote.\n`);
+  if (pkg) {
+    selection.push(`${pkg.name} package`, `From ${usd(pkg.priceFrom)} · fixed quote · ${pkg.timeline}`);
+    pkg.projectTypes.forEach((t) => types.add(t));
+    prefill.budget = budgetForPrice(pkg.priceFrom);
+  }
 
   const ids = parseStack(params.stack);
   if (ids.length) {
     const e = estimateStack(ids);
-    const lines = e.items.map((i) => `• ${i.name} (${formatItemPrice(i)})`);
     const summary = [formatEstimate(e)];
     if (e.days) summary.push(`~${e.days.min}–${e.days.max} days`);
     if (e.bundle) summary.push(BUNDLE_NOTE.toLowerCase());
-    parts.push(`Quote request:\n${lines.join("\n")}\nEstimate: ${summary.filter(Boolean).join(" · ")}\n`);
+    if (!selection.length) selection.push("Your stack");
+    selection.push(e.items.map((i) => i.name).join(", "), `Estimate: ${summary.filter(Boolean).join(" · ")}`);
+    e.items.forEach((i) => i.projectType && types.add(i.projectType));
   }
 
-  const details = params.details?.trim();
-  if (details) parts.push(details);
+  if (selection.length) prefill.selection = selection.join("\n").slice(0, 2000);
+  if (types.size) prefill.projectTypes = [...types];
 
-  if (!parts.length) return undefined;
-  return parts.join("\n").slice(0, 2000);
+  const details = params.details?.trim();
+  if (details) prefill.details = details.slice(0, 2000);
+
+  return Object.keys(prefill).length ? prefill : undefined;
 }

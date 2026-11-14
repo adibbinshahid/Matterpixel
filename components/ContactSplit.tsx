@@ -35,7 +35,6 @@ import {
   BUDGET_OPTIONS,
   TIMELINE_OPTIONS,
   PROJECT_TYPE_OPTIONS,
-  PROJECT_GOAL_OPTIONS,
   type InquiryValues,
   type BookingValues,
 } from "@/lib/schema";
@@ -49,14 +48,17 @@ import {
   zonedTimeKey,
   zoneOffsetLabel,
 } from "@/lib/availability";
-import { serviceLineup } from "@/content/services";
+import type { InquiryPrefill } from "@/content/packages";
 import { ctas, footer, siteGreeting, whatsappHref } from "@/content/siteConfig";
 import { cn, EASE, DURATIONS } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { clearDraft, isDraftEmpty, readDraft, saveDraft } from "@/lib/formDraft";
 
-/** localStorage keys for the two persisted contact forms. */
-const INQUIRY_DRAFT_KEY = "contact-inquiry";
+/** localStorage keys for the two persisted contact forms. The inquiry key
+ * moved when the wizard went from eleven questions to five; drafts under
+ * the old key are migrated once, then deleted (see loadInquiryDraft). */
+const INQUIRY_DRAFT_KEY = "contact-inquiry-v2";
+const LEGACY_INQUIRY_DRAFT_KEY = "contact-inquiry";
 const BOOKING_DRAFT_KEY = "contact-booking";
 
 const BURST = Array.from({ length: 14 }, (_, i) => {
@@ -168,7 +170,7 @@ const TAB_STAGGER_STEP = 0.08;
  * (`?tab=partner` never gets here: next.config redirects it to the
  * homepage's white-label strip.)
  */
-export function ContactSplit({ initialTab, prefill }: { initialTab?: string; prefill?: string }) {
+export function ContactSplit({ initialTab, prefill }: { initialTab?: string; prefill?: InquiryPrefill }) {
   const [active, setActive] = useState<TabId>(isTabId(initialTab) ? initialTab : DEFAULT_TAB);
   const router = useRouter();
   const reduced = useReducedMotion();
@@ -771,42 +773,102 @@ function SubmitRow({
   );
 }
 
-type WizardStepId =
+type InquiryFieldId =
   | "fullName"
   | "workEmail"
   | "whatsapp"
   | "company"
   | "website"
-  | "projectType"
-  | "serviceTypes"
+  | "projectTypes"
   | "budget"
-  | "timeline"
-  | "projectGoals"
   | "projectDetails";
 
-interface WizardStep {
-  id: WizardStepId;
+interface InquiryField {
+  id: InquiryFieldId;
   kind: "text" | "email" | "tel" | "textarea" | "choice" | "multi";
+  /** Short label for the review grid and the accessible name on screens
+   * that carry more than one field. */
+  label: string;
+  placeholder?: string;
+  /** Autofill token for this field. Every text field opts in — defaults to
+   * a plain "on" so the browser still offers suggestions for fields with
+   * no standard token. */
+  autoComplete?: string;
+  optional?: boolean;
+  options?: readonly string[];
+}
+
+const INQUIRY_FIELDS: Record<InquiryFieldId, InquiryField> = {
+  fullName: { id: "fullName", kind: "text", label: "Name", placeholder: "Your name", autoComplete: "name" },
+  workEmail: {
+    id: "workEmail",
+    kind: "email",
+    label: "Work email",
+    placeholder: "you@company.com",
+    autoComplete: "email",
+  },
+  projectTypes: { id: "projectTypes", kind: "multi", label: "Project type", options: PROJECT_TYPE_OPTIONS },
+  budget: { id: "budget", kind: "choice", label: "Budget", options: BUDGET_OPTIONS },
+  projectDetails: {
+    id: "projectDetails",
+    kind: "textarea",
+    label: "Project details",
+    placeholder: "We're building...",
+  },
+  whatsapp: {
+    id: "whatsapp",
+    kind: "tel",
+    label: "WhatsApp",
+    placeholder: "WhatsApp number",
+    autoComplete: "tel",
+    optional: true,
+  },
+  company: {
+    id: "company",
+    kind: "text",
+    label: "Company",
+    placeholder: "Company or brand",
+    autoComplete: "organization",
+    optional: true,
+  },
+  website: {
+    id: "website",
+    kind: "text",
+    label: "Website",
+    placeholder: "Website, e.g. acme.com",
+    autoComplete: "url",
+    optional: true,
+  },
+};
+
+/** Review-grid order: the four required answers first, the optional
+ * extras after. */
+const REVIEW_FIELDS: InquiryFieldId[] = [
+  "fullName",
+  "workEmail",
+  "projectTypes",
+  "budget",
+  "projectDetails",
+  "whatsapp",
+  "company",
+  "website",
+];
+
+type InquiryStepId = "contact" | "projectTypes" | "budget" | "projectDetails" | "extras";
+
+interface WizardStep {
+  id: InquiryStepId;
+  fields: InquiryFieldId[];
   title: string;
   /** Used instead of `title` once we know the visitor's first name, so
    * the run of questions reads like a conversation rather than a form.
    * Deliberately not on every step — a name in *every* headline reads
    * like a mail-merge, so only a few steps opt in. Falls back to
-   * `title` whenever step 1 was left blank or the name is unusable. */
+   * `title` whenever the name is blank or unusable. */
   titleWithName?: (name: string) => string;
   desc: string;
-  /** Shown instead of `desc` when the name is known — same reasoning. */
-  descWithName?: (name: string) => string;
-  placeholder?: string;
-  /** Short label for the review grid — the full question sentence is far
-   * too long to fit eleven answers in one unscrolled view. */
-  reviewLabel: string;
-  /** Autofill token for this question's field. Every text step opts in —
-   * defaults to a plain "on" so the browser still offers suggestions for
-   * steps with no standard token. */
-  autoComplete?: string;
+  /** The whole screen can be skipped. */
   optional?: boolean;
-  options?: readonly string[];
 }
 
 /** Capitalizes one name token: "adib" → "Adib", "ADIB" → "Adib",
@@ -839,110 +901,48 @@ function displayNameOf(fullName: string | undefined): string | null {
   return clean;
 }
 
+/** Four required screens, then one optional extras screen, then review. A
+ * link from a package or a stack skips the screens it already answers. */
 const WIZARD_STEPS: WizardStep[] = [
   {
-    id: "fullName",
-    kind: "text",
-    reviewLabel: "Name",
-    title: "Let's start with your name.",
-    desc: "We'll use this to personalize your proposal.",
-    placeholder: "John Smith",
-    autoComplete: "name",
+    id: "contact",
+    fields: ["fullName", "workEmail"],
+    title: "Let's start with you.",
+    desc: "Your name, and where your proposal should land.",
   },
   {
-    id: "workEmail",
-    kind: "email",
-    reviewLabel: "Work email",
-    title: "What's your work email?",
-    titleWithName: (n) => `Nice to meet you, ${n}. What's your work email?`,
-    desc: "We'll send your proposal here.",
-    placeholder: "john@company.com",
-    autoComplete: "email",
-  },
-  {
-    id: "whatsapp",
-    kind: "tel",
-    reviewLabel: "WhatsApp",
-    title: "What's your WhatsApp number?",
-    desc: "Optional — for faster back-and-forth.",
-    placeholder: "+1 555 000 1234",
-    autoComplete: "tel",
-    optional: true,
-  },
-  {
-    id: "company",
-    kind: "text",
-    reviewLabel: "Company",
-    title: "What's your company called?",
-    titleWithName: (n) => `Who do you build for, ${n}?`,
-    desc: "Optional.",
-    descWithName: () => "Optional — your company or brand name.",
-    placeholder: "Acme Inc.",
-    autoComplete: "organization",
-    optional: true,
-  },
-  {
-    id: "website",
-    kind: "text",
-    reviewLabel: "Website",
-    title: "Got a website?",
-    desc: "Optional — link your current site.",
-    placeholder: "acme.com",
-    autoComplete: "url",
-    optional: true,
-  },
-  {
-    id: "projectType",
-    kind: "choice",
-    reviewLabel: "Project type",
-    title: "What type of project is this?",
+    id: "projectTypes",
+    fields: ["projectTypes"],
+    title: "What do you need?",
     titleWithName: (n) => `So ${n}, what are we building?`,
-    desc: "Pick the closest match.",
-    options: PROJECT_TYPE_OPTIONS,
-  },
-  {
-    id: "serviceTypes",
-    kind: "multi",
-    reviewLabel: "Services",
-    title: "Which services do you need?",
     desc: "Select all that apply.",
-    options: serviceLineup.map((s) => s.title),
   },
   {
     id: "budget",
-    kind: "choice",
-    reviewLabel: "Budget",
+    fields: ["budget"],
     title: "What's your budget range?",
     titleWithName: (n) => `${n}, what budget are you working with?`,
     desc: "Ballpark is fine — this helps us scope things right.",
-    options: BUDGET_OPTIONS,
-  },
-  {
-    id: "timeline",
-    kind: "choice",
-    reviewLabel: "Timeline",
-    title: "What's your timeline?",
-    desc: "When would you like to get started?",
-    options: TIMELINE_OPTIONS,
-  },
-  {
-    id: "projectGoals",
-    kind: "multi",
-    reviewLabel: "Main goal",
-    title: "What's the main goal?",
-    desc: "Select all that apply.",
-    options: PROJECT_GOAL_OPTIONS,
   },
   {
     id: "projectDetails",
-    kind: "textarea",
-    reviewLabel: "Project details",
+    fields: ["projectDetails"],
     title: "Tell us about the project.",
-    titleWithName: (n) => `Last one, ${n} — tell us about the project.`,
+    titleWithName: (n) => `${n}, tell us about the project.`,
     desc: "The more detail, the better we can scope it.",
-    placeholder: "We're building...",
+  },
+  {
+    id: "extras",
+    fields: ["whatsapp", "company", "website"],
+    title: "Anything else that helps?",
+    desc: "Optional — WhatsApp for faster back-and-forth, plus your company and site.",
+    optional: true,
   },
 ];
+
+/** Single-choice answers advance on their own after this long — long enough
+ * to see the pick land, short enough not to feel like waiting. */
+const AUTO_ADVANCE_MS = 250;
 
 const stepVariants: Variants = {
   enter: (dir: number) => ({ opacity: 0, x: dir > 0 ? 28 : -28 }),
@@ -950,52 +950,146 @@ const stepVariants: Variants = {
   exit: (dir: number) => ({ opacity: 0, x: dir > 0 ? -28 : 28, transition: { duration: 0.35, ease: EASE } }),
 };
 
-/**
- * The one validation authority for a single answer: runs that field's own
- * slice of `inquirySchema`, so nothing can reach the review screen that the
- * final submit would then reject (a one-letter website used to sail through
- * and only blow up on Send). Returns the message to show, or null if the
- * answer is acceptable.
- */
-function stepIssue(step: WizardStep, values: InquiryValues): string | null {
-  // Optional and untouched is a valid state — that's what Skip means.
-  if (step.optional && isStepEmpty(step, values)) return null;
-
-  const result = inquiryFieldSchemas[step.id].safeParse(values[step.id]);
-  if (!result.success) return result.error.issues[0]?.message ?? "Check this answer.";
-
-  // Cross-field rule, so it can't live on the field schema itself.
-  if (
-    step.id === "projectGoals" &&
-    Array.isArray(values.projectGoals) &&
-    values.projectGoals.includes("Other") &&
-    !values.otherGoalDetails?.trim()
-  ) {
-    return "Tell us a bit more about your goal.";
-  }
-  return null;
-}
-
-/** Whether this step's field has been left blank — drives the
- * Continue → Skip swap on optional steps. */
-function isStepEmpty(step: WizardStep, values: InquiryValues): boolean {
-  const v = values[step.id];
+function isFieldEmpty(id: InquiryFieldId, values: InquiryValues): boolean {
+  const v = values[id];
   if (Array.isArray(v)) return v.length === 0;
   if (typeof v === "string") return v.trim().length === 0;
   return v == null;
 }
 
-function displayValue(step: WizardStep, values: InquiryValues): string {
-  const v = values[step.id];
-  if (Array.isArray(v)) {
-    if (!v.length) return "—";
-    if (step.id === "projectGoals" && v.includes("Other") && values.otherGoalDetails) {
-      return [...v.filter((g) => g !== "Other"), `Other: ${values.otherGoalDetails}`].join(", ");
-    }
-    return v.join(", ");
+/**
+ * The one validation authority for a single answer: runs that field's own
+ * slice of `inquirySchema`, so nothing can reach the review screen that the
+ * final submit would then reject. Returns the message to show, or null if
+ * the answer is acceptable.
+ */
+function fieldIssue(id: InquiryFieldId, values: InquiryValues): string | null {
+  // Optional and untouched is a valid state — that's what Skip means.
+  if (INQUIRY_FIELDS[id].optional && isFieldEmpty(id, values)) return null;
+  const result = inquiryFieldSchemas[id].safeParse(values[id]);
+  return result.success ? null : (result.error.issues[0]?.message ?? "Check this answer.");
+}
+
+function stepIssue(step: WizardStep, values: InquiryValues): string | null {
+  for (const id of step.fields) {
+    const issue = fieldIssue(id, values);
+    if (issue) return issue;
   }
+  return null;
+}
+
+function displayValue(id: InquiryFieldId, values: InquiryValues): string {
+  const v = values[id];
+  if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
   if (typeof v === "string") return v.trim() ? v : "—";
   return "—";
+}
+
+/** The old eleven-question wizard's answers, mapped onto the merged
+ * project-type question. "Multiple Services" says nothing on its own. */
+const LEGACY_PROJECT_TYPES: Record<string, string> = {
+  "New Website": "New website",
+  "Website Redesign": "Website redesign",
+  "AI Automation": "AI automation",
+  "Brand Identity": "Branding & identity",
+  "Content Creation": "AI visuals & video",
+  "Growth Marketing": "SEO & marketing",
+  "Web & App Development": "Web app or software",
+  "Business Software": "Web app or software",
+  "Branding & Identity": "Branding & identity",
+  "AI Product Visuals & Video": "AI visuals & video",
+  "SEO & Digital Marketing": "SEO & marketing",
+};
+
+/**
+ * Turns whatever came out of localStorage into values this form can hold —
+ * strings stay strings, choices must still be on offer, everything else is
+ * dropped. Drafts from the previous wizard (separate project type and
+ * services, timeline, goals) are folded into the new fields here, so a
+ * visitor mid-way through the old form keeps their answers rather than
+ * crashing the new one.
+ */
+function sanitizeInquiryDraft(raw: Record<string, unknown>): Partial<InquiryValues> {
+  const str = (v: unknown) => (typeof v === "string" ? v : undefined);
+  const known = new Set<string>(PROJECT_TYPE_OPTIONS);
+  const types = new Set<string>();
+  const addType = (v: unknown) => {
+    if (typeof v !== "string") return;
+    const mapped = known.has(v) ? v : LEGACY_PROJECT_TYPES[v];
+    if (mapped) types.add(mapped);
+  };
+  for (const key of ["projectTypes", "serviceTypes"]) {
+    const list = raw[key];
+    if (Array.isArray(list)) list.forEach(addType);
+  }
+  addType(raw.projectType);
+  const budget = str(raw.budget);
+  return {
+    fullName: str(raw.fullName),
+    workEmail: str(raw.workEmail),
+    whatsapp: str(raw.whatsapp),
+    company: str(raw.company),
+    website: str(raw.website),
+    projectTypes: PROJECT_TYPE_OPTIONS.filter((t) => types.has(t)),
+    budget: budget && (BUDGET_OPTIONS as readonly string[]).includes(budget) ? budget : undefined,
+    projectDetails: str(raw.projectDetails),
+    selection: str(raw.selection),
+  };
+}
+
+/** Reads the current draft, or migrates one left by the old wizard (and
+ * deletes it, so it's read once). Returns null when there's nothing usable. */
+function loadInquiryDraft(): { values: Partial<InquiryValues>; step?: number } | null {
+  const current = readDraft<Record<string, unknown>>(INQUIRY_DRAFT_KEY);
+  const legacy = readDraft<Record<string, unknown>>(LEGACY_INQUIRY_DRAFT_KEY);
+  if (legacy) clearDraft(LEGACY_INQUIRY_DRAFT_KEY);
+  const draft = current ?? legacy;
+  if (!draft) return null;
+  const values = sanitizeInquiryDraft(draft.values as Record<string, unknown>);
+  if (isDraftEmpty(values as Record<string, unknown>)) return null;
+  // A legacy step index pointed into a different list of questions.
+  return { values, step: current ? draft.step : undefined };
+}
+
+/** "Your selection" — what the visitor picked before landing here (a
+ * package, a stack, a brief), kept in view from the first question so a
+ * skipped step never feels like a missing one. */
+function SelectionCard({
+  selection,
+  details,
+  onChange,
+}: {
+  selection?: string;
+  details?: string;
+  onChange: () => void;
+}) {
+  const [heading, ...lines] = (selection ?? "").split("\n").filter(Boolean);
+  return (
+    <div className="relative z-10 mb-3 flex shrink-0 items-start justify-between gap-3 rounded-2xl border border-blue/40 bg-blue/10 px-4 py-2.5">
+      <div className="min-w-0">
+        <p className="text-[0.6rem] font-bold uppercase tracking-[0.08em] text-blue">Your selection</p>
+        {heading && <p className="truncate text-[0.9rem] font-extrabold tracking-tight text-ink">{heading}</p>}
+        {lines.map((line) => (
+          <p key={line} className="truncate text-[0.72rem] font-semibold text-ink-soft">
+            {line}
+          </p>
+        ))}
+        {details && (
+          <p className="line-clamp-2 text-[0.72rem] font-medium text-ink-soft">
+            <span className="font-semibold text-ink">Brief:</span> {details}
+          </p>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={onChange}
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue/25 px-3 py-1.5 text-[0.7rem] font-bold text-ink transition-colors hover:bg-blue/40"
+      >
+        <Pencil className="h-3 w-3" />
+        Change
+      </button>
+    </div>
+  );
 }
 
 /** Ambient decoration only — two slow-drifting blurred blobs plus a
@@ -1039,10 +1133,16 @@ function WizardAmbience() {
   );
 }
 
-function InquiryPanel({ prefill }: { prefill?: string }) {
+function InquiryPanel({ prefill }: { prefill?: InquiryPrefill }) {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
-  const [step, setStep] = useState(0);
+  const [stepId, setStepId] = useState<InquiryStepId | "review">("contact");
   const [direction, setDirection] = useState(1);
+  /** Steps a package/stack link already answered. Hidden from the run of
+   * questions until the visitor asks to change the selection. */
+  const [skipped, setSkipped] = useState<InquiryStepId[]>(() => [
+    ...(prefill?.projectTypes?.length ? (["projectTypes"] as const) : []),
+    ...(prefill?.budget ? (["budget"] as const) : []),
+  ]);
   /** Off on mount (and on a restored draft) so the browser never auto-scrolls
    * the page to the field on load — flips on once the visitor actually
    * advances a step, so focus-follows-step still works while stepping
@@ -1053,9 +1153,26 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [restored, setRestored] = useState(false);
   /** Which answer is being edited in place on the review screen, if any. */
-  const [editingId, setEditingId] = useState<WizardStepId | null>(null);
+  const [editingId, setEditingId] = useState<InquiryFieldId | null>(null);
   /** The value that field held when its editor opened — Escape's undo. */
-  const revertRef = useRef<{ id: WizardStepId; value: unknown } | null>(null);
+  const revertRef = useRef<{ id: InquiryFieldId; value: unknown } | null>(null);
+  /** Pending single-choice auto-advance. */
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /** What the link set — applied on top of defaults, and on top of a
+   * restored draft too: an explicit choice from the link beats an older
+   * half-typed answer. */
+  const linkValues: Partial<InquiryValues> = {
+    ...(prefill?.projectTypes?.length ? { projectTypes: prefill.projectTypes } : {}),
+    ...(prefill?.budget ? { budget: prefill.budget } : {}),
+    ...(prefill?.details ? { projectDetails: prefill.details } : {}),
+    ...(prefill?.selection ? { selection: prefill.selection } : {}),
+  };
+  const linkValuesRef = useRef(linkValues);
+  /** The skip set as it stood on mount — what the draft restore resumes
+   * against. */
+  const initialSkippedRef = useRef(skipped);
+
   const {
     register,
     handleSubmit,
@@ -1067,79 +1184,101 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
     formState: { errors, isSubmitting },
   } = useForm<InquiryValues>({
     resolver: zodResolver(inquirySchema),
-    defaultValues: { serviceTypes: [], projectGoals: [], ...(prefill ? { projectDetails: prefill } : {}) },
+    defaultValues: { projectTypes: [], ...linkValues },
   });
   const values = watch();
 
+  const visibleSteps = WIZARD_STEPS.filter((s) => !skipped.includes(s.id));
+  const isReview = stepId === "review";
+  const stepIndex = isReview ? visibleSteps.length : visibleSteps.findIndex((s) => s.id === stepId);
+  const current = WIZARD_STEPS.find((s) => s.id === stepId) ?? WIZARD_STEPS[0];
+
   // Restore a half-finished inquiry on mount: answers *and* the step the
-  // visitor was on, so a reload lands them back on the same question.
+  // visitor was on — but never past the first screen that still needs an
+  // answer, so a draft from an older build can't land on review with holes.
   useEffect(() => {
-    const draft = readDraft<InquiryValues>(INQUIRY_DRAFT_KEY);
-    if (draft && !isDraftEmpty(draft.values as Record<string, unknown>)) {
-      reset({
-        serviceTypes: [],
-        projectGoals: [],
+    const draft = loadInquiryDraft();
+    if (draft) {
+      const restoredValues = {
+        projectTypes: [],
         ...draft.values,
-        // An explicit choice from the link beats an older half-typed draft.
-        ...(prefill ? { projectDetails: prefill } : {}),
+        ...linkValuesRef.current,
         // Never restore the honeypot — a stored value would look like a bot.
         hp: "",
-      } as InquiryValues);
-      if (typeof draft.step === "number") {
-        setStep(Math.min(Math.max(draft.step, 0), WIZARD_STEPS.length));
-      }
+      } as InquiryValues;
+      reset(restoredValues);
+      const steps = WIZARD_STEPS.filter((s) => !initialSkippedRef.current.includes(s.id));
+      const firstOpen = steps.findIndex((s) => stepIssue(s, restoredValues));
+      // The saved index is into the full step list; count the visible steps
+      // before it, so a step that's skipped now resumes on the one after. A
+      // migrated draft has no usable index and resumes at its first gap.
+      const savedStep = draft.step ?? WIZARD_STEPS.length;
+      const savedIndex = steps.filter((s) => WIZARD_STEPS.indexOf(s) < savedStep).length;
+      const target = firstOpen < 0 ? savedIndex : Math.min(savedIndex, firstOpen);
+      setStepId(steps[target]?.id ?? "review");
       setRestored(true);
     }
     setDraftLoaded(true);
-  }, [reset, prefill]);
+  }, [reset]);
 
   // Persist on every change, debounced so a burst of keystrokes is one write.
   // Runs only after the restore pass, otherwise the empty initial form would
-  // overwrite the draft we're about to read.
+  // overwrite the draft we're about to read. The step is saved as its index
+  // in the full step list, review being one past the end.
   useEffect(() => {
     if (!draftLoaded || status === "success") return;
     // hp is dropped, never persisted — a stored honeypot value would come
     // back looking like a bot filled the form.
     const persisted: Partial<InquiryValues> = { ...values, hp: undefined };
     if (isDraftEmpty(persisted as Record<string, unknown>)) return;
-    const timer = setTimeout(() => saveDraft(INQUIRY_DRAFT_KEY, persisted, step), 400);
+    const index = stepId === "review" ? WIZARD_STEPS.length : WIZARD_STEPS.findIndex((s) => s.id === stepId);
+    const timer = setTimeout(() => saveDraft(INQUIRY_DRAFT_KEY, persisted, index), 400);
     return () => clearTimeout(timer);
-  }, [values, step, draftLoaded, status]);
+  }, [values, stepId, draftLoaded, status]);
+
+  useEffect(() => () => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+  }, []);
+
+  const goTo = (target: InquiryStepId | "review", dir: number) => {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    setDirection(dir);
+    setAutoFocusStep(true);
+    setStepId(target);
+  };
 
   const startOver = () => {
     clearDraft(INQUIRY_DRAFT_KEY);
-    reset({ serviceTypes: [], projectGoals: [] });
+    reset({ projectTypes: [], ...linkValuesRef.current });
     setRestored(false);
     setEditingId(null);
-    setDirection(-1);
-    setStep(0);
+    goTo("contact", -1);
   };
 
-  const isReview = step === WIZARD_STEPS.length;
-  const current = WIZARD_STEPS[Math.min(step, WIZARD_STEPS.length - 1)];
   /** Live schema verdict for the visible question. No step advances while
    * this is non-null, so the review screen only ever shows sendable data. */
-  const currentIssue = stepIssue(current, values);
+  const currentIssue = isReview ? null : stepIssue(current, values);
   const canContinue = !currentIssue;
 
   const displayName = displayNameOf(values.fullName);
   const title = displayName ? (current.titleWithName?.(displayName) ?? current.title) : current.title;
-  const desc = displayName ? (current.descWithName?.(displayName) ?? current.desc) : current.desc;
 
-  /** An optional step that's still empty — the primary action is "move
+  /** An optional screen that's still empty — the primary action is "move
    * on", not "submit an answer", so the button says Skip and drops the
    * gradient. Typing anything flips it back to Continue. */
-  const isSkip = !!current.optional && isStepEmpty(current, values);
+  const isSkip = !!current.optional && current.fields.every((id) => isFieldEmpty(id, values));
 
   /** Only nag once there's something to nag about: an empty required field
    * already reads as unfinished via the disabled Continue, but a filled-in
    * value that won't validate has to say why, right where it was typed. */
-  const visibleIssue = currentIssue && !isStepEmpty(current, values) ? currentIssue : undefined;
+  const visibleIssue = (id: InquiryFieldId) =>
+    (!isFieldEmpty(id, values) ? fieldIssue(id, values) : null) ??
+    (errors[id]?.message as string | undefined);
 
   /** Rewrites the answer to the form it will actually be sent in, so the
    * review screen shows what we got rather than what was typed. Only the
    * website needs it today (bare domain → https://bare-domain). */
-  const normalizeAnswer = (id: WizardStepId) => {
+  const normalizeAnswer = (id: InquiryFieldId) => {
     if (id !== "website") return;
     const typed = getValues("website");
     if (!typed) return;
@@ -1147,33 +1286,59 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
     if (normalized !== typed) setValue("website", normalized, { shouldValidate: false });
   };
 
+  const nextAfter = (id: InquiryStepId): InquiryStepId | "review" => {
+    const i = visibleSteps.findIndex((s) => s.id === id);
+    return visibleSteps[i + 1]?.id ?? "review";
+  };
+
   const goNext = () => {
-    if (!canContinue) return;
-    normalizeAnswer(current.id);
-    setDirection(1);
-    setAutoFocusStep(true);
-    setStep((s) => Math.min(s + 1, WIZARD_STEPS.length));
+    if (isReview || !canContinue) return;
+    current.fields.forEach(normalizeAnswer);
+    goTo(nextAfter(current.id), 1);
   };
   const goBack = () => {
-    setDirection(-1);
-    setAutoFocusStep(true);
-    setStep((s) => Math.max(s - 1, 0));
+    if (stepIndex <= 0) return;
+    goTo(visibleSteps[stepIndex - 1].id, -1);
   };
+
+  /** A single-choice pick is the whole answer, so the step moves on by
+   * itself — after a beat, so the selection visibly lands first. Clicks
+   * and keyboard (Enter/Space on the pill) take the same path. */
+  const pickChoice = (id: InquiryFieldId, option: string) => {
+    setValue(id, option as never, { shouldValidate: true });
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    const from = current.id;
+    const to = nextAfter(from);
+    advanceTimer.current = setTimeout(() => {
+      setDirection(1);
+      setAutoFocusStep(true);
+      setStepId((s) => (s === from ? to : s));
+    }, AUTO_ADVANCE_MS);
+  };
+
+  /** "Change" on the selection card: the skipped steps rejoin the run, and
+   * the visitor is taken to the first of them — unless their name and
+   * email aren't in yet, in which case they meet them in order. */
+  const changeSelection = () => {
+    const reopened = WIZARD_STEPS.find((s) => skipped.includes(s.id))?.id ?? "projectTypes";
+    setSkipped([]);
+    if (!stepIssue(WIZARD_STEPS[0], getValues())) goTo(reopened, -1);
+  };
+
   /** Opens the inline editor on the review screen. The previous answer is
    * stashed so Escape can put it back — a mis-click into a field shouldn't
    * be able to wipe an answer with no way out. */
-  const openEditor = (id: WizardStepId) => {
+  const openEditor = (id: InquiryFieldId) => {
     revertRef.current = { id, value: getValues(id) };
     setEditingId(id);
   };
   const closeEditor = (commit: boolean) => {
     const revert = revertRef.current;
     if (commit && revert) {
-      const editedStep = WIZARD_STEPS.find((s) => s.id === revert.id);
       // Same gate as the wizard: an invalid answer can't be accepted here
       // either, so the editor stays open with its message rather than
       // returning a summary that Send would reject.
-      if (editedStep && stepIssue(editedStep, getValues())) {
+      if (fieldIssue(revert.id, getValues())) {
         void trigger(revert.id);
         return;
       }
@@ -1195,16 +1360,20 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
       closeEditor(false);
     }
   };
+  /** Enter moves to the screen's next field, and from its last field on to
+   * the next screen. */
   const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      goNext();
-    }
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const fields = current.fields;
+    const next = fields[fields.indexOf(e.currentTarget.name as InquiryFieldId) + 1];
+    if (next) document.getElementById(`${next}-wiz`)?.focus();
+    else goNext();
   };
-  const toggleMulti = (id: "serviceTypes" | "projectGoals", option: string) => {
-    const list = (getValues(id) as string[] | undefined) ?? [];
+  const toggleMulti = (option: string) => {
+    const list = getValues("projectTypes") ?? [];
     const next = list.includes(option) ? list.filter((x) => x !== option) : [...list, option];
-    setValue(id, next, { shouldValidate: true });
+    setValue("projectTypes", next, { shouldValidate: true });
   };
 
   const onSubmit = async (values: InquiryValues) => {
@@ -1233,13 +1402,13 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
    * visitor back into the wizard — the offending cell is already on screen,
    * flagged in magenta. */
   const onInvalid = (formErrors: FieldErrors<InquiryValues>) => {
-    const firstKey = Object.keys(formErrors)[0];
-    const failing = WIZARD_STEPS.find(
-      (s) => s.id === firstKey || (firstKey === "otherGoalDetails" && s.id === "projectGoals"),
-    );
-    setStep(WIZARD_STEPS.length);
-    if (failing) openEditor(failing.id);
+    const firstKey = Object.keys(formErrors)[0] as InquiryFieldId;
+    setStepId("review");
+    if (firstKey in INQUIRY_FIELDS) openEditor(firstKey);
   };
+
+  const showSelection = !!(values.selection || prefill?.details);
+  const multiField = current.fields.length > 1;
 
   return (
     <form
@@ -1275,9 +1444,17 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
         </div>
       ) : !isReview ? (
         <>
+          {showSelection && (
+            <SelectionCard
+              selection={values.selection}
+              details={prefill?.details ? values.projectDetails : undefined}
+              onChange={changeSelection}
+            />
+          )}
           <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
             <span className="text-[0.7rem] font-bold uppercase tracking-wide text-ink-soft">
-              Step {step + 1} of {WIZARD_STEPS.length}
+              Step {stepIndex + 1} of {visibleSteps.length + 1}
+              {current.optional && " · optional"}
             </span>
             {/* Restoring silently would read as a bug ("why is my name
                already here?"), so say it happened and offer the escape hatch. */}
@@ -1295,106 +1472,88 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
             )}
           </div>
 
-          <div className="relative z-10 flex-1 overflow-hidden">
+          {/* overflow-x-hidden is load-bearing: the step entrance slides in
+             from x:+28, and `overflow-y: auto` alone would compute x to auto
+             and flash a horizontal scrollbar. */}
+          <div className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
-                key={step}
+                key={stepId}
                 custom={direction}
                 variants={stepVariants}
                 initial="enter"
                 animate="center"
                 exit="exit"
-                className="flex h-full flex-col justify-center gap-8 py-8 sm:gap-10 sm:py-10"
+                className="flex min-h-full flex-col justify-center gap-6 py-6 sm:gap-8 sm:py-8"
               >
                 <div>
                   <h2 className="text-[1.9rem] font-extrabold leading-[1.12] tracking-tight text-ink sm:text-[2.35rem]">
                     {title}
                   </h2>
-                  <p className="mt-3 max-w-md text-base leading-relaxed text-ink-soft">{desc}</p>
+                  <p className="mt-3 max-w-md text-base leading-relaxed text-ink-soft">{current.desc}</p>
                 </div>
 
-                {(current.kind === "text" || current.kind === "email" || current.kind === "tel") && (
-                  <FloatingInput
-                    registration={register(current.id)}
-                    type={current.kind}
-                    placeholder={current.placeholder ?? ""}
-                    error={visibleIssue ?? (errors[current.id]?.message as string | undefined)}
-                    autoFocus={autoFocusStep}
-                    autoComplete={current.autoComplete}
-                    onKeyDown={handleEnter}
-                  />
-                )}
-
-                {current.kind === "textarea" && (
-                  <FloatingTextarea
-                    registration={register(current.id)}
-                    placeholder={current.placeholder ?? ""}
-                    error={visibleIssue ?? (errors[current.id]?.message as string | undefined)}
-                    autoFocus={autoFocusStep}
-                  />
-                )}
-
-                {current.kind === "choice" && (
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {current.options?.map((opt) => (
-                      <OptionPill
-                        key={opt}
-                        label={opt}
-                        selected={values[current.id] === opt}
-                        onClick={() => setValue(current.id, opt, { shouldValidate: true })}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {current.kind === "multi" && (
-                  <div className="flex flex-col gap-3">
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {current.options?.map((opt) => (
-                        <OptionPill
-                          key={opt}
-                          label={opt}
-                          selected={
-                            Array.isArray(values[current.id]) && (values[current.id] as string[]).includes(opt)
-                          }
-                          onClick={() => toggleMulti(current.id as "serviceTypes" | "projectGoals", opt)}
-                        />
-                      ))}
-                    </div>
-                    {current.id === "projectGoals" &&
-                      Array.isArray(values.projectGoals) &&
-                      values.projectGoals.includes("Other") && (
+                <div className={cn("flex flex-col", multiField ? "gap-3" : "gap-0")}>
+                  {current.fields.map((id, i) => {
+                    const field = INQUIRY_FIELDS[id];
+                    if (field.kind === "text" || field.kind === "email" || field.kind === "tel") {
+                      return (
                         <FloatingInput
-                          registration={register("otherGoalDetails")}
-                          type="text"
-                          placeholder="Tell us more about your goal"
-                          error={errors.otherGoalDetails?.message}
+                          key={id}
+                          registration={register(id)}
+                          type={field.kind}
+                          label={field.label}
+                          placeholder={field.placeholder ?? ""}
+                          error={visibleIssue(id)}
+                          autoFocus={autoFocusStep && i === 0}
+                          autoComplete={field.autoComplete}
                           onKeyDown={handleEnter}
+                          compact={multiField}
                         />
-                      )}
-                  </div>
-                )}
+                      );
+                    }
+                    if (field.kind === "textarea") {
+                      return (
+                        <FloatingTextarea
+                          key={id}
+                          registration={register(id)}
+                          placeholder={field.placeholder ?? ""}
+                          error={visibleIssue(id)}
+                          autoFocus={autoFocusStep}
+                        />
+                      );
+                    }
+                    return (
+                      <div key={id} role="group" aria-label={field.label} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {field.options?.map((opt) => (
+                          <OptionPill
+                            key={opt}
+                            label={opt}
+                            selected={field.kind === "multi" ? values.projectTypes?.includes(opt) ?? false : values[id] === opt}
+                            onClick={() => (field.kind === "multi" ? toggleMulti(opt) : pickChoice(id, opt))}
+                          />
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
               </motion.div>
             </AnimatePresence>
           </div>
 
           {/* Previous + Continue sit together as one control pair, right
-             aligned — the pagination dots are gone, so the step counter
-             above is the only progress cue. */}
+             aligned — the step counter above is the only progress cue. */}
           <div className="relative z-10 flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={goBack}
-              disabled={step === 0}
+              disabled={stepIndex === 0}
               // Same min-w and the same hover-lift/press cue as Continue
               // so the pair feels like one control; the difference is
               // purely tonal — outline + faint fill instead of gradient,
               // muted label — so Previous stays secondary without
               // behaving differently under the cursor.
-              className={cn(
-                "btn-outline group min-w-[10.5rem]",
-                step === 0 && "invisible",
-              )}
+              className={cn("btn-outline group min-w-[10.5rem]", stepIndex === 0 && "invisible")}
             >
               <ChevronLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
               Previous
@@ -1426,24 +1585,34 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
       ) : (
         <div className="relative z-10 flex min-h-0 flex-1 flex-col justify-center">
           <div className="shrink-0">
-            <h2 className="text-2xl font-extrabold tracking-tight text-ink sm:text-[1.7rem]">
+            <span className="text-[0.7rem] font-bold uppercase tracking-wide text-ink-soft">
+              Step {visibleSteps.length + 1} of {visibleSteps.length + 1}
+            </span>
+            <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-ink sm:text-[1.7rem]">
               Everything looks good.
             </h2>
             <p className="mt-1.5 text-sm text-ink-soft">Double-check your answers, then send it our way.</p>
           </div>
 
+          {values.selection && (
+            <p className="mt-3 truncate rounded-xl border border-blue/30 bg-blue/10 px-3 py-2 text-[0.75rem] font-semibold text-ink">
+              <span className="mr-1.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-blue">Selection</span>
+              {values.selection.split("\n").join(" · ")}
+            </p>
+          )}
+
           {/* Two/three-column grid of short labels, not a stack of full
-             question sentences — all eleven answers have to be checkable in
-             one look. Scroll stays as a fallback for very short viewports
-             only; on a normal screen nothing is hidden below the fold. */}
+             question sentences — every answer has to be checkable in one
+             look. Scroll stays as a fallback for very short viewports only. */}
           <div className="my-4 max-h-full min-h-0 overflow-y-auto rounded-2xl border border-white/15 bg-white/10 p-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] backdrop-blur-md backdrop-saturate-150">
             <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
-              {WIZARD_STEPS.map((s) => {
-                const isEditing = editingId === s.id;
+              {REVIEW_FIELDS.map((id) => {
+                const f = INQUIRY_FIELDS[id];
+                const isEditing = editingId === id;
                 // Live schema verdict, not just post-submit resolver errors —
-                // a restored draft from an older build could hold a value the
-                // rules now reject, and it should flag before Send.
-                const fieldError = stepIssue(s, values) ?? (errors[s.id]?.message as string | undefined);
+                // a restored draft could hold a value the rules now reject,
+                // and it should flag before Send.
+                const fieldError = fieldIssue(id, values) ?? (errors[id]?.message as string | undefined);
 
                 // Editing happens right here in the summary — sending someone
                 // back through the wizard to change one answer means they have
@@ -1451,7 +1620,7 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
                 if (isEditing) {
                   return (
                     <div
-                      key={s.id}
+                      key={id}
                       // Editors always take the full row: choice/multi pills
                       // need the width, and a text field in a third of the
                       // row is uncomfortably narrow to correct a typo in.
@@ -1459,7 +1628,7 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-[0.6rem] font-bold uppercase tracking-[0.08em] text-blue">
-                          {s.reviewLabel}
+                          {f.label}
                         </span>
                         <button
                           type="button"
@@ -1472,37 +1641,39 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
                       </div>
 
                       <div className="mt-2">
-                        {(s.kind === "text" || s.kind === "email" || s.kind === "tel") && (
+                        {(f.kind === "text" || f.kind === "email" || f.kind === "tel") && (
                           <input
-                            {...register(s.id)}
-                            type={s.kind}
+                            {...register(id)}
+                            type={f.kind}
                             autoFocus
-                            autoComplete={s.autoComplete ?? "on"}
-                            placeholder={s.placeholder}
+                            aria-label={f.label}
+                            autoComplete={f.autoComplete ?? "on"}
+                            placeholder={f.placeholder}
                             onKeyDown={handleEditorKeyDown}
                             className="focus-no-outline w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-soft/40 focus:border-blue"
                           />
                         )}
 
-                        {s.kind === "textarea" && (
+                        {f.kind === "textarea" && (
                           <textarea
-                            {...register(s.id)}
+                            {...register(id)}
                             rows={3}
                             autoFocus
-                            placeholder={s.placeholder}
+                            aria-label={f.label}
+                            placeholder={f.placeholder}
                             className="focus-no-outline w-full resize-none rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium leading-relaxed text-ink outline-none placeholder:font-normal placeholder:text-ink-soft/40 focus:border-blue"
                           />
                         )}
 
-                        {s.kind === "choice" && (
+                        {f.kind === "choice" && (
                           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                            {s.options?.map((opt) => (
+                            {f.options?.map((opt) => (
                               <ReviewPill
                                 key={opt}
                                 label={opt}
-                                selected={values[s.id] === opt}
+                                selected={values[id] === opt}
                                 onClick={() => {
-                                  setValue(s.id, opt, { shouldValidate: true });
+                                  setValue(id, opt as never, { shouldValidate: true });
                                   // Single-answer question — picking *is* the
                                   // whole edit, so no separate confirm step.
                                   closeEditor(true);
@@ -1512,30 +1683,16 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
                           </div>
                         )}
 
-                        {s.kind === "multi" && (
-                          <div className="flex flex-col gap-1.5">
-                            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                              {s.options?.map((opt) => (
-                                <ReviewPill
-                                  key={opt}
-                                  label={opt}
-                                  selected={
-                                    Array.isArray(values[s.id]) && (values[s.id] as string[]).includes(opt)
-                                  }
-                                  onClick={() => toggleMulti(s.id as "serviceTypes" | "projectGoals", opt)}
-                                />
-                              ))}
-                            </div>
-                            {s.id === "projectGoals" &&
-                              Array.isArray(values.projectGoals) &&
-                              values.projectGoals.includes("Other") && (
-                                <input
-                                  {...register("otherGoalDetails")}
-                                  type="text"
-                                  placeholder="Tell us more about your goal"
-                                  className="focus-no-outline w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-soft/40 focus:border-blue"
-                                />
-                              )}
+                        {f.kind === "multi" && (
+                          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                            {f.options?.map((opt) => (
+                              <ReviewPill
+                                key={opt}
+                                label={opt}
+                                selected={values.projectTypes?.includes(opt) ?? false}
+                                onClick={() => toggleMulti(opt)}
+                              />
+                            ))}
                           </div>
                         )}
                       </div>
@@ -1549,21 +1706,21 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
 
                 return (
                   <button
-                    key={s.id}
+                    key={id}
                     type="button"
-                    onClick={() => openEditor(s.id)}
+                    onClick={() => openEditor(id)}
                     // The whole cell is the edit affordance, so the row needs
                     // no persistent "Edit" link eating horizontal space — the
                     // pencil fades in on hover/focus instead.
                     className={cn(
                       "group/cell relative flex min-w-0 flex-col gap-0.5 rounded-xl px-3 py-2 text-left transition-colors hover:bg-white/[0.07] focus-visible:bg-white/[0.07]",
                       // Free-text answer is the long one — give it the full row.
-                      s.kind === "textarea" && "sm:col-span-2 lg:col-span-3",
+                      f.kind === "textarea" && "sm:col-span-2 lg:col-span-3",
                       fieldError && "ring-1 ring-inset ring-magenta/60",
                     )}
                   >
                     <span className="flex items-center gap-1.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
-                      {s.reviewLabel}
+                      {f.label}
                       <Pencil className="h-2.5 w-2.5 shrink-0 text-blue opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-visible/cell:opacity-100" />
                     </span>
                     <span
@@ -1572,10 +1729,10 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
                         fieldError ? "text-magenta" : "text-ink",
                         // Multi-selects and the details textarea can run long;
                         // two clamped lines keep every cell the same height.
-                        s.kind === "textarea" || s.kind === "multi" ? "line-clamp-2" : "truncate",
+                        f.kind === "textarea" || f.kind === "multi" ? "line-clamp-2" : "truncate",
                       )}
                     >
-                      {fieldError ?? displayValue(s, values)}
+                      {fieldError ?? displayValue(id, values)}
                     </span>
                   </button>
                 );
@@ -1591,6 +1748,14 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
               successMsg="Inquiry sent — we reply within 12 hours."
               onStartOver={startOver}
             />
+            <button
+              type="button"
+              onClick={() => goTo(visibleSteps[visibleSteps.length - 1].id, -1)}
+              className="focus-no-outline mx-auto mt-1 flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold text-ink-soft transition-colors hover:text-ink focus-visible:text-ink"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              Previous
+            </button>
           </div>
         </div>
       )}
