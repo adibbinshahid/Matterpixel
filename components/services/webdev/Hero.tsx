@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import type { Service } from "@/content/services";
 import { ComparisonCard } from "./ComparisonCard";
-import { BOOKING_URL } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 
 export function Hero({ service }: { service: Service }) {
   return (
@@ -32,10 +32,10 @@ export function Hero({ service }: { service: Service }) {
               {service.heroClaim}
             </h1>
             <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">{service.intro}</p>
-            <Link href={BOOKING_URL} className="btn-brand group mt-8">
-              Get a Free Audit
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
+            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+              <CtaLink cta="book" />
+              <CtaLink cta="quote" variant="text" className="text-ink" />
+            </div>
             <p className="mt-4 text-sm text-ink-soft">{service.processNote}</p>
           </Reveal>
 

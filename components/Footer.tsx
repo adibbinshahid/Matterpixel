@@ -4,6 +4,7 @@ import { SiWhatsapp, SiTelegram } from "react-icons/si";
 import { Logo } from "@/components/Logo";
 import { MarkImg } from "@/components/MarkImg";
 import { Spotlight } from "@/components/ui/Spotlight";
+import { WhatsAppSpotlight } from "@/components/WhatsAppSpotlight";
 import { footer, brand } from "@/content/siteConfig";
 
 /** Slow expo settle. Everything that fades here shares it, so the footer
@@ -54,7 +55,6 @@ function Eyebrow({ children }: { children: string }) {
 }
 
 export function Footer() {
-  const waNumber = footer.contact.whatsapp.replace(/[^\d]/g, "");
 
   return (
     <footer className="relative overflow-hidden bg-[#0b0c0e] px-6 pb-6 pt-10 text-white sm:px-8 lg:px-12">
@@ -119,11 +119,11 @@ export function Footer() {
                 <Mail className="h-4 w-4" />
               </CardBody>
             </Spotlight>
-            <Spotlight href={`https://wa.me/${waNumber}`} external>
+            <WhatsAppSpotlight>
               <CardBody title="Contact through WhatsApp" sub="We reply within 12 hours">
                 <SiWhatsapp className="h-4 w-4" />
               </CardBody>
-            </Spotlight>
+            </WhatsAppSpotlight>
             <Spotlight href={`https://t.me/${footer.contact.telegram}`} external>
               <CardBody title="Contact via Telegram" sub="Let&rsquo;s connect">
                 <SiTelegram className="h-4 w-4" />

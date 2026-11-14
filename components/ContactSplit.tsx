@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useForm, type FieldErrors, type UseFormRegisterReturn } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence, type Variants } from "motion/react";
@@ -50,7 +50,7 @@ import {
   zoneOffsetLabel,
 } from "@/lib/availability";
 import { serviceLineup } from "@/content/services";
-import { footer } from "@/content/siteConfig";
+import { ctas, footer, siteGreeting, whatsappHref } from "@/content/siteConfig";
 import { cn, EASE, DURATIONS } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { clearDraft, isDraftEmpty, readDraft, saveDraft } from "@/lib/formDraft";
@@ -163,9 +163,10 @@ const TAB_STAGGER_STEP = 0.08;
  */
 /**
  * `prefill` seeds the inquiry's project details — built on the server from
- * `?package=`, `?stack=`, `?details=` or `?tab=partner` (see
- * buildInquiryPrefill). Those links don't name a real tab, so they fall
- * through to the default inquiry tab.
+ * `?package=`, `?stack=` or `?details=` (see buildInquiryPrefill). Links
+ * that don't name a real tab fall through to the default inquiry tab.
+ * (`?tab=partner` never gets here: next.config redirects it to the
+ * homepage's white-label strip.)
  */
 export function ContactSplit({ initialTab, prefill }: { initialTab?: string; prefill?: string }) {
   const [active, setActive] = useState<TabId>(isTabId(initialTab) ? initialTab : DEFAULT_TAB);
@@ -2124,8 +2125,8 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
    * share one "Copied" state without fighting each other. */
   const [copied, setCopied] = useState<"whatsapp" | "email" | null>(null);
   const reduced = useReducedMotion();
+  const pathname = usePathname();
   const waRaw = formatPhone(footer.contact.whatsapp);
-  const waNumber = footer.contact.whatsapp.replace(/[^\d]/g, "");
   const email = footer.contact.email;
 
   const copy = async (key: "whatsapp" | "email", value: string) => {
@@ -2162,7 +2163,7 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
           blurb="Fastest way to get a reply"
           badge="Fast reply"
           actionLabel="Open WhatsApp"
-          href={`https://wa.me/${waNumber}`}
+          href={whatsappHref(siteGreeting(pathname))}
           value={waRaw}
           copied={copied === "whatsapp"}
           onCopy={() => copy("whatsapp", footer.contact.whatsapp)}
@@ -2217,7 +2218,7 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
           className="btn-brand btn-sm group shrink-0"
         >
           <Calendar className="h-4 w-4" aria-hidden="true" />
-          Book Free Audit Call
+          {ctas.book.label}
           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
         </button>
       </motion.div>

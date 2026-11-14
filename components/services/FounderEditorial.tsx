@@ -1,11 +1,10 @@
 "use client";
 
 import { useRef } from "react";
-import Link from "next/link";
 import { motion, useScroll, useTransform } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
 import { founderEditorial } from "@/content/servicesPage";
-import { founder } from "@/content/siteConfig";
+import { founder, ctas } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 import { EASE } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
@@ -130,10 +129,7 @@ export function FounderEditorial() {
               ))}
             </dl>
 
-            <Link href={founderEditorial.cta.href} className="btn-brand group mt-5 w-fit">
-              {founderEditorial.cta.label}
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
+            <CtaLink cta="book" label={ctas.book.withAdib} className="mt-5 w-fit" />
           </motion.div>
         </div>
       </div>

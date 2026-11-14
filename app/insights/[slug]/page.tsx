@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
-import { ArrowLeft, ArrowUpRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { getAllPosts, getPostBySlug, slugifyHeading } from "@/lib/posts";
-import { siteUrl, BOOKING_URL } from "@/content/siteConfig";
+import { siteUrl } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 
 const mdxComponents = {
   h2: ({ children, ...props }: React.ComponentProps<"h2">) => (
@@ -199,13 +200,10 @@ export default async function PostPage({
             <h2 className="text-3xl font-bold tracking-tight text-paper sm:text-5xl">
               Got something that matters? Let&rsquo;s build it.
             </h2>
-            <Link
-              href={BOOKING_URL}
-              className="btn-brand group mt-8"
-            >
-              Get a Free Audit
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+              <CtaLink cta="book" />
+              <CtaLink cta="quote" variant="text" className="text-ink" />
+            </div>
           </Reveal>
         </div>
       </section>

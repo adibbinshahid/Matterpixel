@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowRight, ArrowUpRight, Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
 import { Logo } from "@/components/Logo";
-import { nav, BOOKING_URL } from "@/content/siteConfig";
+import { nav } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 import { EASE } from "@/lib/utils";
 
 function isActive(pathname: string, href: string) {
@@ -176,10 +177,7 @@ export function Nav() {
               own `display`, so a `hidden lg:inline-flex` on the link itself
               would fight the class rather than hide it. */}
           <div className="hidden lg:block">
-            <Link href={BOOKING_URL} className="btn-brand btn-sm group">
-              {nav.cta}
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
+            <CtaLink cta="book" className="btn-sm" />
           </div>
 
           <button
@@ -266,14 +264,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: 0.06 + nav.links.length * 0.04, ease: EASE }}
               >
-                <Link
-                  href={BOOKING_URL}
-                  onClick={onClose}
-                  className="btn-brand btn-block"
-                >
-                  {nav.cta}
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
+                <CtaLink cta="book" onClick={onClose} className="btn-block" />
               </motion.div>
             </div>
           </motion.div>

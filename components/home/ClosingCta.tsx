@@ -3,9 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useReveal } from "@/lib/useReveal";
 import { Hl } from "@/components/home/Hl";
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { BOOKING_URL } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 import { easeOutExpo, markCells, prefersReducedMotion, rng } from "@/lib/pixels";
 
 const COLS = 30;
@@ -204,10 +202,10 @@ export function ClosingCta() {
           <p data-reveal="lede" className="mt-6 max-w-[38ch] text-base leading-relaxed text-white/80 sm:text-lg">
             Claim your free audit and allow us to see exactly what&rsquo;s holding your growth back.
           </p>
-          <Link href={BOOKING_URL} data-reveal="block" className="btn-brand group mt-9 w-fit">
-            Get a Free Audit
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
+          <div data-reveal="block" className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <CtaLink cta="book" className="w-fit" />
+            <CtaLink cta="quote" variant="text" className="text-white" />
+          </div>
         </div>
       </div>
     </section>

@@ -3,6 +3,8 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
+import { ctaHref, ctas } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 
 const MIN = 10;
 const MAX = 2000;
@@ -26,7 +28,7 @@ export function CustomQuote() {
       setError("A sentence or two helps us quote it properly.");
       return;
     }
-    router.push(`/contact?details=${encodeURIComponent(value)}`);
+    router.push(ctaHref("quote", { details: value }));
   };
 
   return (
@@ -73,10 +75,13 @@ export function CustomQuote() {
               {error}
             </p>
           )}
-          <button type="submit" className="btn-brand group mt-1 w-fit">
-            Get a fixed quote in 48h
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </button>
+          <div className="mt-1 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <button type="submit" className="btn-brand group w-fit">
+              {ctas.quote.label}
+              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </button>
+            <CtaLink cta="book" variant="text" className="text-ink" />
+          </div>
         </div>
       </form>
     </div>

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import { WorkGrid } from "@/components/WorkGrid";
 import { PixelField } from "@/components/PixelField";
 import { projects, mediums, websiteProjects, mediaProjects, toWorkCards } from "@/content/projects";
-import { workIntro, siteUrl, BOOKING_URL } from "@/content/siteConfig";
+import { workIntro, siteUrl } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -118,10 +118,10 @@ export default function WorkPage() {
               Every build above was set as our own brief. Bring us yours and we&rsquo;ll scope it
               the same way — problem first, then the build that answers it.
             </p>
-            <a href={BOOKING_URL} className="btn-brand group mt-9">
-              Get a Free Audit
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </a>
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+              <CtaLink cta="book" />
+              <CtaLink cta="quote" variant="text" className="text-ink" />
+            </div>
           </Reveal>
         </div>
       </section>

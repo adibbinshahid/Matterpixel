@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import Link from "next/link";
-import { ArrowUpRight, ArrowRight, ChevronDown, Gauge, Star, ShieldCheck, Wallet, type LucideIcon } from "lucide-react";
-import { hero, trust, BOOKING_URL } from "@/content/siteConfig";
+import { ChevronDown, Gauge, Star, ShieldCheck, Wallet, type LucideIcon } from "lucide-react";
+import { hero, trust } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 import { WEB_STACK } from "@/components/TechMarquee";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { loadGsap, refreshScrollTrigger } from "@/lib/loadGsap";
@@ -155,14 +155,8 @@ export function Hero() {
           className="hero-rise mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4"
           style={{ animationDelay: "0.4s" }}
         >
-          <Link href={BOOKING_URL} className="btn-brand group">
-            {hero.ctaPrimary}
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
-          <Link href="/projects" className="btn-outline group">
-            View Projects
-            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-          </Link>
+          <CtaLink cta="book" />
+          <CtaLink cta="quote" variant="text" className="text-white" />
         </div>
 
         {/* The stack, monochrome and small, over a hairline. */}

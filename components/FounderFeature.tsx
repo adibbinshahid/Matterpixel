@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowUpRight, Code2, Megaphone, PenTool, Sparkles } from "lucide-react";
+import { Code2, Megaphone, PenTool, Sparkles } from "lucide-react";
 import { PixelResolve } from "@/components/PixelResolve";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
-import { founder, BOOKING_URL } from "@/content/siteConfig";
+import { founder, ctas } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 import { EASE } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
@@ -206,10 +206,7 @@ export function FounderFeature() {
               {/* Conversion action, same as every other "book a call" link
                   on the site — so it takes the primary pill, not the
                   outlined secondary it was using. */}
-              <Link href={BOOKING_URL} className="btn-brand group mt-8 w-fit lg:mt-6">
-                Talk to Adib directly
-                <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
+              <CtaLink cta="book" label={ctas.book.withAdib} className="mt-8 w-fit lg:mt-6" />
             </Reveal>
           </div>
         </div>

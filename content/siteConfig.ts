@@ -6,16 +6,8 @@
 
 export const siteUrl = "https://matterpixel.com";
 
-/**
- * Where every "book a call" / "Get a Free Audit" button points. Currently the
- * on-site scheduler (contact page, booking tab). Swap for an external
- * scheduler (e.g. a Calendly link) here and every booking CTA follows.
- */
-export const BOOKING_URL = "/contact?tab=booking";
-
-/** Agency / white-label enquiries — opens the inquiry wizard pre-filled
- * with an "Agency partnership" subject (see ContactSplit). */
-export const PARTNER_URL = "/contact?tab=partner";
+/** The one WhatsApp number every WhatsApp link on the site dials. */
+export const WHATSAPP_NUMBER = "+8801707555755";
 
 export const brand = {
   name: "matterpixel",
@@ -26,6 +18,68 @@ export const brand = {
   replyPromise: "We reply within 12 hours.",
 };
 
+/** wa.me link, optionally with a pre-typed first message. */
+export function whatsappHref(text?: string): string {
+  const digits = WHATSAPP_NUMBER.replace(/[^\d]/g, "");
+  return `https://wa.me/${digits}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+}
+
+/** The opener for a WhatsApp chat started from a page on this site, so Adib
+ * sees where the visitor was when they reached out. */
+export function siteGreeting(path: string): string {
+  return `Hi Adib, I found you via matterpixel.com${path}`;
+}
+
+/** The blanks an agency fills in — shared by the WhatsApp and email links
+ * so both channels ask for the same four facts. */
+const PARTNER_TEMPLATE =
+  "Agency:\nWebsite:\nServices needed:\nProjects per month:\n\n(via matterpixel.com/#white-label)";
+
+/**
+ * Every conversion CTA on the site. Two labels only — a visitor either
+ * books the free audit call or asks for a fixed quote — and both land on
+ * the /contact hub's matching tab. Components read the label and href from
+ * here; never hard-code either. Swap `book.href` for an external scheduler
+ * (e.g. a Calendly link) and every booking CTA follows.
+ *
+ * `book.withAdib` is the same booking action, worded for the founder
+ * sections where the offer is access to Adib himself. `partner` is the
+ * agency strip's direct line: no form, straight to WhatsApp or email.
+ */
+export const ctas = {
+  book: {
+    label: "Book a free audit call",
+    withAdib: "Book a call with Adib",
+    href: "/contact?tab=booking",
+  },
+  quote: {
+    label: "Get a fixed quote",
+    href: "/contact?tab=inquiry",
+  },
+  partner: {
+    whatsapp: {
+      label: "WhatsApp Adib",
+      href: whatsappHref(`Hi Adib, I run an agency and want to discuss white-label work.\n\n${PARTNER_TEMPLATE}`),
+    },
+    email: {
+      label: "Email Adib",
+      href: `mailto:${brand.email}?subject=${encodeURIComponent("Agency partnership: [agency name]")}&body=${encodeURIComponent(PARTNER_TEMPLATE)}`,
+    },
+  },
+} as const;
+
+export type CtaKind = "book" | "quote";
+
+/** A CTA's href with extra query params appended (a package, a stack, a
+ * brief). Empty values are dropped. */
+export function ctaHref(kind: CtaKind, params?: Record<string, string | undefined>): string {
+  const url = new URLSearchParams(ctas[kind].href.split("?")[1]);
+  for (const [key, value] of Object.entries(params ?? {})) {
+    if (value) url.set(key, value);
+  }
+  return `/contact?${url.toString()}`;
+}
+
 export const nav = {
   links: [
     { label: "Projects", href: "/projects" },
@@ -34,14 +88,12 @@ export const nav = {
     { label: "Insights", href: "/insights" },
     { label: "Contact", href: "/contact" },
   ],
-  cta: "Get a Free Audit",
 };
 
 export const hero = {
   eyebrow: "Websites & Apps · AI Automation · Business Software · Branding & Visuals",
   headline: "We Build Websites and AI systems that win customers and save hours.",
   sub: "Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
-  ctaPrimary: "Get a Free Audit",
 };
 
 /**
@@ -94,7 +146,6 @@ export const servicesCta = {
   headingHighlight: "results.",
   body: "Every project starts with strategy, not templates, specifically based on your business problem — so what we ship actually moves the growth wheel for your business.",
   badges: ["NDA Friendly", "On-time Delivery", "Fixed Pricing"],
-  button: "Get a Free Audit",
 };
 
 export const workIntro = {
@@ -283,10 +334,6 @@ export const foundingOffer = {
   body: "Matterpixel is opening its first studio roster with a limited number of clients. Early projects get direct involvement from Adib from strategy through delivery, built with vetted specialists where deeper expertise is needed.",
   /** The founding-client offer, phrased as terms rather than a discount. */
   terms: "Early clients receive preferred founding-client terms while the initial roster is being built.",
-  /** The offer here is access to Adib, not a discount, so the button says
-   * exactly that. Only read by FoundingRoster — the homepage's own closing
-   * CTA keeps its audit framing. */
-  cta: { label: "Talk to Adib directly", href: BOOKING_URL },
   micro: "Limited availability for the initial Matterpixel roster.",
   /** Status indicator in the corner of the panel — state, not a countdown. */
   status: { label: "Roster", value: "Open · Limited" },
@@ -304,7 +351,6 @@ export const whiteLabel = {
   heading: "Your trusted white-label development partner.",
   body: "We build websites, web apps and AI automations white-label: your brand, NDA, no client contact. Fixed prices.",
   bullets: ["Your brand, NDA, no client contact", "Pre-discussed rate card for all development", "We build while you sleep"],
-  cta: "Partner with us",
 };
 
 /**
@@ -347,7 +393,7 @@ export const footer = {
   copyright: `© ${brand.year} Matterpixel. All rights reserved.`,
   contact: {
     email: "hello@matterpixel.com",
-    whatsapp: "+8801707555755",
+    whatsapp: WHATSAPP_NUMBER,
     telegram: "+8801707555755",
     location: "Working globally, HQ based on Dhaka",
   },

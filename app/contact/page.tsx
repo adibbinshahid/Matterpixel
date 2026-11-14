@@ -15,8 +15,8 @@ export default async function ContactPage({
   searchParams: Promise<{ tab?: string; package?: string; stack?: string; details?: string }>;
 }) {
   const { tab, package: packageSlug, stack, details } = await searchParams;
-  // Links from the service finder and the agency strip arrive with what
-  // the visitor already chose; it lands in the inquiry's project details.
-  const prefill = buildInquiryPrefill({ packageSlug, stack, details, partner: tab === "partner" });
+  // Links from the service finder arrive with what the visitor already
+  // chose; it lands in the inquiry's project details.
+  const prefill = buildInquiryPrefill({ packageSlug, stack, details });
   return <ContactSplit initialTab={tab} prefill={prefill} />;
 }

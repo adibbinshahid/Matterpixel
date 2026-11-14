@@ -1,5 +1,3 @@
-import { BOOKING_URL } from "@/content/siteConfig";
-
 /**
  * Services page — the credibility layer.
  *
@@ -145,7 +143,6 @@ export const founderEditorial = {
   /** Two sentences, not four — same claim as siteConfig.founder.bio,
    * compressed to what fits the compact composition. */
   body: "Adib leads strategy, creative direction, development and delivery end to end. Founder-led, built with vetted specialists where deeper expertise is needed. No account managers — one person owns the direction and stays accountable for the result.",
-  cta: { label: "Talk to Adib directly", href: BOOKING_URL },
 };
 
 /* ── §6 Process ──────────────────────────────────────────────────────────

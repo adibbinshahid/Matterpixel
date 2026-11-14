@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import {
   AppWindow,
-  ArrowUpRight,
   Bot,
   CalendarCheck,
   Check,
@@ -20,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { SectionHeading } from "@/components/home/SectionHeading";
+import { CtaLink } from "@/components/CtaLink";
 import { BRAND_BLUE, BRAND_MAGENTA, prefersReducedMotion } from "@/lib/pixels";
 import {
   BUNDLE_NOTE,
@@ -226,7 +225,6 @@ export function StackBuilder() {
   const totalRef = useRef<HTMLParagraphElement>(null);
   const estimate = estimateStack(ids);
   const count = ids.length;
-  const quoteHref = count ? `/contact?${PARAM}=${ids.join(",")}` : "/contact";
   const shown = useTweenedRange(estimate.min, estimate.max);
 
   const toggle = (id: string, from: HTMLElement) => {
@@ -334,16 +332,15 @@ export function StackBuilder() {
             {details}
           </div>
 
-          <Link
-            href={quoteHref}
+          <CtaLink
+            cta="quote"
+            params={{ [PARAM]: ids.join(",") }}
             aria-disabled={count === 0}
             onClick={(e) => count === 0 && e.preventDefault()}
-            className={`btn-brand group mt-3 w-full justify-center lg:mt-4 ${count === 0 ? "pointer-events-none opacity-50" : ""}`}
+            className={`mt-3 w-full justify-center lg:mt-4 ${count === 0 ? "pointer-events-none opacity-50" : ""}`}
             tabIndex={count === 0 ? -1 : undefined}
-          >
-            Send me this quote
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
+          />
+          <CtaLink cta="book" variant="text" className="w-full justify-center text-sm text-ink" />
         </aside>
       </div>
     </div>

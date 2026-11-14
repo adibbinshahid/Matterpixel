@@ -3,7 +3,7 @@ import { Accordion } from "@/components/ui/Accordion";
 import { PixelSection } from "@/components/home/PixelSection";
 import { SectionHeading } from "@/components/home/SectionHeading";
 import { Hl } from "@/components/home/Hl";
-import { faq, BOOKING_URL } from "@/content/siteConfig";
+import { faq, ctaHref, ctas } from "@/content/siteConfig";
 
 /**
  * The second light beat of the page: six plain answers to what a buyer
@@ -36,12 +36,12 @@ export function HomeFaq() {
             }
           />
           <p data-reveal="lede" className="text-base leading-relaxed text-ink-soft md:pb-2">
-            Anything not here,{" "}
+            Anything not here?{" "}
             <Link
-              href={BOOKING_URL}
+              href={ctaHref("book")}
               className="font-semibold text-ink underline decoration-ink/30 underline-offset-4 transition-colors hover:decoration-ink"
             >
-              ask on a free audit call
+              {ctas.book.label}
             </Link>
             .
           </p>

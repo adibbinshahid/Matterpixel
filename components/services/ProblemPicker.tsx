@@ -10,7 +10,7 @@ import { Hl } from "@/components/home/Hl";
 import { prefersReducedMotion } from "@/lib/pixels";
 import { SWEEP_MS, sweep } from "@/lib/sweep";
 import { useReducedMotion } from "@/lib/useReducedMotion";
-import { BOOKING_URL } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 import { usd, type ProblemPackage, type Stat } from "@/content/packages";
 
 export type ResolvedProof = {
@@ -229,16 +229,8 @@ function PackagePanel({
         </div>
 
         <div data-m="fade" data-k="cta" data-i="3" className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
-          <Link href={`/contact?package=${pkg.slug}`} className="btn-brand group">
-            Get this for my business
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
-          <Link
-            href={BOOKING_URL}
-            className="inline-flex min-h-11 items-center text-base font-semibold text-ink underline decoration-ink-soft/50 underline-offset-4 transition-colors hover:decoration-magenta"
-          >
-            Start with a free audit
-          </Link>
+          <CtaLink cta="quote" params={{ package: pkg.slug }} />
+          <CtaLink cta="book" variant="text" className="text-ink" />
         </div>
 
         {proof && (

@@ -1,7 +1,6 @@
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
-import { servicesCta, BOOKING_URL } from "@/content/siteConfig";
+import { servicesCta } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 import { DURATIONS } from "@/lib/utils";
 
 /**
@@ -34,10 +33,7 @@ export function ServicesCtaBanner({ className }: { className?: string }) {
             </div>
           </div>
 
-          <Link href={BOOKING_URL} className="btn-brand btn-on-brand on-blue group w-fit">
-            {servicesCta.button}
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
+          <CtaLink cta="quote" className="btn-on-brand on-blue w-fit" />
         </div>
 
         <div

@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
-import Link from "next/link";
-import { ArrowUpRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { PixelSection } from "@/components/home/PixelSection";
 import { SectionHeading } from "@/components/home/SectionHeading";
 import { Hl } from "@/components/home/Hl";
 import { engagementModels, engagementModelsIntro } from "@/content/engagementModels";
-import { BOOKING_URL } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 
 const LAST = engagementModels.length - 1;
 
@@ -259,10 +258,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
         </div>
 
         <div data-reveal="block" className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4 border-t border-line pt-6">
-          <Link href={BOOKING_URL} className="btn-brand group">
-            Get a Free Audit
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
+          <CtaLink cta="book" />
           <p className="text-base text-ink-soft">Not sure which fits? We&rsquo;ll recommend one on the call.</p>
         </div>
       </div>

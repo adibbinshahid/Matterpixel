@@ -1,8 +1,8 @@
-import Link from "next/link";
-import { ArrowUpRight, Check } from "lucide-react";
+import { ArrowUpRight, Check, Mail } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import { PixelSection } from "@/components/home/PixelSection";
 import { Hl } from "@/components/home/Hl";
-import { whiteLabel, PARTNER_URL } from "@/content/siteConfig";
+import { whiteLabel, ctas } from "@/content/siteConfig";
 
 /**
  * Agency / white-label pitch: a full-bleed magenta section before the FAQ,
@@ -10,7 +10,7 @@ import { whiteLabel, PARTNER_URL } from "@/content/siteConfig";
  */
 export function WhiteLabel() {
   return (
-    <PixelSection tone="magenta" className="home-section" labelledBy="white-label-title">
+    <PixelSection tone="magenta" id="white-label" className="home-section" labelledBy="white-label-title">
       <div className="home-shell grid gap-10 lg:grid-cols-[1.2fr_1fr] lg:items-end lg:gap-16">
         <div>
           <p
@@ -43,12 +43,25 @@ export function WhiteLabel() {
               </li>
             ))}
           </ul>
-          {/* On magenta the magenta primary would vanish: the same pill
-              inverts to white with a magenta label. */}
-          <Link href={PARTNER_URL} className="btn-brand btn-on-magenta group mt-8 w-fit">
-            {whiteLabel.cta}
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
+          {/* Agencies talk to Adib directly — no form. Both links open with
+              the same short template pre-typed. On magenta the magenta
+              primary would vanish: the pill inverts to white. */}
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <a
+              href={ctas.partner.whatsapp.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-brand btn-on-magenta group w-fit"
+            >
+              <SiWhatsapp className="h-4 w-4" aria-hidden="true" />
+              {ctas.partner.whatsapp.label}
+              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </a>
+            <a href={ctas.partner.email.href} className="btn-outline group w-fit">
+              <Mail className="h-4 w-4" aria-hidden="true" />
+              {ctas.partner.email.label}
+            </a>
+          </div>
         </div>
       </div>
     </PixelSection>

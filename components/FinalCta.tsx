@@ -1,7 +1,5 @@
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
-import { BOOKING_URL } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 
 /**
  * The homepage's closing statement — distinct from the founding-client CTA
@@ -17,21 +15,19 @@ export function FinalCta() {
       <div className="absolute inset-0 bg-magenta" aria-hidden="true" />
       {/* `flex-col-reverse` below `lg`: the DOM order (button, then copy) is
          the desktop left-to-right reading order, but stacked vertically it
-         put "Get a Free Audit" above the sentence explaining what the audit
-         is. Reversing the column restores headline-then-button on phones
+         put the button above the sentence explaining what it gets you. Reversing the column restores headline-then-button on phones
          without disturbing the desktop row. */}
       <Reveal className="relative mx-auto flex w-full max-w-[1400px] flex-col-reverse items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
-        <Link
-          href={BOOKING_URL}
-          className="btn-brand btn-on-brand on-magenta group shrink-0"
-        >
-          Get a Free Audit
-          <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-        </Link>
+        {/* On /services the visitor is pricing a build, so the quote leads
+           and the audit call is the quieter alternative. */}
+        <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-6 gap-y-3">
+          <CtaLink cta="quote" className="btn-on-brand on-magenta" />
+          <CtaLink cta="book" variant="text" className="text-paper" />
+        </div>
         <p className="max-w-2xl text-center leading-snug text-paper lg:text-right">
           <span className="block text-2xl font-bold sm:text-3xl">Let&rsquo;s build your next win.</span>
           <span className="mt-1 block text-sm text-paper/85 sm:text-base">
-            Claim your free audit and allow us to see exactly what&rsquo;s holding your growth back.
+            A fixed price for exactly what you need, agreed before any work begins.
           </span>
         </p>
       </Reveal>

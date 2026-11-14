@@ -322,10 +322,8 @@ export function buildInquiryPrefill(params: {
   packageSlug?: string;
   stack?: string;
   details?: string;
-  partner?: boolean;
 }): string | undefined {
   const parts: string[] = [];
-  if (params.partner) parts.push("Agency partnership: ");
 
   const pkg = getProblemPackage(params.packageSlug);
   if (pkg) parts.push(`Package: ${pkg.name} — from ${usd(pkg.priceFrom)}, fixed quote.\n`);

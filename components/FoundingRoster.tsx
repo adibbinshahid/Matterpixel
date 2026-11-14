@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
-import { foundingOffer } from "@/content/siteConfig";
+import { foundingOffer, ctas } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 import { EASE } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
@@ -142,13 +141,12 @@ export function FoundingRoster() {
                 </span>
               </p>
 
-              <Link
-                href={foundingOffer.cta.href}
-                className="btn-brand btn-on-brand on-magenta group mt-8 w-fit"
-              >
-                {foundingOffer.cta.label}
-                <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </Link>
+              {/* The offer here is access to Adib, not a discount, so the
+                  button says exactly that. */}
+              <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <CtaLink cta="book" label={ctas.book.withAdib} className="btn-on-brand on-magenta w-fit" />
+                <CtaLink cta="quote" variant="text" className="text-paper" />
+              </div>
 
               <p className="mt-5 max-w-xs text-sm leading-relaxed text-paper/70">
                 {foundingOffer.micro}

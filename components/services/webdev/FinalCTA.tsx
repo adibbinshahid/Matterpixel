@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import { GiantHeading } from "@/components/GiantHeading";
 import { Reveal } from "@/components/Reveal";
-import { BOOKING_URL } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 
 export function FinalCTA() {
   return (
@@ -14,10 +12,10 @@ export function FinalCTA() {
           <h2 className="mx-auto max-w-3xl">
             <GiantHeading lines={["Got something", "worth building?"]} maxFontSize={56} />
           </h2>
-          <Link href={BOOKING_URL} className="btn-brand btn-on-brand on-blue group mt-10">
-            Get a Free Audit
-            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            <CtaLink cta="book" className="btn-on-brand on-blue" />
+            <CtaLink cta="quote" variant="text" className="text-paper" />
+          </div>
         </Reveal>
       </div>
     </section>
