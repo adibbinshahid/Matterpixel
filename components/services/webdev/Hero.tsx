@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
 import type { Service } from "@/content/services";
 import { ComparisonCard } from "./ComparisonCard";
+import { BOOKING_URL } from "@/content/siteConfig";
 
 export function Hero({ service }: { service: Service }) {
   return (
@@ -31,7 +32,7 @@ export function Hero({ service }: { service: Service }) {
               {service.heroClaim}
             </h1>
             <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">{service.intro}</p>
-            <Link href="/contact?tab=booking" className="btn-brand group mt-8">
+            <Link href={BOOKING_URL} className="btn-brand group mt-8">
               Get a Free Audit
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { Reveal } from "@/components/Reveal";
+import { BOOKING_URL } from "@/content/siteConfig";
 
 /**
  * The homepage's closing statement — distinct from the founding-client CTA
@@ -21,7 +22,7 @@ export function FinalCta() {
          without disturbing the desktop row. */}
       <Reveal className="relative mx-auto flex w-full max-w-[1400px] flex-col-reverse items-center gap-5 lg:flex-row lg:items-center lg:justify-between">
         <Link
-          href="/contact?tab=booking"
+          href={BOOKING_URL}
           className="btn-brand btn-on-brand on-magenta group shrink-0"
         >
           Get a Free Audit

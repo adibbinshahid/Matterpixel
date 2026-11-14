@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { GiantHeading } from "@/components/GiantHeading";
 import { Reveal } from "@/components/Reveal";
+import { BOOKING_URL } from "@/content/siteConfig";
 
 export function FinalCTA() {
   return (
@@ -13,7 +14,7 @@ export function FinalCTA() {
           <h2 className="mx-auto max-w-3xl">
             <GiantHeading lines={["Got something", "worth building?"]} maxFontSize={56} />
           </h2>
-          <Link href="/contact?tab=booking" className="btn-brand btn-on-brand on-blue group mt-10">
+          <Link href={BOOKING_URL} className="btn-brand btn-on-brand on-blue group mt-10">
             Get a Free Audit
             <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>

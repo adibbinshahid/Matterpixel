@@ -7,7 +7,7 @@ import { WebsiteCaseStudy } from "./WebsiteCaseStudy";
 import { MediaCaseStudy } from "./MediaCaseStudy";
 import { projects, getProjectBySlug } from "@/content/projects";
 import { getServiceBySlug } from "@/content/services";
-import { siteUrl } from "@/content/siteConfig";
+import { siteUrl, BOOKING_URL } from "@/content/siteConfig";
 
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
@@ -167,7 +167,7 @@ export default async function CaseStudyPage({
             <p className="mx-auto mt-5 max-w-xl leading-relaxed text-paper/70">
               Same standard, your name on it — scoped against your problem instead of ours.
             </p>
-            <Link href="/contact?tab=booking" className="btn-brand group mt-9">
+            <Link href={BOOKING_URL} className="btn-brand group mt-9">
               Get a Free Audit
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </Link>

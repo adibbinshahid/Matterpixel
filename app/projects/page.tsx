@@ -4,7 +4,7 @@ import { Reveal } from "@/components/Reveal";
 import { WorkGrid } from "@/components/WorkGrid";
 import { PixelField } from "@/components/PixelField";
 import { projects, mediums, websiteProjects, mediaProjects, toWorkCards } from "@/content/projects";
-import { workIntro, siteUrl } from "@/content/siteConfig";
+import { workIntro, siteUrl, BOOKING_URL } from "@/content/siteConfig";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -83,7 +83,8 @@ export default function WorkPage() {
           </Reveal>
 
           <Reveal delay={0.1} className="lg:col-span-5">
-            <p className="max-w-xl leading-relaxed text-ink-soft">{workIntro.honestLine}</p>
+            <p className="max-w-xl font-semibold leading-relaxed text-ink">{workIntro.conceptLine}</p>
+            <p className="mt-3 max-w-xl leading-relaxed text-ink-soft">{workIntro.honestLine}</p>
             <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-2 border-t border-line pt-5">
               {proofPoints.map((p) => (
                 <div key={p.label} className="flex items-baseline gap-1.5">
@@ -117,7 +118,7 @@ export default function WorkPage() {
               Every build above was set as our own brief. Bring us yours and we&rsquo;ll scope it
               the same way — problem first, then the build that answers it.
             </p>
-            <a href="/contact?tab=booking" className="btn-brand group mt-9">
+            <a href={BOOKING_URL} className="btn-brand group mt-9">
               Get a Free Audit
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </a>

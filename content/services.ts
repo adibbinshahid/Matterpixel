@@ -24,6 +24,9 @@ export type Service = {
   addOns?: string[];
   frequentlyRequested?: string[];
   whyChooseUs?: string[];
+  /** Business-software scope, rendered as its own anchored group
+   * (`#software`) on the web-app detail page until it gets a page of its own. */
+  businessSoftware?: string[];
   proofNote?: string;
   processNote: string;
   faq: { q: string; a: string }[];
@@ -74,6 +77,14 @@ export const services: Service[] = [
       "CRM integrations",
       "Analytics (GA4, PostHog, Plausible)",
     ],
+    businessSoftware: [
+      "Custom dashboards and admin panels",
+      "Internal tools and staff portals",
+      "Lightweight CRMs and booking systems",
+      "Inventory, order and reporting tools",
+      "Client portals with secure logins",
+      "Integrations with the tools you already use",
+    ],
     deployment: ["Vercel deployment", "Cloudflare configuration", "Custom domain setup", "SSL configuration"],
     ongoingSupport: ["Maintenance", "Feature development", "Performance monitoring", "Bug fixes"],
     processNote:
@@ -93,7 +104,7 @@ export const services: Service[] = [
       },
       {
         q: "Who actually writes the code?",
-        a: "The founder, senior-led — no junior bench learning on your project.",
+        a: "Founder-led, built with vetted specialists — Adib owns the build and reviews every line that ships.",
       },
     ],
     metaKeyword: "web development agency",
@@ -148,7 +159,7 @@ export const services: Service[] = [
   },
   {
     slug: "branding-identity",
-    id: "03",
+    id: "04",
     title: "Branding & Identity",
     shortDesc: "Brand systems that create memorable experiences across every platform and customer interaction.",
     startingPrice: 600,
@@ -215,7 +226,7 @@ export const services: Service[] = [
   },
   {
     slug: "ai-product-photography",
-    id: "04",
+    id: "05",
     title: "AI Image / Product Photography",
     shortDesc: "AI-powered product imagery with studio-quality results, delivered in a fraction of the time.",
     startingPrice: 300,
@@ -388,6 +399,82 @@ export const services: Service[] = [
       },
     ],
     metaKeyword: "technical SEO agency",
+  },
+];
+
+/**
+ * The service catalogue as it's presented in listings (home carousel,
+ * /services grid, contact form) — six offerings in this order. Mostly 1:1
+ * with a detail page in `services`, with two exceptions: Business Software
+ * has no page yet and points at its section on the web-app page, and AI
+ * product visuals + video are sold as one line and land on the photography
+ * page (the video page is still reachable from there and the sitemap).
+ */
+export type ServiceListing = {
+  /** Stable key for icons/imagery — the detail-page slug where one exists. */
+  key: string;
+  id: string;
+  title: string;
+  shortDesc: string;
+  startingPrice: number;
+  href: string;
+};
+
+function detail(slug: string): Service {
+  const service = services.find((s) => s.slug === slug);
+  if (!service) throw new Error(`serviceLineup: no service "${slug}"`);
+  return service;
+}
+
+export const serviceLineup: ServiceListing[] = [
+  {
+    key: "web-app-development",
+    id: "01",
+    title: "Web & App Development",
+    shortDesc: detail("web-app-development").shortDesc,
+    startingPrice: detail("web-app-development").startingPrice,
+    href: "/services/web-app-development",
+  },
+  {
+    key: "ai-automation",
+    id: "02",
+    title: "AI Automation",
+    shortDesc: detail("ai-automation").shortDesc,
+    startingPrice: detail("ai-automation").startingPrice,
+    href: "/services/ai-automation",
+  },
+  {
+    key: "business-software",
+    id: "03",
+    title: "Business Software",
+    shortDesc:
+      "Dashboards, internal tools, portals and lightweight CRMs built around how your business actually runs.",
+    startingPrice: detail("web-app-development").startingPrice,
+    href: "/services/web-app-development#software",
+  },
+  {
+    key: "branding-identity",
+    id: "04",
+    title: "Branding & Identity",
+    shortDesc: detail("branding-identity").shortDesc,
+    startingPrice: detail("branding-identity").startingPrice,
+    href: "/services/branding-identity",
+  },
+  {
+    key: "ai-product-photography",
+    id: "05",
+    title: "AI Product Visuals & Video",
+    shortDesc: "Studio-quality product imagery and cinematic short-form video, AI-assisted and hand-refined.",
+    startingPrice: detail("ai-product-photography").startingPrice,
+    href: "/services/ai-product-photography",
+  },
+  {
+    key: "seo-growth",
+    id: "06",
+    title: "SEO & Digital Marketing",
+    shortDesc: detail("seo-growth").shortDesc,
+    startingPrice: detail("seo-growth").startingPrice,
+    href: "/services/seo-growth",
   },
 ];
 

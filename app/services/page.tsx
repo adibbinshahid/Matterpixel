@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Services } from "@/components/Services";
-import { ServicesHero } from "@/components/services/ServicesHero";
+import { ServiceFinder } from "@/components/services/ServiceFinder";
 import { ProofBoard } from "@/components/services/ProofBoard";
 import { FounderEditorial } from "@/components/services/FounderEditorial";
 import { ProcessSystem } from "@/components/services/ProcessSystem";
@@ -9,7 +9,7 @@ import { FinalCta } from "@/components/FinalCta";
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "Web & app development, AI automation, branding, AI product photography, AI video, and SEO & digital marketing — senior-led, fixed quotes, no bench.",
+    "Web & app development, AI automation, business software, branding, AI product visuals & video, and SEO & digital marketing — founder-led, fixed quotes, built with vetted specialists.",
   alternates: { canonical: "/services" },
 };
 
@@ -17,7 +17,8 @@ export const metadata: Metadata = {
  * Section rhythm. Each beat deliberately runs on a different visual
  * grammar, so the page never resolves into one repeated layout:
  *
- *   ServicesHero    cursor-reactive pixel field, giant headline
+ *   ServiceFinder   problem picker → stack builder → custom brief (also
+ *                    the homepage's services section); carries the h1
  *   ProofBoard      oversized blue numerals on an irregular, cropped grid
  *   Services        the six-service card system (unchanged)
  *   FounderEditorial portrait plate bled off-edge, counter-parallax type
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
 export default function ServicesPage() {
   return (
     <>
-      <ServicesHero />
+      <ServiceFinder firstSection />
 
       <ProofBoard />
 

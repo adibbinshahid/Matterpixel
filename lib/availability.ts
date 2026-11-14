@@ -32,7 +32,7 @@ export const AVAILABILITY = {
   callsCompact: "Sun–Thu 7–11:30 PM GMT+6 · Fri–Sat 24h",
   callsLong:
     "Audit calls: Sunday–Thursday, 7:00 PM–11:30 PM (GMT+6). Friday–Saturday, 24 hours.",
-  messaging: "WhatsApp & email: 24/7",
+  messaging: "WhatsApp & email: replies within 12 hours, 7 days a week",
 } as const;
 
 /** The office's own clock. Every rule below is a wall-clock rule *here*. */

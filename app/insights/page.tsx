@@ -8,7 +8,7 @@ import { getAllPosts } from "@/lib/posts";
 export const metadata: Metadata = {
   title: "Insights",
   description:
-    "Notes on performance, engineering, and AI-assisted brand production from the team building Matterpixel.",
+    "Notes on performance, engineering, and AI-assisted brand production from the founder building Matterpixel.",
   alternates: { canonical: "/insights" },
 };
 

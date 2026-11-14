@@ -1,0 +1,35 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "helvetica",
+        "files": [
+          "lib/email.ts"
+        ],
+        "createdAt": "2026-11-13T21:41:36.233Z",
+        "reason": "assistant triage: lib/email.ts builds transactional HTML emails; email clients can't load the site's web fonts, so a Helvetica/Arial system stack is the correct email-safe choice"
+      },
+      {
+        "rule": "codex-grid-background",
+        "value": "*",
+        "files": [
+          "app/globals.css"
+        ],
+        "createdAt": "2026-11-13T21:51:20.445Z",
+        "reason": "user confirmed: asked for a hairline grid background on the homepage's dark sections, drifting with parallax (.drift-grid-layer)"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#000",
+        "files": [
+          "app/globals.css"
+        ],
+        "createdAt": "2026-11-13T21:51:20.490Z",
+        "reason": "assistant triage: #000 is used as a mask-image alpha stop (.drift-grid vignette) and a colour-mix darkening stop, not a rendered colour"
+      }
+    ]
+  }
+}

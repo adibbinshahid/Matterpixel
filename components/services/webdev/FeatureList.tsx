@@ -3,12 +3,13 @@ import { GiantHeading } from "@/components/GiantHeading";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import type { Service } from "@/content/services";
 
-type Group = { label: string; items: string[] };
+type Group = { label: string; items: string[]; id?: string };
 
 function buildGroups(service: Service): Group[] {
   return [
     { label: "What you get", items: service.deliverables },
     { label: "What we build", items: service.capabilities ?? [] },
+    { label: "Business software", items: service.businessSoftware ?? [], id: "software" },
     { label: "Performance & integrations", items: [...(service.performance ?? []), ...(service.integrations ?? [])] },
     { label: "Deployment & support", items: [...(service.deployment ?? []), ...(service.ongoingSupport ?? [])] },
   ].filter((g) => g.items.length > 0);
@@ -37,7 +38,7 @@ export function FeatureList({ service }: { service: Service }) {
         <RevealGroup className="mt-12 grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2">
           {groups.map((group) => (
             <RevealItem key={group.label}>
-              <h3 className="text-sm font-bold uppercase tracking-[0.08em] text-white/50">{group.label}</h3>
+              <h3 id={group.id} className="scroll-mt-28 text-sm font-bold uppercase tracking-[0.08em] text-white/50">{group.label}</h3>
               <ul className="mt-4 flex flex-col gap-2.5">
                 {group.items.map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-white/80">

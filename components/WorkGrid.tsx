@@ -236,6 +236,7 @@ function ProjectCard({ project, index, reduced }: { project: WorkCard; index: nu
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase leading-none tracking-[0.1em] text-[var(--accent)]">
               {project.sector}
+              {project.medium === "website" && " · Concept build"}
             </p>
 
             {/* Underline wipes in from the left on hover — see

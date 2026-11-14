@@ -1,156 +1,271 @@
 "use client";
 
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
-import { ArrowRight, FileText, Users, Wrench, type LucideIcon } from "lucide-react";
-import { GiantHeading } from "@/components/GiantHeading";
-import { RevealGroup, RevealItem } from "@/components/Reveal";
+import { ArrowUpRight, Check } from "lucide-react";
+import { PixelSection } from "@/components/home/PixelSection";
+import { SectionHeading } from "@/components/home/SectionHeading";
+import { Hl } from "@/components/home/Hl";
 import { engagementModels, engagementModelsIntro } from "@/content/engagementModels";
+import { BOOKING_URL } from "@/content/siteConfig";
 
-const ICON_BY_TITLE: Record<string, LucideIcon> = {
-  "Fixed-Scope Project": FileText,
-  "Dedicated Team": Users,
-  "Support and Growth": Wrench,
-};
+const LAST = engagementModels.length - 1;
 
-function ModelCard({ model }: { model: (typeof engagementModels)[number] }) {
-  const Icon = ICON_BY_TITLE[model.title] ?? FileText;
+/**
+ * The engagement models as a commitment spectrum: one line from a single
+ * project to an embedded partner, with each model a node on it and a
+ * compact column beneath. The layout itself says how the three relate.
+ *
+ * The active model lights the line from the start up to its node with the
+ * page's blue→magenta light, and the other columns step back. Desktop:
+ * hover or keyboard focus picks the model (resting on the most popular).
+ * Phones: the line runs vertically and the light follows the reader down
+ * it, tracking whichever model sits mid-screen. Reduced motion: the same
+ * states without the travel.
+ */
+export function EngagementModels({ firstSection = false }: { firstSection?: boolean }) {
+  const featured = engagementModels.findIndex((m) => m.featured);
+  const [hovered, setHovered] = useState<number | null>(null);
+  // Keyboard focus shows on the glass plate (a ring), not as an outline
+  // around the whole column cutting across the spectrum line.
+  const [kbd, setKbd] = useState(false);
+  const [scrolled, setScrolled] = useState(featured);
+  const cols = useRef<(HTMLDivElement | null)[]>([]);
+  const bodies = useRef<(HTMLDivElement | null)[]>([]);
+  const nodes = useRef<(HTMLSpanElement | null)[]>([]);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  // Measured node-to-node line: its box, orientation, and where each node
+  // falls along it (0–1). Measured rather than assumed, because on phones
+  // the gaps follow each column's text length.
+  const [line, setLine] = useState<{ style: CSSProperties; vertical: boolean; stops: number[] } | null>(null);
+  // Each column's box, for the glass plate that slides behind the active one.
+  const [boxes, setBoxes] = useState<{ x: number; y: number; w: number; h: number }[]>([]);
+
+  useLayoutEffect(() => {
+    const wrap = wrapRef.current;
+    if (!wrap) return;
+    // Layout offsets, not bounding rects: the section's entrance animation
+    // scales this block while it's staged, and rects would carry that.
+    const offsetIn = (el: HTMLElement) => {
+      let x = 0;
+      let y = 0;
+      let node: HTMLElement | null = el;
+      while (node && node !== wrap) {
+        x += node.offsetLeft;
+        y += node.offsetTop;
+        node = node.offsetParent as HTMLElement | null;
+      }
+      return { x, y };
+    };
+    const measure = () => {
+      const pts = nodes.current.map((n) => {
+        const o = offsetIn(n!);
+        return { x: o.x + n!.offsetWidth / 2, y: o.y + n!.offsetHeight / 2 };
+      });
+      const first = pts[0];
+      const last = pts[pts.length - 1];
+      const vertical = Math.abs(last.x - first.x) < 4;
+      const len = vertical ? last.y - first.y : last.x - first.x;
+      setLine({
+        vertical,
+        style: vertical
+          ? { left: first.x, top: first.y, height: len, width: 1 }
+          : { left: first.x, top: first.y, width: len, height: 1 },
+        stops: pts.map((p) => (len ? (vertical ? p.y - first.y : p.x - first.x) / len : 0)),
+      });
+      setBoxes(
+        bodies.current.map((c) => {
+          const o = offsetIn(c!);
+          return { x: o.x, y: o.y, w: c!.offsetWidth, h: c!.offsetHeight };
+        }),
+      );
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(wrap);
+    return () => ro.disconnect();
+  }, []);
+
+  // Phones: the model crossing the middle of the screen is the active one.
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    if (mq.matches) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) setScrolled(cols.current.indexOf(e.target as HTMLDivElement));
+        }
+      },
+      { rootMargin: "-45% 0px -45% 0px" },
+    );
+    cols.current.forEach((c) => c && io.observe(c));
+    return () => io.disconnect();
+  }, []);
+
+  const active = hovered ?? scrolled;
+  const dimOthers = hovered !== null;
+  const progress = line?.stops[active] ?? (LAST ? active / LAST : 0);
 
   return (
-    <RevealItem className={model.featured ? "lg:-mt-6" : ""}>
-      <div
-        className={`glass-card group relative flex flex-col overflow-hidden rounded-[28px] p-8 transition-colors duration-500 ${
-          model.featured ? "" : "border border-line group-hover:border-transparent"
-        }`}
-      >
-        {model.featured ? (
-          <span className="absolute left-1/2 top-8 z-10 -translate-x-1/2 rounded-full bg-magenta px-4 py-1.5 text-xs font-extrabold uppercase tracking-[0.12em] text-paper shadow-[0_4px_16px_rgba(255,0,128,0.4)]">
-            {model.tag}
-          </span>
-        ) : (
-          <p className="absolute left-1/2 top-8 z-10 -translate-x-1/2 whitespace-nowrap text-[0.65rem] font-bold uppercase tracking-[0.1em] text-ink-soft transition-colors duration-500 group-hover:text-white/70">
-            {model.tag}
-          </p>
-        )}
+    <PixelSection
+      seam
+      className={`${firstSection ? "pb-[72px] pt-32 lg:pb-[120px] lg:pt-40" : "py-16 lg:py-20"}`}
+      labelledBy="engagement-title"
+    >
+      <div className="home-shell">
+        <SectionHeading
+          id="engagement-title"
+          eyebrow={engagementModelsIntro.eyebrow}
+          title={
+            <>
+              Choose the way we <Hl tone="magenta">build together</Hl>.
+            </>
+          }
+          lede={engagementModelsIntro.body}
+          wideLede
+        />
 
-        {/* Featured: photo is always visible (data-visible stays true), so
-           hovering only triggers the slow zoom — nothing fades or reloads.
-           Side cards: photo + scrim start hidden and fade in together as
-           one unit on hover, then the same zoom kicks in. Reset on
-           mouse-leave rides the plain CSS transition on the media element
-           (see .pricing-card-media in globals.css), not a second
-           animation, so it eases back rather than snapping. */}
         <div
-          aria-hidden="true"
-          data-visible={model.featured ? "true" : "false"}
-          className="pricing-card-media pointer-events-none absolute inset-0 bg-cover"
-          style={{
-            backgroundImage: `url(${encodeURI(model.image)})`,
-            backgroundPosition: model.imagePosition,
-            maskImage: "linear-gradient(180deg, transparent 0%, black 55%)",
-            WebkitMaskImage: "linear-gradient(180deg, transparent 0%, black 55%)",
+          data-reveal="block"
+          ref={wrapRef}
+          className="relative mt-10 lg:mt-12"
+          onMouseLeave={() => setHovered(null)}
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) setHovered(null);
           }}
-        />
-        <div
-          aria-hidden="true"
-          data-visible={model.featured ? "true" : "false"}
-          className="pricing-card-scrim pointer-events-none absolute inset-0"
-          style={{ background: "linear-gradient(180deg, rgba(10,10,14,0.55) 0%, rgba(10,10,14,0.9) 100%)" }}
-        />
+        >
+          {/* The line. Desktop: across the top of the columns, node to
+              node. Phones: down the left edge. The lit part runs from the
+              first node to the active one. */}
+          {/* Glass plate behind the active model: one element that glides
+              between columns on the same curve as the light, frosting the
+              drifting grid behind it. */}
+          {boxes[active] && (
+            <div
+              aria-hidden="true"
+              data-focus={kbd || undefined}
+              className="spectrum-plate"
+              style={{
+                transform: `translate3d(${boxes[active].x}px, ${boxes[active].y}px, 0)`,
+                width: boxes[active].w,
+                height: boxes[active].h,
+              }}
+            />
+          )}
 
-        <div className="relative z-10 flex h-full flex-col">
-          <span
-            className={`mx-auto mt-16 flex h-12 w-12 items-center justify-center rounded-full transition-colors duration-500 ${
-              model.featured ? "bg-white/15 text-white" : "bg-blue/10 text-blue group-hover:bg-white/15 group-hover:text-white"
-            }`}
-          >
-            <Icon className="block h-5 w-5 shrink-0" strokeWidth={1.75} aria-hidden="true" />
-          </span>
+          {line && (
+            <div aria-hidden="true" className="spectrum-track" data-vertical={line.vertical} style={line.style}>
+              <div className="spectrum-fill" style={{ ["--p" as string]: progress }} />
+            </div>
+          )}
 
-          <h3
-            className={`mt-6 text-center text-2xl font-bold tracking-tight transition-colors duration-500 ${
-              model.featured ? "text-white" : "text-ink group-hover:text-white"
-            }`}
-          >
-            {model.title}
-          </h3>
-          <p
-            className={`mt-3 text-center text-sm leading-relaxed transition-colors duration-500 ${
-              model.featured ? "text-white/75" : "text-ink-soft group-hover:text-white/75"
-            }`}
-          >
-            {model.desc}
-          </p>
-
-          <div
-            className={`mt-6 border-t pt-6 transition-colors duration-500 ${
-              model.featured ? "border-white/15" : "border-line group-hover:border-white/15"
-            }`}
-          >
-            <ul className="space-y-3">
-              {model.features.map((f) => (
-                <li
-                  key={f}
-                  className={`flex gap-2.5 text-sm leading-relaxed transition-colors duration-500 ${
-                    model.featured ? "text-white/85" : "text-ink-soft group-hover:text-white/85"
+          {/* Desktop: one shared row grid (subgrid) for all three columns, so
+              every row — stage, name, price, note, description, ticks —
+              lines up across the models and the three plates are the same
+              size. */}
+          <div className="grid gap-8 pl-6 lg:grid-cols-3 lg:grid-rows-[repeat(6,auto)] lg:gap-x-16 lg:gap-y-0 lg:pl-0">
+            {engagementModels.map((m, i) => {
+              const isActive = i === active;
+              const reached = i <= active;
+              return (
+                <div
+                  key={m.title}
+                  ref={(el) => {
+                    cols.current[i] = el;
+                  }}
+                  onMouseEnter={() => {
+                    setKbd(false);
+                    setHovered(i);
+                  }}
+                  onFocus={(e) => {
+                    setKbd(e.currentTarget.matches(":focus-visible"));
+                    setHovered(i);
+                  }}
+                  tabIndex={0}
+                  aria-label={`${m.title}: ${m.anchor}`}
+                  className={`group relative z-10 transition-opacity duration-200 focus-visible:outline-none motion-reduce:transition-none lg:row-span-6 lg:grid lg:grid-rows-subgrid ${
+                    dimOthers && !isActive ? "opacity-45" : "opacity-100"
                   }`}
                 >
-                  <span
-                    className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full transition-colors duration-500 ${
-                      model.featured ? "bg-white/60" : "bg-blue group-hover:bg-white/60"
-                    }`}
-                  />
-                  {f}
-                </li>
-              ))}
-            </ul>
+                  {/* Node + stage label */}
+                  <div className="flex items-center gap-3 lg:flex-col lg:items-start lg:gap-4">
+                    <span
+                      ref={(el) => {
+                        nodes.current[i] = el;
+                      }}
+                      aria-hidden="true"
+                      className={`relative z-10 -ml-[calc(1.5rem+6px)] block h-3 w-3 shrink-0 transition-[background-color,box-shadow,border-color] duration-200 motion-reduce:transition-none lg:ml-0 ${
+                        isActive
+                          ? "border border-magenta bg-magenta shadow-[0_0_0_4px_rgba(255,46,147,0.25),0_0_18px_rgba(255,46,147,0.7)]"
+                          : reached
+                            ? "border border-[var(--blue-ink)] bg-blue"
+                            : "border border-white/30 bg-paper"
+                      }`}
+                    />
+                    <span
+                      className={`text-xs font-semibold uppercase tracking-[0.16em] transition-colors duration-200 lg:mt-1 ${
+                        isActive ? "text-ink" : "text-ink-soft"
+                      }`}
+                    >
+                      {m.stage}
+                    </span>
+                  </div>
+
+                  {/* The model's content — what the glass plate frames. Its
+                      padding is pulled back out with negative margins so the
+                      text stays aligned with the node and stage label. */}
+                  <div
+                    ref={(el) => {
+                      bodies.current[i] = el;
+                    }}
+                    className="-mx-5 mt-2 p-5 lg:row-span-5 lg:-mx-6 lg:mt-3 lg:grid lg:grid-rows-subgrid lg:p-6"
+                  >
+                    <h3 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xl font-bold tracking-tight text-ink">
+                      {m.title}
+                      {m.featured && (
+                        <span className="rounded-full bg-magenta px-2.5 py-1 text-[0.6875rem] font-extrabold uppercase tracking-[0.12em] text-white">
+                          {m.tag}
+                        </span>
+                      )}
+                    </h3>
+                    <p
+                      className={`mt-3 font-avenir text-[2rem] font-extrabold leading-none tracking-tight transition-colors duration-200 ${
+                        isActive ? "text-magenta" : "text-ink/85"
+                      }`}
+                    >
+                      {m.anchor}
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-ink-soft">{m.anchorNote}</p>
+                    <p className="mt-4 text-base leading-relaxed text-ink-soft">{m.desc}</p>
+                    <ul className="mt-4 flex flex-col gap-2 self-start border-t border-line pt-4">
+                      {m.features.map((f) => (
+                        <li key={f} className="flex items-start gap-2.5 text-base leading-snug text-ink">
+                          <Check
+                            className={`mt-0.5 h-4 w-4 shrink-0 transition-colors duration-200 ${
+                              isActive ? "text-magenta" : "text-ink-soft"
+                            }`}
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              );
+            })}
           </div>
+        </div>
 
-          <Link
-            href="/contact"
-            /* Featured card is dark at rest, so it takes the primary pill.
-               The other two are light at rest and go dark only on hover —
-               hence .btn-line plus the .pricing-card-cta inversion, rather
-               than .btn-outline (white glass, invisible on a light card).
-               That inversion lives in globals.css because .btn-line sets
-               `color` in unlayered CSS and beats any utility written here. */
-            className={`group mx-auto mt-8 w-fit ${
-              model.featured ? "btn-brand" : "btn-line pricing-card-cta"
-            }`}
-          >
-            {model.cta}
-            <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+        <div data-reveal="block" className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4 border-t border-line pt-6">
+          <Link href={BOOKING_URL} className="btn-brand group">
+            Get a Free Audit
+            <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </Link>
+          <p className="text-base text-ink-soft">Not sure which fits? We&rsquo;ll recommend one on the call.</p>
         </div>
       </div>
-    </RevealItem>
-  );
-}
-
-export function EngagementModels({ firstSection = false }: { firstSection?: boolean }) {
-  return (
-    <section
-      className={
-        firstSection
-          ? "relative px-6 pb-20 pt-32 sm:px-8 sm:pb-24 sm:pt-36 lg:px-12 lg:pb-32 lg:pt-40"
-          : "relative border-t border-line px-6 py-20 sm:px-8 sm:py-24 lg:px-12 lg:py-32"
-      }
-    >
-      <div className="mx-auto max-w-[1400px]">
-        <div className="text-center">
-          <p className="mb-4 font-semibold uppercase tracking-[0.12em] text-ink" style={{ fontSize: "clamp(0.875rem, 0.6rem + 1.2vw, 1.5rem)" }}>
-            {engagementModelsIntro.eyebrow}
-          </p>
-          <h2>
-            <GiantHeading lines={[engagementModelsIntro.heading]} highlight={engagementModelsIntro.highlight} />
-          </h2>
-        </div>
-
-        <RevealGroup className="mt-16 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:items-start lg:gap-6" stagger={0.12}>
-          {engagementModels.map((model) => (
-            <ModelCard key={model.title} model={model} />
-          ))}
-        </RevealGroup>
-      </div>
-    </section>
+    </PixelSection>
   );
 }

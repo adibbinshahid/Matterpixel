@@ -6,13 +6,24 @@
 
 export const siteUrl = "https://matterpixel.com";
 
+/**
+ * Where every "book a call" / "Get a Free Audit" button points. Currently the
+ * on-site scheduler (contact page, booking tab). Swap for an external
+ * scheduler (e.g. a Calendly link) here and every booking CTA follows.
+ */
+export const BOOKING_URL = "/contact?tab=booking";
+
+/** Agency / white-label enquiries — opens the inquiry wizard pre-filled
+ * with an "Agency partnership" subject (see ContactSplit). */
+export const PARTNER_URL = "/contact?tab=partner";
+
 export const brand = {
   name: "matterpixel",
   tagline: "We build what matters. Down to the pixel.",
   email: "hello@matterpixel.com",
   location: "Dhaka — working globally",
   year: 2026,
-  replyPromise: "24h reply, guaranteed",
+  replyPromise: "We reply within 12 hours.",
 };
 
 export const nav = {
@@ -27,9 +38,9 @@ export const nav = {
 };
 
 export const hero = {
-  eyebrow: "Web Development · AI Automation · AI Content · Digital Marketing",
-  headline: "We build what matters. Down to the pixel.",
-  sub: "From premium websites and AI automation to content creation and digital growth, we craft digital experiences that people trust, remember and choose.",
+  eyebrow: "Websites & Apps · AI Automation · Business Software · Branding & Visuals",
+  headline: "We Build Websites and AI systems that win customers and save hours.",
+  sub: "Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
   ctaPrimary: "Get a Free Audit",
 };
 
@@ -61,13 +72,12 @@ export const stats = [
   { value: "100%", label: "Founder-Led", desc: "No bench, no juniors learning on your dime." },
   { value: "4.9", label: "Client Rating", desc: "Verified reviews across every project." },
   { value: "150+", label: "Projects Delivered", desc: "Real work, shipped and live." },
-  { value: "15+", label: "Industries Served", desc: "From solo entrepreneurs and SMEs to large corporations." },
   {
-    value: "0%",
-    label: "Upfront Risk",
+    value: "Fixed",
+    label: "Quote Upfront",
     desc: "Fixed pricing with no unexpected price increases after the project begins.",
   },
-  { value: "24h", label: "Reply Guaranteed", desc: "Every inquiry gets a same-day reply, no exceptions." },
+  { value: "12h", label: "Reply Time", desc: "Every inquiry gets a reply within 12 hours, 7 days a week." },
   { value: "7 Days", label: "Avg Turnaround", desc: "From kickoff to first delivery." },
   { value: "7+", label: "Years Experience", desc: "Senior craft, not junior guesswork." },
 ];
@@ -90,6 +100,7 @@ export const servicesCta = {
 export const workIntro = {
   eyebrow: "selected builds",
   heading: "real custom codes. production quality.",
+  conceptLine: "Concept builds made to show our standard, not client work.",
   honestLine:
     "A collection of extraordinary, production-quality builds showcasing our approach to design, development, and performance. Every project is crafted with the same attention to detail, usability, and technical excellence that we bring to real-world digital products.",
 };
@@ -161,7 +172,7 @@ export const founder = {
   /** Two declarative lines about what he does on your project. The proof
    * row and credentials below carry the evidence — the copy doesn't argue. */
   bio: [
-    "Adib leads strategy, creative direction, development, and delivery from the first conversation to launch. You work directly with him throughout the project, while a specialist team works behind the scenes where deeper expertise is needed.",
+    "Adib leads strategy, creative direction, development, and delivery from the first conversation to launch. You work directly with him throughout the project. Founder-led, built with vetted specialists where deeper expertise is needed.",
     "No layers of account managers. No disappearing into a large agency. One person owns the direction, keeps the work moving, and stays accountable for the result.",
   ],
   /** Label over the credential cards — the tenure claim is stated once here
@@ -195,11 +206,11 @@ export const founder = {
  * card grid: every key below is a node or an edge label in that diagram.
  */
 export const team = {
-  eyebrow: "the crew",
+  eyebrow: "vetted specialists",
   /** Two lines, kept separate so the diagram's headline can break exactly
    * where the argument does rather than wherever the box ends. */
-  heading: ["You don’t manage the crew.", "Adib does."],
-  body: "A specialist crew handles the disciplines. Adib owns the brief, directs the work, and keeps every moving part aligned from first conversation to final delivery.",
+  heading: ["You don’t manage specialists.", "Adib does."],
+  body: "Founder-led, built with vetted specialists. Adib owns the brief, directs the work, and keeps every moving part aligned from first conversation to final delivery.",
   /** Entry node — the client's side of the thread. */
   brief: {
     label: "Your brief",
@@ -269,13 +280,13 @@ export const foundingOffer = {
   eyebrow: "now open",
   /** Two lines, set as one oversized typographic composition. */
   heading: ["A few projects.", "Full attention."],
-  body: "Matterpixel is opening its first studio roster with a limited number of clients. Early projects get direct involvement from Adib from strategy through delivery, with the specialist crew working behind the scenes.",
+  body: "Matterpixel is opening its first studio roster with a limited number of clients. Early projects get direct involvement from Adib from strategy through delivery, built with vetted specialists where deeper expertise is needed.",
   /** The founding-client offer, phrased as terms rather than a discount. */
   terms: "Early clients receive preferred founding-client terms while the initial roster is being built.",
   /** The offer here is access to Adib, not a discount, so the button says
    * exactly that. Only read by FoundingRoster — the homepage's own closing
    * CTA keeps its audit framing. */
-  cta: { label: "Talk to Adib directly", href: "/contact?tab=booking" },
+  cta: { label: "Talk to Adib directly", href: BOOKING_URL },
   micro: "Limited availability for the initial Matterpixel roster.",
   /** Status indicator in the corner of the panel — state, not a countdown. */
   status: { label: "Roster", value: "Open · Limited" },
@@ -287,15 +298,51 @@ export const foundingOffer = {
   },
 };
 
+/** Agency / white-label strip above the homepage's closing CTA. */
+export const whiteLabel = {
+  eyebrow: "For agencies",
+  heading: "Your trusted white-label development partner.",
+  body: "We build websites, web apps and AI automations white-label: your brand, NDA, no client contact. Fixed prices.",
+  bullets: ["Your brand, NDA, no client contact", "Pre-discussed rate card for all development", "We build while you sleep"],
+  cta: "Partner with us",
+};
+
+/**
+ * Homepage FAQ. Every answer restates a fact already confirmed elsewhere
+ * (PRODUCT.md, engagement models, packages, lib/availability) or given by
+ * Adib directly (payment terms and methods) — nothing here is new.
+ */
+export const faq = [
+  {
+    q: "Where are you based?",
+    a: "Dhaka, Bangladesh (GMT+6), working with clients in Europe and the US. Calls are booked in your time zone, and the time difference means your project moves forward overnight.",
+  },
+  {
+    q: "How does payment work?",
+    a: "50% upfront to start, 50% on delivery. The price is a fixed quote agreed before any work begins, so it never moves mid-project. You can pay by bank transfer, Payoneer or PayPal.",
+  },
+  {
+    q: "Who owns what you build?",
+    a: "You do. Code, design files and content are handed over to you. No lock-in, and no ongoing fees to us unless you choose a care plan.",
+  },
+  {
+    q: "How fast do you reply?",
+    a: "Within 12 hours, 7 days a week. You talk to Adib directly, never an account manager.",
+  },
+  {
+    q: "What happens when I need changes after launch?",
+    a: "Every build includes the Support and Growth plan free for the first 6 months: updates, monitoring and fixes. After that it is $149/month, and bigger new features get their own fixed quote.",
+  },
+  {
+    q: "Do you work with agencies?",
+    a: "Yes, white-label. We build websites, web apps and AI automations under your brand, under NDA, with no client contact. Fixed prices from $400.",
+  },
+];
+
 export const footer = {
   links: nav.links,
-  socials: [
-    { label: "Facebook", href: "https://facebook.com" },
-    { label: "LinkedIn", href: "https://linkedin.com" },
-    { label: "Instagram", href: "https://instagram.com" },
-  ],
   description:
-    "Matterpixel is a digital studio building high-performance websites, apps, and AI-powered content for brands that want to stand out.",
+    "Matterpixel is a founder-led digital studio building high-performance websites, apps, and AI systems for brands that want to stand out.",
   foundingLine: "Let’s build your next win together.",
   copyright: `© ${brand.year} Matterpixel. All rights reserved.`,
   contact: {

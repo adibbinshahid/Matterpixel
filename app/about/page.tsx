@@ -8,7 +8,7 @@ import { PixelField } from "@/components/PixelField";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Matterpixel pairs specialist crews in engineering, digital marketing, and AI content with one accountable lead — Md. Adib Bin Shahid, your single point of contact from first call to launch.",
+    "Matterpixel is founder-led, built with vetted specialists in engineering, digital marketing, and AI content — Md. Adib Bin Shahid is your single point of contact from first call to launch.",
   alternates: { canonical: "/about" },
 };
 
@@ -23,11 +23,11 @@ export default function AboutPage() {
             {/* One line from lg up: the size is tied to viewport width so the
                 nowrap setting can never push past the 1400px container. */}
             <h1 className="text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-6xl lg:whitespace-nowrap lg:text-[clamp(2.75rem,4.4vw,4.5rem)]">
-              A crew of specialists. One person accountable.
+              Vetted specialists. One person accountable.
             </h1>
             <p className="mt-5 text-lg leading-relaxed text-ink-soft">
-              Engineering, digital marketing, and AI content, each run by a specialist.
-              Adib directs the work and stays your single point of contact throughout.
+              Founder-led, built with vetted specialists in engineering, digital marketing, and AI
+              content. Adib directs the work and stays your single point of contact throughout.
             </p>
           </Reveal>
         </div>

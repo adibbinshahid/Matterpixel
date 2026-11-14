@@ -49,7 +49,7 @@ import {
   zonedTimeKey,
   zoneOffsetLabel,
 } from "@/lib/availability";
-import { services } from "@/content/services";
+import { serviceLineup } from "@/content/services";
 import { footer } from "@/content/siteConfig";
 import { cn, EASE, DURATIONS } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
@@ -84,13 +84,13 @@ const TABS = [
   {
     id: "chat",
     label: "Quick Question",
-    blurb: "WhatsApp or email · 24/7",
+    blurb: "WhatsApp or email · 12h reply",
     icon: MessageCircle,
   },
 ] as const;
 
 const TRUST_POINTS = [
-  { label: "Reply within 24h", icon: Clock },
+  { label: "We reply within 12 hours", icon: Clock },
   { label: "NDA-friendly", icon: FileCheck },
   { label: "Your data is 100% secure", icon: ShieldCheck },
 ] as const;
@@ -107,6 +107,8 @@ const DEFAULT_TAB: TabId = "inquiry";
 function isTabId(value: string | undefined): value is TabId {
   return !!value && (TAB_IDS as string[]).includes(value);
 }
+
+
 
 const panelVariants: Variants = {
   initial: { opacity: 0, y: 16, filter: "blur(6px)" },
@@ -159,7 +161,13 @@ const TAB_STAGGER_STEP = 0.08;
  * `router.replace` so the link stays shareable/bookmarkable after
  * interacting too, not just on load.
  */
-export function ContactSplit({ initialTab }: { initialTab?: string }) {
+/**
+ * `prefill` seeds the inquiry's project details — built on the server from
+ * `?package=`, `?stack=`, `?details=` or `?tab=partner` (see
+ * buildInquiryPrefill). Those links don't name a real tab, so they fall
+ * through to the default inquiry tab.
+ */
+export function ContactSplit({ initialTab, prefill }: { initialTab?: string; prefill?: string }) {
   const [active, setActive] = useState<TabId>(isTabId(initialTab) ? initialTab : DEFAULT_TAB);
   const router = useRouter();
   const reduced = useReducedMotion();
@@ -288,7 +296,7 @@ export function ContactSplit({ initialTab }: { initialTab?: string }) {
                     exit="exit"
                     className="h-full"
                   >
-                    <InquiryPanel />
+                    <InquiryPanel prefill={prefill} />
                   </motion.div>
                 )}
                 {active === "booking" && (
@@ -888,7 +896,7 @@ const WIZARD_STEPS: WizardStep[] = [
     reviewLabel: "Services",
     title: "Which services do you need?",
     desc: "Select all that apply.",
-    options: services.map((s) => s.title),
+    options: serviceLineup.map((s) => s.title),
   },
   {
     id: "budget",
@@ -1021,7 +1029,7 @@ function WizardAmbience() {
   );
 }
 
-function InquiryPanel() {
+function InquiryPanel({ prefill }: { prefill?: string }) {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
@@ -1049,7 +1057,7 @@ function InquiryPanel() {
     formState: { errors, isSubmitting },
   } = useForm<InquiryValues>({
     resolver: zodResolver(inquirySchema),
-    defaultValues: { serviceTypes: [], projectGoals: [] },
+    defaultValues: { serviceTypes: [], projectGoals: [], ...(prefill ? { projectDetails: prefill } : {}) },
   });
   const values = watch();
 
@@ -1062,6 +1070,8 @@ function InquiryPanel() {
         serviceTypes: [],
         projectGoals: [],
         ...draft.values,
+        // An explicit choice from the link beats an older half-typed draft.
+        ...(prefill ? { projectDetails: prefill } : {}),
         // Never restore the honeypot — a stored value would look like a bot.
         hp: "",
       } as InquiryValues);
@@ -1071,7 +1081,7 @@ function InquiryPanel() {
       setRestored(true);
     }
     setDraftLoaded(true);
-  }, [reset]);
+  }, [reset, prefill]);
 
   // Persist on every change, debounced so a burst of keystrokes is one write.
   // Runs only after the restore pass, otherwise the empty initial form would
@@ -1250,7 +1260,7 @@ function InquiryPanel() {
           </span>
           <h2 className="text-2xl font-extrabold tracking-tight text-ink">Inquiry sent.</h2>
           <p className="max-w-xs text-sm text-ink-soft">
-            We&rsquo;ll reply within 24 hours with next steps and a proposal.
+            We reply within 12 hours with next steps and a proposal.
           </p>
         </div>
       ) : !isReview ? (
@@ -1568,7 +1578,7 @@ function InquiryPanel() {
               isSubmitting={isSubmitting}
               status={status}
               label="Send Inquiry"
-              successMsg="Inquiry sent — we'll reply within 24 hours."
+              successMsg="Inquiry sent — we reply within 12 hours."
               onStartOver={startOver}
             />
           </div>
@@ -1959,7 +1969,7 @@ function BookingPanel() {
           </span>
           <h2 className="text-2xl font-extrabold tracking-tight text-ink">Call requested.</h2>
           <p className="max-w-xs text-sm text-ink-soft">
-            We&rsquo;ll confirm your slot and send a Google Meet link within 24 hours.
+            We reply within 12 hours to confirm your slot and send a Google Meet link.
           </p>
         </div>
       ) : !isReview ? (
@@ -2303,13 +2313,13 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
         <div className="flex items-center gap-3">
           <Clock className="h-8 w-8 shrink-0 text-blue" strokeWidth={1.75} aria-hidden="true" />
           <div className="flex flex-col">
-            <span className="text-xs font-semibold text-ink-soft">We usually reply</span>
-            <span className="font-avenir text-lg font-extrabold leading-tight text-blue">within 24 hours</span>
+            <span className="text-xs font-semibold text-ink-soft">We reply</span>
+            <span className="font-avenir text-lg font-extrabold leading-tight text-blue">within 12 hours</span>
           </div>
         </div>
         <div className="flex flex-col gap-0.5 sm:pl-4">
-          <span className="text-xs font-semibold text-ink-soft">Messaging is open</span>
-          <span className="font-avenir text-2xl font-extrabold leading-tight text-ink">24/7</span>
+          <span className="text-xs font-semibold text-ink-soft">Replies come</span>
+          <span className="font-avenir text-2xl font-extrabold leading-tight text-ink">7 days a week</span>
         </div>
       </motion.div>
 

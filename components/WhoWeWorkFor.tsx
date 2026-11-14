@@ -1,521 +1,211 @@
-"use client";
-
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
-import { AnimatePresence, motion, useInView, type Variants } from "motion/react";
+import Image from "next/image";
+import Link from "next/link";
 import {
+  ArrowUpRight,
   Briefcase,
-  Car,
-  Cpu,
+  Calculator,
+  Coffee,
   Dumbbell,
-  Factory,
-  Film,
-  Flower2,
-  Gamepad2,
-  GraduationCap,
-  HardHat,
+  Handshake,
   Heart,
-  HeartHandshake,
-  Home,
-  Landmark,
+  Layers,
   type LucideIcon,
-  PartyPopper,
-  Plane,
-  RefreshCw,
+  Package,
   Scale,
-  ShieldCheck,
-  ShoppingBag,
+  Scissors,
   ShoppingCart,
-  Sofa,
+  Sparkles,
+  Stethoscope,
   Store,
-  Truck,
-  Users,
   Utensils,
+  Workflow,
 } from "lucide-react";
-import { GiantHeading } from "@/components/GiantHeading";
-import { EASE } from "@/lib/utils";
+import { PixelSection } from "@/components/home/PixelSection";
+import { SectionHeading } from "@/components/home/SectionHeading";
+import { Hl } from "@/components/home/Hl";
 
-const HOLD_MS = 2000;
-const START_DELAY_MS = 2000;
-const CLICK_PAUSE_MS = 15000;
-const WIDTH_TRANSITION_S = 0.85;
-// Slow expo-out — decelerates gradually all the way to rest instead of
-// settling early, which is what reads as "liquid" rather than mechanical.
-const LIQUID_EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
-
-const iconFor: Record<string, LucideIcon> = {
-  Ecommerce: ShoppingCart,
-  "SaaS & Tech": Cpu,
-  "Media & Entertainment": Film,
-  "Gaming & Apps": Gamepad2,
-  "Subscription Platforms": RefreshCw,
-  "Healthcare & Wellness": Heart,
-  "Fashion & Beauty": ShoppingBag,
-  "Food & Beverage": Utensils,
-  "Travel & Hospitality": Plane,
-  "Fitness & Sports": Dumbbell,
-  "Beauty & Spa": Flower2,
-  "Events & Entertainment": PartyPopper,
-  "Real Estate": Home,
-  Automotive: Car,
-  Retail: Store,
-  "Home & Lifestyle": Sofa,
-  Manufacturing: Factory,
-  "Construction & Interiors": HardHat,
-  "Finance & Fintech": Landmark,
-  Legal: Scale,
-  "Education & EdTech": GraduationCap,
-  "Non-Profits": HeartHandshake,
-  "Professional Services": Briefcase,
-  "Logistics & Supply Chain": Truck,
-  "Agencies & Consultancies": Users,
-  Insurance: ShieldCheck,
+type Industry = {
+  label: string;
+  /** Small qualifier shown as a tag beside the name. */
+  tag?: string;
+  /** What we typically build for this industry — positioning, no claims. */
+  build: string;
+  items: { label: string; icon: LucideIcon }[];
+  image: string;
+  /** A live concept build in this industry, where one exists. */
+  proof?: { name: string; href: string };
+  /** Bento placement from lg up. */
+  span: string;
 };
 
-const segments: { label: string; items: string[]; image: string }[] = [
+/**
+ * Six industries, each on its segment photograph. Where a concept build
+ * exists in the sector, the tile links to it.
+ */
+const INDUSTRIES: Industry[] = [
   {
-    label: "Digital-First",
-    items: ["Ecommerce", "SaaS & Tech", "Media & Entertainment", "Gaming & Apps", "Subscription Platforms"],
-    image: "/WhoWeWorkFor/Digital First Businesses.webp",
-  },
-  {
-    label: "Service & Experience",
+    label: "Ecommerce & D2C",
+    build: "Fast storefronts, product visuals and automations that recover carts.",
     items: [
-      "Healthcare & Wellness",
-      "Fashion & Beauty",
-      "Food & Beverage",
-      "Travel & Hospitality",
-      "Fitness & Sports",
-      "Beauty & Spa",
-      "Events & Entertainment",
+      { label: "Online stores", icon: ShoppingCart },
+      { label: "Direct-to-consumer brands", icon: Package },
+      { label: "Marketplace sellers", icon: Store },
     ],
-    image: "/WhoWeWorkFor/Services businesses.webp",
+    image: "/WhoWeWorkFor/property-physical-goods.webp",
+    proof: { name: "ShopSphere", href: "/projects/shopsphere" },
+    span: "xl:col-span-2",
   },
   {
-    label: "Property & Physical Goods",
-    items: ["Real Estate", "Automotive", "Retail", "Home & Lifestyle", "Manufacturing", "Construction & Interiors"],
-    image: "/WhoWeWorkFor/Property & physical goods.webp",
-  },
-  {
-    label: "Relationship-Driven",
+    label: "Professional Services",
+    build: "Credible sites, lead capture and the busywork automated.",
     items: [
-      "Finance & Fintech",
-      "Legal",
-      "Education & EdTech",
-      "Non-Profits",
-      "Professional Services",
-      "Logistics & Supply Chain",
-      "Agencies & Consultancies",
-      "Insurance",
+      { label: "Consultancies", icon: Briefcase },
+      { label: "Law firms", icon: Scale },
+      { label: "Accountants & advisors", icon: Calculator },
     ],
     image: "/WhoWeWorkFor/regulated and relationshion driven.webp",
+    span: "",
+  },
+  {
+    label: "Health & Wellness",
+    build: "Online booking, intake and reminders that fill the calendar.",
+    items: [
+      { label: "Clinics & practices", icon: Stethoscope },
+      { label: "Therapists & coaches", icon: Heart },
+      { label: "Fitness studios", icon: Dumbbell },
+    ],
+    image: "/WhoWeWorkFor/health-wellness.webp",
+    proof: { name: "MindWell", href: "/projects/mindwell" },
+    span: "",
+  },
+  {
+    label: "Food & Hospitality",
+    build: "Direct ordering that skips the delivery-app commission.",
+    items: [
+      { label: "Restaurants & delivery", icon: Utensils },
+      { label: "Cafés & bakeries", icon: Coffee },
+      { label: "Food & beverage brands", icon: Package },
+    ],
+    image: "/WhoWeWorkFor/Services businesses.webp",
+    proof: { name: "L'Cinco Pizza", href: "/projects/lcinco-pizza" },
+    span: "",
+  },
+  {
+    label: "Beauty & Personal Care",
+    build: "Premium brand sites and campaign visuals without a photoshoot.",
+    items: [
+      { label: "Skincare & cosmetics", icon: Sparkles },
+      { label: "Salons & spas", icon: Scissors },
+      { label: "Fragrance & grooming", icon: Heart },
+    ],
+    image: "/WhoWeWorkFor/beauty-personal-care.webp",
+    proof: { name: "Scentora", href: "/projects/scentora" },
+    span: "xl:col-span-2",
+  },
+  {
+    label: "Agencies",
+    tag: "White-label",
+    build: "Overflow builds under your brand, under NDA.",
+    items: [
+      { label: "Overflow web builds", icon: Layers },
+      { label: "AI automations", icon: Workflow },
+      { label: "No client contact", icon: Handshake },
+    ],
+    image: "/WhoWeWorkFor/Digital First Businesses.webp",
+    span: "",
   },
 ];
 
-const listContainer: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.07, delayChildren: WIDTH_TRANSITION_S * 0.7 } },
-};
-
-const listItem: Variants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: EASE } },
-};
-
-/** Deterministic per-index pseudo-randomness (no Math.random — must render
- * identically on server and client) for the faint collapsed-card blobs. */
-function blobStyle(i: number): CSSProperties {
-  const angle = (i * 47) % 360;
-  return {
-    background: `radial-gradient(circle at ${30 + ((i * 23) % 40)}% ${20 + ((i * 31) % 50)}%, color-mix(in srgb, var(--ink-soft) 14%, transparent) 0%, transparent 65%)`,
-    transform: `rotate(${angle}deg)`,
-  };
-}
-
+/**
+ * The industries as a bento grid: six photo tiles of mixed widths, every
+ * industry readable at a glance.
+ *
+ * Each tile carries its number, name and one line on what we build there;
+ * on hover (or keyboard focus within) the photo eases in and brightens, a
+ * magenta rim lights, and the business types rise from the bottom. Touch
+ * screens and reduced motion show the types from the start. CSS only — no
+ * script on this section beyond the shared entrance.
+ */
 export function WhoWeWorkFor() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(sectionRef, { amount: 0.3 });
-
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [reducedMotion, setReducedMotion] = useState(false);
-  // Timestamp until which autoplay ticks are skipped (set by a click).
-  // Scrolling away clears it, so leaving and coming back always resumes
-  // autoplay rather than staying stuck on whatever was last clicked.
-  const pausedUntilRef = useRef(0);
-  // Plain `false` default so the client's first render matches the server's
-  // (SSR never knows viewport width) — hydration would otherwise mismatch
-  // whenever the client's initial value differed from `false`. Corrected in
-  // a layout effect (fires before paint) rather than a plain effect, so
-  // there's still no visible flash of un-rotated collapsed cards.
-  const [isDesktop, setIsDesktop] = useState(false);
-
-  useEffect(() => {
-    setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  }, []);
-
-  useLayoutEffect(() => {
-    // Row-vs-stack layout switches at md (768px) — the flexGrow/flexBasis width
-    // animation below only makes sense in the row layout; in the mobile stack
-    // it would size main-axis (height), not width.
-    const mq = window.matchMedia("(min-width: 768px)");
-    const update = () => setIsDesktop(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-
-  // Plain interval (not recursive setTimeout) so a click's pause doesn't
-  // need to tear down/recreate the ticker — it just tells this interval to
-  // skip ticks until `pausedUntilRef` elapses. Leaving the section clears
-  // the pause outright, so autoplay is always back on by the time it's
-  // scrolled back into view.
-  useEffect(() => {
-    if (!inView) {
-      pausedUntilRef.current = 0;
-      return;
-    }
-    // Below `md` every card is open at once (see `isOpen` in the render),
-    // so there is no active card for the autoplay to advance — ticking
-    // would just churn state behind an unchanged layout.
-    if (reducedMotion || !isDesktop) return;
-    // Wait a beat after scrolling in before autoplay kicks off, so the
-    // section doesn't start animating the instant it's crossed into view.
-    const startTimeout = setTimeout(() => {
-      pausedUntilRef.current = 0;
-    }, START_DELAY_MS);
-    pausedUntilRef.current = Date.now() + START_DELAY_MS;
-    const interval = setInterval(() => {
-      if (Date.now() < pausedUntilRef.current) return;
-      setActiveIndex((i) => (i + 1) % segments.length);
-    }, HOLD_MS);
-    return () => {
-      clearTimeout(startTimeout);
-      clearInterval(interval);
-    };
-  }, [inView, reducedMotion, isDesktop]);
-
-  function handleClick(i: number) {
-    // Nothing to select on mobile — every card is already open.
-    if (!isDesktop || i === activeIndex) return;
-    setActiveIndex(i);
-    pausedUntilRef.current = Date.now() + CLICK_PAUSE_MS;
-  }
-
   return (
-    <section ref={sectionRef} className="border-t border-line px-6 py-20 sm:px-8 sm:py-24 lg:px-12 lg:py-32">
-      <div className="mx-auto max-w-[1400px]">
-        <div className="text-center">
-          <p
-            className="mb-4 font-semibold uppercase tracking-[0.12em] text-ink"
-            style={{ fontSize: "clamp(0.875rem, 0.6rem + 1.2vw, 1.5rem)" }}
-          >
-            Service ACROSS EVERY INDUSTRY
-          </p>
-          <h2>
-            <GiantHeading
-              lines={["wherever you build, we understand it."]}
-              highlight="we understand it"
-            />
-          </h2>
-        </div>
+    <PixelSection seam labelledBy="industries-title">
+      <div className="home-shell home-section">
+        <SectionHeading
+          id="industries-title"
+          eyebrow="Industries"
+          title={
+            <>
+              Where <Hl tone="blue">we</Hl> do our <Hl tone="magenta">best work</Hl>.
+            </>
+          }
+          lede="Six sectors we know well — four with a live concept build you can open."
+        />
 
-        {/* Progress dots — desktop only; below `md` nothing cycles, so there
-           is no position for them to report. */}
-        <div className="mt-8 hidden items-center justify-center gap-2 md:flex" aria-hidden="true">
-          {segments.map((_, i) => (
-            <span
-              key={i}
-              className="h-1.5 w-1.5 rounded-full transition-all duration-300"
-              style={
-                i === activeIndex
-                  ? { width: "1.25rem", backgroundColor: "var(--magenta)" }
-                  : { backgroundColor: "color-mix(in srgb, var(--ink-soft) 35%, transparent)" }
-              }
-            />
-          ))}
-        </div>
+        <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:mt-14 xl:auto-rows-[320px] xl:grid-cols-4">
+          {INDUSTRIES.map((ind, i) => (
+            <li
+              key={ind.label}
+              data-reveal="block"
+              className={`bento-tile group relative isolate flex min-h-[300px] flex-col justify-start overflow-hidden rounded-[22px] border border-white/10 p-6 pt-[5.25rem] sm:p-7 sm:pt-[5.5rem] ${ind.span}`}
+            >
+              <Image
+                src={ind.image}
+                alt=""
+                fill
+                loading="lazy"
+                sizes="(min-width: 640px) 50vw, 100vw"
+                className="bento-img -z-20 object-cover"
+              />
+              <div
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(11,12,14,0.55)_0%,rgba(11,12,14,0.85)_55%,rgba(11,12,14,0.95)_100%)]"
+              />
 
-        <div className="relative mt-10">
-          <div className="flex flex-col gap-3 md:flex-row md:items-stretch md:gap-3">
-            {segments.map((segment, i) => {
-              // Below `md` there is no accordion at all: all four cards render
-              // in their open state, permanently. The collapsed treatment
-              // exists to buy horizontal room in the desktop row, and a
-              // vertical phone stack has no such constraint — it just made
-              // three of the four segments unreadable until tapped. Nothing
-              // transitions on mobile either, since `isOpen` never changes
-              // there and every animation below is `initial={false}`.
-              const isOpen = !isDesktop || (reducedMotion ? i === 0 : i === activeIndex);
-              // Width-only tween on explicit flex properties (grow/basis) — no `layout`
-              // prop here, since its automatic FLIP also interpolates height, and a
-              // fixed-height row with `items-stretch` meant that whenever the active
-              // card's own content momentarily reflowed, FLIP read it as "the whole
-              // row resized" and animated every card's height too. This way only
-              // width can ever change; height is pinned by the fixed h-[...] below.
-              return (
-                <motion.div
-                  key={segment.label}
-                  initial={false}
-                  animate={
-                    isDesktop
-                      ? { flexGrow: isOpen ? 1 : 0, flexBasis: isOpen ? "0%" : "64px" }
-                      : { flexGrow: 0, flexBasis: "auto" }
-                  }
-                  transition={{
-                    duration: reducedMotion ? 0 : WIDTH_TRANSITION_S,
-                    ease: LIQUID_EASE,
-                    // Collapsing card: hold its width for one beat (matching the industries
-                    // list's own 0.15s exit fade below) before shrinking — without this, the
-                    // card visibly narrows WHILE the still-fading-out list is reflowing its grid
-                    // columns to the shrinking width underneath it, which read as the list
-                    // "jumping to another spot" for a moment. Expanding card still grows
-                    // immediately (delay 0) so clicks feel instant, not laggy.
-                    delay: reducedMotion || isOpen ? 0 : 0.15,
-                  }}
-                  className="group relative w-full shrink-0 overflow-hidden rounded-[22px] text-left transition-shadow duration-500"
-                  style={{
-                    // Glass base — semi-transparent tonal gradient (not flat white) so the
-                    // faint blob + backdrop-blur underneath read through, plus a layered
-                    // shadow stack: outer ambient shadow for lift, inset top highlight for
-                    // a "light hitting glass" edge, inset bottom shade for depth — this
-                    // combination is what reads as Apple-style frosted glass rather than a
-                    // flat card. Fades out with everything else when the card goes active,
-                    // since the opaque blue fill/photo sit above it at that point anyway.
-                    background:
-                      "linear-gradient(165deg, color-mix(in srgb, white 92%, transparent) 0%, color-mix(in srgb, white 65%, transparent) 100%)",
-                    backdropFilter: "blur(20px) saturate(160%)",
-                    WebkitBackdropFilter: "blur(20px) saturate(160%)",
-                    boxShadow: isOpen
-                      ? "none"
-                      : "inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -1px 1px rgba(0,0,0,0.04), inset 0 0 0 1px rgba(255,255,255,0.6), 0 18px 40px -16px rgba(15,15,35,0.22), 0 4px 10px -4px rgba(15,15,35,0.1)",
-                  }}
+              <span className="absolute left-6 top-6 flex h-9 w-9 items-center justify-center rounded-full bg-magenta font-avenir text-sm font-extrabold tabular-nums text-white shadow-[0_6px_16px_-6px_rgba(255,46,147,0.7)] sm:left-7 sm:top-7">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+
+              <h3 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-2xl font-bold leading-tight tracking-tight text-white">
+                {ind.label}
+                {ind.tag && (
+                  <span className="rounded-full border border-white/30 px-2.5 py-1 text-[0.6875rem] font-bold uppercase leading-none tracking-[0.12em] text-white/90">
+                    {ind.tag}
+                  </span>
+                )}
+              </h3>
+              <p className="mt-2 max-w-[34ch] text-base leading-snug text-white/80">{ind.build}</p>
+              {ind.proof && (
+                <Link
+                  href={ind.proof.href}
+                  className="group/proof mt-3 inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-white underline decoration-white/30 underline-offset-4 transition-colors hover:text-magenta hover:decoration-magenta"
                 >
-                  {/* Faint decorative collapsed-card blob — cross-fades with opacity (like the
-                      blue fill below) instead of mounting/unmounting, so it doesn't pop. */}
-                  <motion.div
+                  <span className="h-1.5 w-1.5 shrink-0 bg-magenta" aria-hidden="true" />
+                  Concept build: {ind.proof.name}
+                  <ArrowUpRight
+                    className="h-3.5 w-3.5 transition-transform duration-300 group-hover/proof:-translate-y-0.5 group-hover/proof:translate-x-0.5"
                     aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 h-full w-full blur-2xl"
-                    style={blobStyle(i)}
-                    initial={false}
-                    animate={{ opacity: isOpen ? 0 : 1 }}
-                    transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.6, ease: LIQUID_EASE }}
                   />
+                </Link>
+              )}
 
-                  {/* Top glass sheen — soft diagonal highlight band, the "light catching the
-                      curved glass edge" cue that sells the premium 3D-glass read. */}
-                  <motion.div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0.12) 28%, transparent 55%)",
-                    }}
-                    initial={false}
-                    animate={{ opacity: isOpen ? 0 : 1 }}
-                    transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.6, ease: LIQUID_EASE }}
-                  />
-
-                  {/* Fill cross-fades in/out instead of the background snapping between
-                      solid white and solid blue (colors framer can't tween across). Sits
-                      under the photo as a color fallback while the image loads/fades. */}
-                  <motion.div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0"
-                    style={{ background: "var(--blue)" }}
-                    initial={false}
-                    animate={{ opacity: isOpen ? 1 : 0 }}
-                    transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.6, ease: LIQUID_EASE }}
-                  />
-
-                  {/* Relevant-to-segment photo, only on the expanded card. Slightly blurred +
-                      scaled up (so the blur doesn't reveal transparent edges) for a soft,
-                      editorial backdrop rather than a sharp photo competing with the text. */}
-                  <motion.div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0 bg-cover bg-center"
-                    style={{
-                      backgroundImage: `url(${encodeURI(segment.image)})`,
-                      filter: "blur(2px)",
-                      transform: "scale(1.03)",
-                    }}
-                    initial={false}
-                    animate={{ opacity: isOpen ? 1 : 0 }}
-                    transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.6, ease: LIQUID_EASE }}
-                  />
-
-                  {/* Scrim over the photo — darkens + tints it toward the brand blue so the
-                      white number/title/list text stays reliably legible over any photo. */}
-                  <motion.div
-                    aria-hidden="true"
-                    className="pointer-events-none absolute inset-0"
-                    style={{
-                      background:
-                        "linear-gradient(180deg, color-mix(in srgb, var(--blue) 55%, black 25%) 0%, color-mix(in srgb, var(--blue) 60%, black 45%) 100%)",
-                    }}
-                    initial={false}
-                    animate={{ opacity: isOpen ? 0.82 : 0 }}
-                    transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.6, ease: LIQUID_EASE }}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => handleClick(i)}
-                    aria-expanded={isOpen}
-                    className={`relative z-10 flex h-full w-full flex-col text-left ${
-                      isOpen ? "p-6" : "p-4 md:p-6 md:px-2"
-                    }`}
-                  >
-                    {/* 88px of reserved inner height plus 24px of padding made
-                       every collapsed card ~136px tall on a phone to hold a
-                       single title line — on a four-card stack that is most of
-                       a screen spent on nothing. Collapsed cards on mobile now
-                       size to their content; the desktop's fixed 250px
-                       equal-height row is unchanged. */}
-                    <div className="relative flex h-full min-h-[40px] flex-col md:h-[250px]">
-                      <div
-                        className={`flex items-start justify-between gap-3 ${
-                          isOpen ? "md:flex-col md:items-start" : ""
-                        }`}
-                      >
-                        {/* Number and title are each independently absolute-positioned off the
-                            card (not off each other) when collapsed, so every card's number sits
-                            at the exact same pinned spot regardless of what the title does. */}
-                        <motion.span
-                          className={`text-xs font-semibold ${
-                            !isOpen ? "md:absolute md:left-1/2 md:top-6 md:-translate-x-1/2" : ""
-                          }`}
-                          initial={false}
-                          animate={{
-                            color: isOpen ? "rgba(255,255,255,0.75)" : "color-mix(in srgb, var(--ink-soft) 60%, transparent)",
-                          }}
-                          transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S * 0.4, ease: LIQUID_EASE }}
-                        >
-                          {String(i + 1).padStart(2, "0")}
-                        </motion.span>
-
-                        {/* Same headline element throughout — collapsed "vertical" is a real
-                            rotate(-90deg) transform on normal horizontal text (writing-mode can't
-                            be animated), so it visibly rotates+scales in place instead of one text
-                            fading out while a different one fades in.
-                            The wrapper is `md:absolute` UNCONDITIONALLY (static classes, never
-                            toggled by state) — position/size instead animate as plain numeric
-                            top/left/width/height percentages via Framer's `animate`. Deliberately
-                            NOT the `layout` prop: `layout` measures via getBoundingClientRect and
-                            FLIPs based on that, but the ANCESTOR card is simultaneously resizing
-                            via its own plain `animate` (flexGrow/flexBasis) over the same duration
-                            — a layout child whose ancestor is mid-resize gets corrupted
-                            measurements, which is what caused the jump/pop instead of a clean
-                            transition. Plain property tweening has no such dependency on ancestor
-                            geometry, so it stays smooth regardless of what the card around it is
-                            doing. Collapsed centers within the full card (100%/100%); expanded
-                            centers within a top-left band (70%/44%) — both use identical
-                            items-center/justify-center, so only the band's size and position need
-                            to move, never the alignment rule itself. */}
-                        <motion.div
-                          initial={false}
-                          animate={
-                            isDesktop
-                              ? { top: "0%", left: "0%", width: isOpen ? "70%" : "100%", height: isOpen ? "28%" : "100%" }
-                              : {}
-                          }
-                          transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S, ease: LIQUID_EASE }}
-                          // justify-center for both would center the expanded headline inside its
-                          // own 70%-wide band — off from both the card's true center and the
-                          // number's left edge, landing it looking arbitrarily off-to-one-side.
-                          // justify-start for active left-aligns it flush with the band's left
-                          // edge, which sits at the same padding inset as the number above it.
-                          // This is a plain CSS class swap (no `layout` prop involved), so it
-                          // can't reintroduce the ancestor-resize FLIP conflict — it doesn't touch
-                          // the top/left/width/height tween at all.
-                          className={`min-h-[1.75em] w-full md:absolute md:flex md:items-center ${
-                            isOpen ? "md:justify-start" : "md:justify-center"
-                          }`}
-                        >
-                          <motion.span
-                            initial={false}
-                            animate={{
-                              rotate: isDesktop ? (isOpen ? 0 : -90) : 0,
-                              scale: isDesktop ? (isOpen ? 1.25 : 0.4) : 1,
-                              color: isOpen ? "#FFFFFF" : "#1A1A1A",
-                            }}
-                            transition={{ duration: reducedMotion ? 0 : WIDTH_TRANSITION_S, ease: LIQUID_EASE }}
-                            // Default transform-origin is the span's own center — scaling up from
-                            // center pushes the left edge outward past the band's left-aligned
-                            // start (and off the card), which is exactly what was clipping "S" off
-                            // "Service...". Left-anchored content needs a left-anchored scale
-                            // origin so it only grows rightward. Collapsed keeps center since it's
-                            // still center-justified within its own full-card band.
-                            style={{
-                              transformOrigin: isOpen ? "left center" : "center",
-                              textShadow: isOpen ? "0 2px 12px rgba(0,0,0,0.35)" : undefined,
-                            }}
-                            // whitespace-nowrap only for collapsed — that's the vertical-rl case
-                            // where the browser's shrink-to-fit width otherwise wraps long labels
-                            // into several short columns. Expanded is normal horizontal text; if
-                            // the longest label doesn't fit the active card's width at this scale,
-                            // wrapping to a second line is the correct, unsurprising behavior for
-                            // a heading — forcing nowrap there risked clipping it instead.
-                            className={`block font-bold tracking-tight md:text-4xl ${
-                              isOpen ? "text-2xl text-left" : "text-base whitespace-nowrap"
-                            }`}
-                          >
-                            {segment.label}
-                          </motion.span>
-                        </motion.div>
-                      </div>
-
-                      <AnimatePresence initial={false}>
-                        {isOpen && (
-                          <motion.div
-                            initial={false}
-                            exit={reducedMotion ? undefined : { opacity: 0, transition: { duration: 0.15 } }}
-                            // No entry animation of its own — the inner grid's staggered fade-in
-                            // (delayChildren below) is the entrance; a second independent fade here
-                            // used to run on its own un-delayed default timing, so the panel was
-                            // fully visible (just empty) well before the card had finished
-                            // widening, and the stagger and the width animation visibly raced.
-                            //
-                            // min-h-0 overrides the flex-item default (min-height: auto), which
-                            // otherwise refuses to shrink below its content size — without it this
-                            // panel ignored the card's fixed height and got hard-clipped by the
-                            // card's own overflow-hidden instead of scrolling internally.
-                            className="mt-5 min-h-0 flex-1 overflow-y-auto md:absolute md:inset-x-0 md:bottom-0 md:top-[32%] md:mt-0"
-                          >
-                            <motion.div
-                              variants={listContainer}
-                              // Mobile skips the staggered entrance outright:
-                              // the cards aren't expanding into view there,
-                              // they're simply open, so there's nothing for a
-                              // reveal to be timed against.
-                              initial={reducedMotion || !isDesktop ? "visible" : "hidden"}
-                              animate="visible"
-                              className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3"
-                            >
-                              {segment.items.map((item) => {
-                                const Icon = iconFor[item];
-                                return (
-                                  <motion.span
-                                    key={item}
-                                    variants={reducedMotion ? undefined : listItem}
-                                    style={{ textShadow: "0 1px 8px rgba(0,0,0,0.35)" }}
-                                    className="flex items-center gap-2 text-base leading-snug text-white sm:text-lg lg:text-xl"
-                                  >
-                                    <Icon className="h-5 w-5 shrink-0 opacity-80" />
-                                    {item}
-                                  </motion.span>
-                                );
-                              })}
-                            </motion.div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </button>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
+              {/* Business types: rise in on hover / focus; always shown on
+                  touch and under reduced motion. */}
+              <div className="bento-more">
+                <div className="overflow-hidden">
+                  <ul className="flex flex-wrap gap-x-4 gap-y-1.5 pt-4 text-sm text-white/85">
+                    {ind.items.map(({ label, icon: Icon }) => (
+                      <li key={label} className="inline-flex items-center gap-1.5">
+                        <Icon className="h-3.5 w-3.5 shrink-0 text-magenta" aria-hidden="true" />
+                        {label}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
-    </section>
+    </PixelSection>
   );
 }

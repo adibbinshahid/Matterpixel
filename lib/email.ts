@@ -52,7 +52,7 @@ export function renderConfirmationEmail(options: {
     </tbody>
   </table>
   <p style="font-size: 15px; line-height: 1.6; margin: 24px 0 0; color: #333;">${escapeHtml(closing)}</p>
-  <p style="font-size: 15px; line-height: 1.6; margin: 24px 0 0; color: #333;">Talk soon,<br />The Matterpixel team</p>
+  <p style="font-size: 15px; line-height: 1.6; margin: 24px 0 0; color: #333;">Talk soon,<br />Adib, Matterpixel</p>
 </div>`.trim();
 
   const text = [
@@ -65,7 +65,7 @@ export function renderConfirmationEmail(options: {
     closing,
     "",
     "Talk soon,",
-    "The Matterpixel team",
+    "Adib, Matterpixel",
   ].join("\n");
 
   return { html, text };

@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     template: "%s — Matterpixel",
   },
   description:
-    "Matterpixel is a digital agency engineering web, product, and brand experiences that scale, convert, and last. 90+ PageSpeed, guaranteed.",
+    "We build websites and AI systems that win customers and save hours. Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
   keywords: [
     "digital agency",
     "web development",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Matterpixel — We build what matters. Down to the pixel.",
     description:
-      "From consumer brands to complex platforms, we engineer digital experiences that scale, convert, and last.",
+      "We build websites and AI systems that win customers and save hours. Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
     url: siteUrl,
     siteName: "Matterpixel",
     images: [{ url: "/api/og", width: 1200, height: 630 }],
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Matterpixel — We build what matters. Down to the pixel.",
     description:
-      "From consumer brands to complex platforms, we engineer digital experiences that scale, convert, and last.",
+      "We build websites and AI systems that win customers and save hours. Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
     images: ["/api/og"],
   },
   icons: {
@@ -87,13 +87,7 @@ const organizationJsonLd = {
   logo: `${siteUrl}/logo.png`,
   email: brand.email,
   description:
-    "Matterpixel is a founder-led digital studio engineering fast, accessible, senior-led web products.",
-  sameAs: [
-    "https://linkedin.com",
-    "https://behance.net",
-    "https://x.com",
-    "https://dribbble.com",
-  ],
+    "Matterpixel is a founder-led digital studio building websites and AI systems, built with vetted specialists.",
 };
 
 export default function RootLayout({

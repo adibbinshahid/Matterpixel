@@ -218,12 +218,18 @@
   }
 }
 
+/* Starts with the top 8% of each line already showing, not 0%: a fully
+   clipped first frame means the headline isn't "painted" until the wipe
+   moves, which pushed LCP behind every script on the page. */
+/* Horizontal (and bottom) insets are negative so the clip never trims
+   glyph ink that overhangs the line box — a final letter's side bearing or
+   a descender. Only the top edge does the wiping. */
 @keyframes hero-line-reveal {
   from {
-    clip-path: inset(0% 0% 100% 0%);
+    clip-path: inset(0% -6% 92% -6%);
   }
   to {
-    clip-path: inset(0% 0% 0% 0%);
+    clip-path: inset(0% -6% -12% -6%);
   }
 }
 
@@ -787,6 +793,15 @@ body {
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
+/* Phones skip the grain: at 2.5% opacity it can't be seen at that size,
+   and the feTurbulence filter rasterises slowly enough on a throttled
+   phone CPU to become the page's last-painted large image — it was the
+   mobile LCP element, ~2.3s after the content it decorates. */
+@media (max-width: 767px) {
+  .nav-grain {
+    display: none;
+  }
+}
 
 /* Same specular pair as .nav-glass, for the smaller per-link hover/active
    pill — but gated behind a plain CSS :hover (not Tailwind's `hover:`
@@ -830,29 +845,6 @@ body {
   box-shadow:
     0 0 24px 2px rgba(44, 75, 255, 0.5),
     0 0 40px 10px rgba(255, 46, 147, 0.35);
-}
-
-/* Slow-drifting grid background for the Services section — replaces what
-   was previously a background video. Two axes of repeating hairlines,
-   animated diagonally via `background-position` so the grid itself reads
-   as continuously moving rather than a static tiled pattern. Reduced
-   motion is handled by the global animation kill-switch below, not a
-   local media query. */
-.services-grid-bg {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
-  background-size: 64px 64px;
-  animation: services-grid-drift 24s linear infinite;
-}
-
-@keyframes services-grid-drift {
-  from {
-    background-position: 0 0;
-  }
-  to {
-    background-position: 64px 64px;
-  }
 }
 
 /* Slow vertical drift for Process's background ghost numerals — rotation
@@ -1014,6 +1006,18 @@ html.lenis body {
 @media (max-width: 480px) {
   .text-hero-headline {
     font-size: clamp(1.875rem, 1.35rem + 5vw, 2.75rem);
+  }
+}
+/* The home hero's sentence-length headline (~70 chars over two lines).
+   Capped at 3.75rem so each half holds one line inside the max-w-5xl
+   column on desktop; phones keep a floor that wraps to ~4 lines. */
+.text-hero-headline.hero-headline-long {
+  font-size: clamp(2.25rem, 1.2rem + 3.4vw, 3.75rem);
+  line-height: 1.08;
+}
+@media (max-width: 480px) {
+  .text-hero-headline.hero-headline-long {
+    font-size: clamp(1.75rem, 1.2rem + 3.5vw, 2.125rem);
   }
 }
 .text-h1 {
@@ -1328,4 +1332,549 @@ html.lenis body {
 .card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-lifted);
+}
+
+/* ── Homepage world: "Built pixel by pixel" ────────────────────────────
+   The homepage runs on a near-black ground. `.home` reassigns the same
+   tokens .panel-dark does, so every existing text-ink / bg-paper-2 /
+   border-line utility inside it renders for dark without per-component
+   overrides. `.home-light` flips a section back for the two light beats
+   (Build your stack, FAQ). `--blue-ink` is brand blue lifted for text on
+   dark: raw #2C4BFF is ~3.2:1 on #0A0B10, under AA for body sizes. */
+.home {
+  --paper: #0b0c0e;
+  --paper-2: #141518;
+  --ink: #ededef;
+  --ink-soft: #8e8f98;
+  --line: #26272c;
+  --blue-ink: #8f9dff;
+  background: var(--paper);
+  color: var(--ink);
+}
+.home-light {
+  --paper: #f6f6f4;
+  --paper-2: #ffffff;
+  --ink: #0b0c0e;
+  --ink-soft: #55565e;
+  --line: #e3e3e0;
+  --blue-ink: #2c4bff;
+  background: var(--paper);
+  color: var(--ink);
+}
+.home ::selection {
+  background: var(--blue);
+  color: #fff;
+}
+.home-light ::selection {
+  background: var(--blue);
+  color: #fff;
+}
+
+/* Single container and section rhythm for the homepage: 1200px, 120px
+   desktop / 72px mobile. */
+.home-shell {
+  margin-inline: auto;
+  max-width: calc(1200px + 3rem);
+  padding-inline: 1.5rem;
+}
+@media (min-width: 640px) {
+  .home-shell {
+    max-width: calc(1200px + 4rem);
+    padding-inline: 2rem;
+  }
+}
+.home-section {
+  padding-block: 72px;
+}
+@media (min-width: 1024px) {
+  .home-section {
+    padding-block: 120px;
+  }
+}
+
+/* 8px pixel texture: one 1px square per 8px cell — pixels, not grid
+   lines — at an opacity you feel more than see. */
+.pixel-texture {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='1' height='1' fill='%23ffffff' fill-opacity='0.07'/%3E%3C/svg%3E");
+  background-size: 8px 8px;
+}
+
+canvas[hidden] {
+  display: none;
+}
+
+/* Page entrance, CSS-only: the old framer wrapper started <main> at
+   opacity 0 + blur(18px) in the server HTML and held every page invisible
+   until hydration, which put mobile LCP at ~5s. Off the paint clock, the
+   content is on screen from the first frame. */
+.page-reveal {
+  animation: page-reveal 0.45s var(--ease-site) both;
+}
+@keyframes page-reveal {
+  from {
+    opacity: 0.001;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-reveal {
+    animation: none;
+  }
+}
+
+/* Homepage dark ground (components/home/DriftGrid.tsx): a fixed hairline
+   grid, vignetted toward the edges like a lit drafting surface. The outer
+   frame holds the mask still; only the inner layer moves. */
+.drift-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 120% 95% at 25% 30%, #000 35%, transparent 100%);
+  mask-image: radial-gradient(ellipse 120% 95% at 25% 30%, #000 35%, transparent 100%);
+}
+.drift-grid-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(100% + 128px);
+  height: calc(100% + 128px);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: translate3d(-64px, -64px, 0);
+  will-change: transform;
+}
+
+/* Light edge of the package sweep (components/services/ProblemPicker.tsx):
+   a 2px blue→magenta line on the leading side, with a soft glow trailing
+   over the content it has just revealed. `data-dir` says which side leads. */
+.sweep-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 3;
+  width: 160px;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.sweep-edge[hidden] {
+  display: none;
+}
+.sweep-edge[data-dir="left"] {
+  background:
+    linear-gradient(180deg, #8f9dff, var(--blue) 45%, var(--magenta)) left / 2px 100% no-repeat,
+    linear-gradient(90deg, rgba(44, 75, 255, 0.35), rgba(255, 46, 147, 0.1) 35%, transparent);
+}
+/* Vertical sweep: a full-width edge whose line leads up (forward, new view
+   rising from the bottom) or down, with the glow trailing behind it. */
+.sweep-edge[data-dir="up"],
+.sweep-edge[data-dir="down"] {
+  right: 0;
+  bottom: auto;
+  width: auto;
+  height: 160px;
+}
+.sweep-edge[data-dir="up"] {
+  background:
+    linear-gradient(90deg, #8f9dff, var(--blue) 45%, var(--magenta)) top / 100% 2px no-repeat,
+    linear-gradient(180deg, rgba(44, 75, 255, 0.35), rgba(255, 46, 147, 0.1) 35%, transparent);
+}
+.sweep-edge[data-dir="down"] {
+  background:
+    linear-gradient(90deg, #8f9dff, var(--blue) 45%, var(--magenta)) bottom / 100% 2px no-repeat,
+    linear-gradient(0deg, rgba(44, 75, 255, 0.35), rgba(255, 46, 147, 0.1) 35%, transparent);
+}
+.sweep-edge[data-dir="right"] {
+  background:
+    linear-gradient(180deg, #8f9dff, var(--blue) 45%, var(--magenta)) right / 2px 100% no-repeat,
+    linear-gradient(270deg, rgba(44, 75, 255, 0.35), rgba(255, 46, 147, 0.1) 35%, transparent);
+}
+
+/* Seam light for the section entrance (lib/useReveal.ts): drawn across the
+   section's top border on arrival, then gone — invisible at rest. */
+.reveal-seam {
+  position: absolute;
+  /* Inside the section's edge, not over its border: sections that clip
+     overflow would otherwise hide the seam from the reveal observer. */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  height: 1px;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: left center;
+  background: linear-gradient(90deg, transparent, var(--blue) 20%, #8f9dff 50%, var(--magenta) 80%, transparent);
+  box-shadow: 0 0 12px 1px rgba(44, 75, 255, 0.45);
+}
+
+/* Engagement commitment spectrum (components/EngagementModels.tsx): a
+   hairline from the first node to the last, positioned from measured node
+   centres, with the brand light filling it up to the active model. */
+.spectrum-track {
+  position: absolute;
+  z-index: 0;
+  background: rgba(255, 255, 255, 0.12);
+  transform: translate(0, -0.5px);
+}
+.spectrum-track[data-vertical="true"] {
+  transform: translate(-0.5px, 0);
+}
+.spectrum-fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left center;
+  transform: scaleX(var(--p, 0));
+  background: var(--blue);
+  box-shadow: 0 0 10px 0 rgba(44, 75, 255, 0.45);
+  transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.spectrum-track[data-vertical="true"] .spectrum-fill {
+  transform-origin: center top;
+  transform: scaleY(var(--p, 0));
+  background: var(--blue);
+}
+@media (prefers-reduced-motion: reduce) {
+  .spectrum-fill {
+    transition: none;
+  }
+}
+
+/* Glass plate behind the active engagement model: frosts the drifting
+   grid beneath it, slides on the spectrum's own curve. */
+.spectrum-plate {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025));
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 28px 56px -28px rgba(0, 0, 0, 0.75);
+  /* Fast ease-out: the plate keeps pace with the cursor instead of
+     trailing it. */
+  transition:
+    transform 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.26s cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 0.2s ease-out,
+    box-shadow 0.2s ease-out;
+}
+.spectrum-plate[data-focus] {
+  border-color: rgba(143, 157, 255, 0.85);
+  box-shadow:
+    0 0 0 3px rgba(44, 75, 255, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 28px 56px -28px rgba(0, 0, 0, 0.75);
+}
+@media (prefers-reduced-motion: reduce) {
+  .spectrum-plate {
+    transition: none;
+  }
+}
+
+/* Engagement spectrum on a light ground. */
+.home-light .spectrum-track {
+  background: rgba(22, 22, 28, 0.14);
+}
+.home-light .spectrum-plate {
+  border-color: rgba(22, 22, 28, 0.08);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.7));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 24px 48px -24px rgba(22, 22, 28, 0.28),
+    0 4px 12px -6px rgba(22, 22, 28, 0.1);
+}
+.home-light .spectrum-plate[data-focus] {
+  border-color: rgba(44, 75, 255, 0.7);
+  box-shadow:
+    0 0 0 3px rgba(44, 75, 255, 0.2),
+    0 24px 48px -24px rgba(22, 22, 28, 0.28);
+}
+
+
+/* ── Homepage + nav buttons ──────────────────────────────────────────────
+   Primary is solid magenta; secondary is translucent grey glass. The magenta is one step deeper than the logo's #FF2E93 so
+   the white label clears AA contrast (4.6:1; the logo magenta is 3.3:1).
+   Literal colours on purpose: tokens are reassigned per section. */
+.home .btn-brand,
+header .btn-brand,
+.nav-menu-btn {
+  background-image: none;
+  animation: none;
+  background-color: #e0157a;
+  color: #fff;
+}
+.home .btn-brand:hover,
+header .btn-brand:hover,
+.nav-menu-btn:hover {
+  background-color: #c7106b;
+  box-shadow: 0 14px 30px -12px rgba(224, 21, 122, 0.55);
+}
+/* Secondary: translucent grey glass, on any homepage ground. */
+.home .btn-outline,
+.home .btn-line {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.22);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+}
+.home .btn-outline:hover,
+.home .btn-line:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: none;
+}
+
+/* ── Brand sections ─────────────────────────────────────────────────────
+   The homepage's coloured beats (PixelSection tone="blue" | "magenta").
+   Same token reassignment as .home-light, so every text-ink / bg-paper-2 /
+   border-line utility inside renders for the ground without per-component
+   overrides. Blue carries white text; logo magenta carries ink, since white
+   on #FF2E93 is under AA for body text. */
+.home-blue {
+  --paper: #2c4bff;
+  --paper-2: #3a58ff;
+  --ink: #ffffff;
+  --ink-soft: rgba(255, 255, 255, 0.86);
+  --line: rgba(255, 255, 255, 0.24);
+  --blue-ink: #ffffff;
+  background: var(--blue);
+  color: #fff;
+}
+.home-magenta {
+  --paper: #ff2e93;
+  --paper-2: rgba(255, 255, 255, 0.16);
+  --ink: #ffffff;
+  --ink-soft: rgba(255, 255, 255, 0.92);
+  --line: rgba(255, 255, 255, 0.32);
+  --blue-ink: #ffffff;
+  background: var(--magenta);
+  color: #fff;
+}
+.home-blue ::selection,
+.home-magenta ::selection {
+  background: #0b0c0e;
+  color: #fff;
+}
+.home-magenta .hover\:text-blue:hover {
+  color: var(--ink);
+}
+
+/* Headline keywords (components/home/Hl.tsx). */
+.hl-blue {
+  color: var(--blue);
+}
+.hl-magenta {
+  color: var(--magenta);
+}
+/* Heading palette is white + blue + magenta; black only on light grounds.
+   On the blue sections a blue keyword would vanish, so every keyword there
+   is magenta against the white heading. */
+.home-blue .hl {
+  color: var(--magenta);
+}
+.home-magenta .hl {
+  color: var(--blue);
+}
+
+/* Engagement spectrum on blue. */
+.home-blue .spectrum-track {
+  background: rgba(255, 255, 255, 0.3);
+}
+.home-blue .spectrum-fill {
+  background: #fff;
+  box-shadow: 0 0 10px 0 rgba(255, 255, 255, 0.5);
+}
+/* On flat blue there's nothing behind the glass to frost, so the plate
+   carries its own material: a brighter tint, a lit rim, and a deep shadow
+   that lifts it off the section. */
+.home-blue .spectrum-plate {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.1) 60%, rgba(255, 255, 255, 0.14));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12),
+    0 30px 60px -24px rgba(8, 14, 90, 0.7),
+    0 8px 18px -8px rgba(8, 14, 90, 0.4);
+}
+.home-blue .spectrum-plate[data-focus] {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+.home-blue .reveal-seam,
+.home-magenta .reveal-seam {
+  background: linear-gradient(90deg, transparent, #fff 50%, transparent);
+  box-shadow: none;
+}
+/* Magenta marks would vanish on the magenta section: they switch to blue. */
+.home-magenta .bg-magenta {
+  background-color: var(--blue);
+}
+.home-magenta .text-magenta {
+  color: var(--blue);
+}
+
+/* Engagement plate accent: a magenta edge along the top of the hovered
+   model's glass card. */
+.spectrum-plate::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 22px;
+  right: 22px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--magenta);
+  box-shadow: 0 0 14px rgba(255, 46, 147, 0.55);
+}
+
+/* Primary on a magenta section: white pill, magenta label. */
+.home .btn-brand.btn-on-magenta {
+  background-color: #fff;
+  color: #d4126f;
+}
+.home .btn-brand.btn-on-magenta:hover {
+  background-color: #fff;
+  color: #b00e5c;
+  box-shadow: 0 14px 30px -12px rgba(120, 0, 50, 0.45);
+}
+
+/* Industries bento (components/WhoWeWorkFor.tsx). At rest each tile
+   shows its photo a step back; hover or keyboard focus eases it in and
+   brightens it, lights a magenta rim and lets the business types rise in
+   (grid-row 0fr → 1fr, no measured heights). Touch screens and reduced
+   motion show the types from the start. */
+.bento-tile {
+  transition:
+    border-color 0.4s ease-out,
+    box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    translate 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bento-img {
+  scale: 1.02;
+  filter: brightness(0.82) saturate(0.95);
+  transition:
+    scale 1.1s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.6s ease-out;
+}
+.bento-more {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.4s ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  .bento-tile:hover,
+  .bento-tile:focus-within {
+    translate: 0 -4px;
+    border-color: rgba(255, 46, 147, 0.7);
+    box-shadow:
+      0 0 0 1px rgba(255, 46, 147, 0.5),
+      0 30px 60px -28px rgba(255, 46, 147, 0.45);
+  }
+  .bento-tile:hover .bento-img,
+  .bento-tile:focus-within .bento-img {
+    scale: 1.08;
+    filter: brightness(1) saturate(1.05);
+  }
+  .bento-tile:hover .bento-more,
+  .bento-tile:focus-within .bento-more {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce), (max-width: 1279px) {
+  .bento-more {
+    display: block;
+    opacity: 1;
+  }
+  .bento-more > div {
+    overflow: visible;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bento-tile,
+  .bento-img,
+  .bento-more {
+    transition: none;
+  }
+}
+
+/* Concept builds on light: three soft brand-colour pools drifting slowly
+   behind the section, and a frosted glass plate on the active row. */
+.aurora {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.55;
+  will-change: transform;
+}
+.aurora-a {
+  width: 520px;
+  height: 520px;
+  left: -8%;
+  top: 10%;
+  background: rgba(44, 75, 255, 0.35);
+  animation: aurora-drift-a 26s ease-in-out infinite alternate;
+}
+.aurora-b {
+  width: 460px;
+  height: 460px;
+  right: -6%;
+  top: 35%;
+  background: rgba(255, 46, 147, 0.3);
+  animation: aurora-drift-b 31s ease-in-out infinite alternate;
+}
+.aurora-c {
+  width: 380px;
+  height: 380px;
+  left: 40%;
+  bottom: -10%;
+  background: rgba(143, 157, 255, 0.35);
+  animation: aurora-drift-c 22s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift-a {
+  to {
+    transform: translate(140px, 90px) scale(1.15);
+  }
+}
+@keyframes aurora-drift-b {
+  to {
+    transform: translate(-160px, -70px) scale(0.9);
+  }
+}
+@keyframes aurora-drift-c {
+  to {
+    transform: translate(-120px, -110px) scale(1.2);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora {
+    animation: none;
+  }
+}
+.concept-glass {
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: linear-gradient(165deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.42));
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 18px 40px -22px rgba(11, 12, 14, 0.3);
 }

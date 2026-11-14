@@ -78,7 +78,7 @@ export async function POST(request: Request) {
         ["Other Goal Details", data.otherGoalDetails],
         ["Project Details", data.projectDetails],
       ],
-      closing: "We'll review your requirements and get back to you within 24 hours.",
+      closing: "We'll review your requirements and reply within 12 hours.",
     });
 
     const confirmation = await resend.emails.send({

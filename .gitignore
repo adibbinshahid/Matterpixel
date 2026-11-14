@@ -51,3 +51,15 @@ next-env.d.ts
 # /public/services are what ships.
 /brand/projects-source/
 /brand/services-source/
+
+# AI agent tooling installed locally (impeccable skill copies, binaries,
+# machine-specific hook settings) — not part of the site.
+/.agent/
+/.agents/
+/.claude/
+/.codex/
+/.cursor/
+/.gemini/
+# Impeccable runtime state (the config, design.json and surfaces are kept).
+/.impeccable/tmp/
+/.impeccable/hook.cache.json

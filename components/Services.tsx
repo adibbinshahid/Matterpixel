@@ -1,25 +1,25 @@
 import Link from "next/link";
-import { ArrowUpRight, Bot, Camera, Clapperboard, Code2, Sparkles, TrendingUp, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Bot, Camera, Code2, LayoutDashboard, Sparkles, TrendingUp, type LucideIcon } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { ServicesCtaBanner } from "@/components/services/ServicesCtaBanner";
-import { services, type Service } from "@/content/services";
+import { serviceLineup, type ServiceListing } from "@/content/services";
 import { servicesIntro } from "@/content/siteConfig";
 
 const ICON_BY_SLUG: Record<string, LucideIcon> = {
   "web-app-development": Code2,
   "ai-automation": Bot,
+  "business-software": LayoutDashboard,
   "branding-identity": Sparkles,
   "ai-product-photography": Camera,
-  "ai-video": Clapperboard,
   "seo-growth": TrendingUp,
 };
 
-function ServiceCard({ service }: { service: Service }) {
-  const Icon = ICON_BY_SLUG[service.slug] ?? Code2;
+function ServiceCard({ service }: { service: ServiceListing }) {
+  const Icon = ICON_BY_SLUG[service.key] ?? Code2;
   return (
     <RevealItem className="h-full">
       <Link
-        href={`/services/${service.slug}`}
+        href={service.href}
         className="glass-card glass-card-blue-hover hover-lift group flex h-full flex-col rounded-[var(--mp-radius-md)] border border-line/60 p-8 transition-colors duration-300 hover:border-blue"
       >
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue/10 text-blue transition-colors duration-300 group-hover:bg-white/20 group-hover:text-white">
@@ -69,7 +69,7 @@ export function Services({
   showCta?: boolean;
 }) {
   return (
-    <section id="services" className="relative border-t border-line">
+    <section id="capabilities" className="relative scroll-mt-24 border-t border-line">
       <div className={`section-shell ${showHeading ? "section-py-spacious" : "pb-28 pt-10 lg:pt-12"}`}>
         {showHeading && (
           <Reveal>
@@ -81,8 +81,8 @@ export function Services({
         <RevealGroup
           className={`grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 ${showHeading ? "mt-20 md:mt-28" : ""}`}
         >
-          {services.map((service) => (
-            <ServiceCard key={service.slug} service={service} />
+          {serviceLineup.map((service) => (
+            <ServiceCard key={service.key} service={service} />
           ))}
         </RevealGroup>
 

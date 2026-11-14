@@ -1,35 +1,47 @@
 import type { Metadata } from "next";
 import { Hero } from "@/components/Hero";
 import { Stats } from "@/components/Stats";
-import { ProblemCloud } from "@/components/ProblemCloud";
-import { WhoWeWorkFor } from "@/components/WhoWeWorkFor";
+import { ProblemPicker } from "@/components/services/ProblemPicker";
+import { getPackageProofs } from "@/components/services/ServiceFinder";
+import { ConceptBuilds } from "@/components/home/ConceptBuilds";
+import { FounderStrip } from "@/components/home/FounderStrip";
+import { PixelSection } from "@/components/home/PixelSection";
+import { HomeFaq } from "@/components/home/HomeFaq";
+import { ClosingCta } from "@/components/home/ClosingCta";
+import { DriftGrid } from "@/components/home/DriftGrid";
 import { Process } from "@/components/Process";
 import { EngagementModels } from "@/components/EngagementModels";
-import { ServicesFold } from "@/components/ServicesFold";
-import { FinalCta } from "@/components/FinalCta";
+import { WhoWeWorkFor } from "@/components/WhoWeWorkFor";
+import { WhiteLabel } from "@/components/WhiteLabel";
+import { problemPackages } from "@/content/packages";
 
 export const metadata: Metadata = {
   title: "Matterpixel — We build what matters. Down to the pixel.",
   description:
-    "A new digital studio engineering fast, accessible, senior-led web products. 90+ PageSpeed guaranteed. See our demo builds and take on a founding-client project.",
+    "We build websites and AI systems that win customers and save hours. Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
   alternates: { canonical: "/" },
 };
 
 export default function Home() {
   return (
-    <>
+    <div className="home relative">
+      <DriftGrid />
       <Hero />
       <Stats />
 
-      <ProblemCloud />
+      <PixelSection className="home-section" label="Start with the problem">
+        <ProblemPicker packages={problemPackages} proofs={getPackageProofs()} />
+      </PixelSection>
 
-      <ServicesFold />
+      <ConceptBuilds />
+      <FounderStrip />
 
-      <WhoWeWorkFor />
-
-      <Process />
       <EngagementModels />
-      <FinalCta />
-    </>
+      <Process />
+      <WhoWeWorkFor />
+      <WhiteLabel />
+      <HomeFaq />
+      <ClosingCta />
+    </div>
   );
 }

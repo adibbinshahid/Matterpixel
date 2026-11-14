@@ -1,0 +1,408 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-14T00:00:00Z",
+  "title": "Design System: Matterpixel",
+  "extensions": {
+    "colorMeta": {
+      "brand-blue": {
+        "role": "primary",
+        "displayName": "Electric Blue",
+        "canonical": "color(display-p3 0.2 0.29 1)",
+        "tonalRamp": [
+          "#0A1146",
+          "#111D7A",
+          "#1B2DB8",
+          "#2C4BFF",
+          "#5A72FF",
+          "#8F9DFF",
+          "#BCC5FF",
+          "#E6E9FF"
+        ]
+      },
+      "brand-magenta": {
+        "role": "secondary",
+        "displayName": "Hot Magenta",
+        "canonical": "color(display-p3 1 0.18 0.58)",
+        "tonalRamp": [
+          "#46061F",
+          "#7A0D39",
+          "#B81858",
+          "#FF2E93",
+          "#FF5CAA",
+          "#FF8DC3",
+          "#FFBEDC",
+          "#FFE8F3"
+        ]
+      },
+      "blue-ink": {
+        "role": "primary",
+        "displayName": "Periwinkle Ink",
+        "canonical": "#8F9DFF",
+        "tonalRamp": [
+          "#1B2DB8",
+          "#2C4BFF",
+          "#5A72FF",
+          "#7586FF",
+          "#8F9DFF",
+          "#A9B4FF",
+          "#C9D0FF",
+          "#E6E9FF"
+        ]
+      },
+      "score-green": {
+        "role": "tertiary",
+        "displayName": "Lighthouse Green",
+        "canonical": "#0CCE6B",
+        "tonalRamp": [
+          "#033D20",
+          "#066635",
+          "#09994F",
+          "#0CCE6B",
+          "#4ADB8F",
+          "#86E8B4",
+          "#BDF3D6",
+          "#E7FBF0"
+        ]
+      },
+      "night-ground": {
+        "role": "neutral",
+        "displayName": "Night Ground",
+        "canonical": "#0A0B10",
+        "tonalRamp": [
+          "#0A0B10",
+          "#12131A",
+          "#22232D",
+          "#3A3B47",
+          "#6A6975",
+          "#A9A8B3",
+          "#D6D5DC",
+          "#F3F2EE"
+        ]
+      },
+      "night-raised": {
+        "role": "neutral",
+        "displayName": "Night Raised",
+        "canonical": "#12131A"
+      },
+      "night-line": {
+        "role": "neutral",
+        "displayName": "Night Line",
+        "canonical": "#22232D"
+      },
+      "night-text": {
+        "role": "neutral",
+        "displayName": "Bone Text",
+        "canonical": "#F3F2EE"
+      },
+      "night-text-soft": {
+        "role": "neutral",
+        "displayName": "Ash Text",
+        "canonical": "#A9A8B3"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Warm Paper",
+        "canonical": "#FAF8F3",
+        "tonalRamp": [
+          "#16161C",
+          "#4A4A52",
+          "#8A877F",
+          "#C9C4B8",
+          "#E4E0D6",
+          "#F2EFE8",
+          "#FAF8F3",
+          "#FFFFFF"
+        ]
+      },
+      "paper-raised": {
+        "role": "neutral",
+        "displayName": "Paper Raised",
+        "canonical": "#F2EFE8"
+      },
+      "paper-line": {
+        "role": "neutral",
+        "displayName": "Paper Line",
+        "canonical": "#E4E0D6"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#16161C"
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Ink Soft",
+        "canonical": "#4A4A52"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero H1 only; one or two words may take a brand colour."
+      },
+      "closing": {
+        "displayName": "Closing",
+        "purpose": "The final call-to-action line."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Every section H2, under the magenta-pixel eyebrow, left-aligned, sentence case."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card and model H3s; no kicker above."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Ledes and copy; 1rem mobile, 1.125rem from 640px; ledes capped at 62ch."
+      },
+      "label": {
+        "displayName": "Eyebrow",
+        "purpose": "Uppercase section eyebrow led by a 6px square magenta pixel."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Prices, stats and Lighthouse scores in Avenir Heavy, tabular figures."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Every button label, Avenir Heavy."
+      }
+    },
+    "textures": [
+      {
+        "name": "drift-grid",
+        "value": "linear-gradient(rgba(255,255,255,0.055) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.055) 1px, transparent 1px) 0 0 / 64px 64px",
+        "purpose": "Fixed hairline grid behind every homepage dark section (components/home/DriftGrid.tsx): radial vignette, glide left-to-right at 9px/s on a ~12\u00b0 rise, swaying \u00b16\u00b0, sub-pixel, scroll parallax 0.25\u00d7; static under reduced motion. Replaced the earlier 8px pixel texture at the user's request."
+      }
+    ],
+    "shadows": [
+      {
+        "name": "proof-float",
+        "value": "0 40px 90px -30px rgba(44,75,255,0.45)",
+        "purpose": "Browser frames holding real work: hero at rest, concept cards on hover."
+      },
+      {
+        "name": "card-rest-dark",
+        "value": "0 30px 70px -30px rgba(0,0,0,0.85)",
+        "purpose": "Browser frames at rest on dark."
+      },
+      {
+        "name": "badge",
+        "value": "0 18px 40px -16px rgba(0,0,0,0.7)",
+        "purpose": "Floating score badge and small overlays."
+      },
+      {
+        "name": "selected-glow",
+        "value": "0 10px 28px -10px rgba(44,75,255,0.8)",
+        "purpose": "Selected choice chip."
+      },
+      {
+        "name": "primary-hover",
+        "value": "0 14px 30px -12px rgba(255,0,128,0.55)",
+        "purpose": "Primary button hover bloom."
+      },
+      {
+        "name": "light-pool",
+        "value": "blur(120px to 140px) on a round brand fill at 15 to 25% alpha",
+        "purpose": "Brand colour as light behind proof and panels."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-site",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Every CSS transition and hover."
+      },
+      {
+        "name": "ease-out-expo",
+        "value": "1 - 2^(-10t)",
+        "purpose": "Pixel flights and score counts: blocks arrive fast and settle softly."
+      },
+      {
+        "name": "ease-in-out-cubic",
+        "value": "cubic-bezier(0.65, 0, 0.35, 1)",
+        "purpose": "The seam light drawing across a section border (and the sweep, at 0.77/0/0.175/1)."
+      },
+      {
+        "name": "button-hover",
+        "value": "300ms, translateY(-2px) scale(1.035); active scale(1.01)",
+        "purpose": "Shared lift for every button."
+      },
+      {
+        "name": "section-entrance",
+        "value": "staged per element as it arrives; 90ms stagger (max 6); seam 1.4s, eyebrow 700ms, title mask-rise 1.05s, lede 900ms, block 1s; cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Section entrance (lib/useReveal.ts). Reduced motion: 400ms fade."
+      },
+      {
+        "name": "panel-reassemble",
+        "value": "cover 170ms, hold 220ms for resize, reveal 320ms, 28px blocks",
+        "purpose": "Package panel switch. Reduced motion: instant swap."
+      },
+      {
+        "name": "hero-assembly",
+        "value": "20-column tiles, 420ms sweep + 260ms jitter + 560ms per tile (~1.2s), then score count 900ms",
+        "purpose": "Hero proof builds from brand blocks; replays on hover, never loops. Reduced motion: finished mockup."
+      },
+      {
+        "name": "stack-fly",
+        "value": "10 squares 6-12px, 520-700ms arc, 22ms stagger",
+        "purpose": "Added stack item throws pixels into the summary. Skipped under reduced motion."
+      },
+      {
+        "name": "closing-mark",
+        "value": "30-column M grid, 700ms stagger + 900ms flight",
+        "purpose": "Closing Matterpixel M assembles once in view. Reduced motion: drawn finished."
+      },
+      {
+        "name": "score-count",
+        "value": "1100ms ease-out-expo, once on first view",
+        "purpose": "Concept card Lighthouse scores."
+      },
+      {
+        "name": "gradient-shift",
+        "value": "4s ease-in-out infinite, background-position 0% to 100%",
+        "purpose": "Primary button gradient."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one conversion style: animated blue-magenta gradient pill.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\">Get a Free Audit</a>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.875rem 1.75rem; border-radius: 9999px; border: 1px solid transparent; font-family: var(--font-avenir), 'Avenir', sans-serif; font-weight: 700; font-size: 0.875rem; line-height: 1.15; color: #fff; text-decoration: none; background-image: linear-gradient(90deg, #2C4BFF, #FF2E93, #2C4BFF); background-size: 200% 100%; animation: ds-shift 4s ease-in-out infinite; transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s cubic-bezier(0.22,1,0.36,1); } .ds-btn-primary:hover { transform: translateY(-2px) scale(1.035); box-shadow: 0 14px 30px -12px rgba(255,0,128,0.55); } .ds-btn-primary:active { transform: translateY(0) scale(1.01); } .ds-btn-primary:focus-visible { outline: 2px solid #8F9DFF; outline-offset: 3px; } @keyframes ds-shift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } } @media (prefers-reduced-motion: reduce) { .ds-btn-primary { animation: none; transition: none; } }"
+    },
+    {
+      "name": "Secondary Button (dark)",
+      "kind": "button",
+      "refersTo": "button-secondary-dark",
+      "description": "Translucent glass pill for secondary actions on the night ground.",
+      "html": "<div style=\"background:#0A0B10;padding:24px\"><a class=\"ds-btn-glass\" href=\"#\">View Projects</a></div>",
+      "css": ".ds-btn-glass { display: inline-flex; align-items: center; padding: 0.875rem 1.75rem; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.22); background: rgba(255,255,255,0.1); backdrop-filter: blur(14px) saturate(160%); color: #fff; font-family: var(--font-avenir), 'Avenir', sans-serif; font-weight: 700; font-size: 0.875rem; text-decoration: none; transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), background-color 0.3s, border-color 0.3s; } .ds-btn-glass:hover { transform: translateY(-2px) scale(1.035); background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.5); } .ds-btn-glass:focus-visible { outline: 2px solid #8F9DFF; outline-offset: 3px; }"
+    },
+    {
+      "name": "Secondary Button (paper)",
+      "kind": "button",
+      "refersTo": "button-secondary-light",
+      "description": "Ink outline pill inverting to solid ink, for light beats.",
+      "html": "<div style=\"background:#FAF8F3;padding:24px\"><a class=\"ds-btn-line\" href=\"#\">See all capabilities</a></div>",
+      "css": ".ds-btn-line { display: inline-flex; align-items: center; padding: 0.875rem 1.75rem; border-radius: 9999px; border: 1px solid rgba(22,22,28,0.4); background: transparent; color: #16161C; font-family: var(--font-avenir), 'Avenir', sans-serif; font-weight: 700; font-size: 0.875rem; text-decoration: none; transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), background-color 0.3s, color 0.3s; } .ds-btn-line:hover { transform: translateY(-2px) scale(1.035); background: #16161C; color: #FAF8F3; border-color: #16161C; } .ds-btn-line:focus-visible { outline: 2px solid #2C4BFF; outline-offset: 3px; }"
+    },
+    {
+      "name": "Choice Chip",
+      "kind": "chip",
+      "refersTo": "chip-choice",
+      "description": "Pill choice chip on dark; selected fills blue with a glow.",
+      "html": "<div style=\"background:#0A0B10;padding:24px;display:flex;gap:8px;flex-wrap:wrap\"><button class=\"ds-chip ds-chip-on\">My site is slow</button><button class=\"ds-chip\">Leads wait for replies</button></div>",
+      "css": ".ds-chip { min-height: 44px; padding: 0.625rem 1.25rem; border-radius: 9999px; border: 1px solid #22232D; background: rgba(255,255,255,0.03); color: #A9A8B3; font-family: 'Inter Tight', system-ui, sans-serif; font-weight: 600; font-size: 0.9375rem; cursor: pointer; transition: background-color 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s; } .ds-chip:hover { border-color: rgba(255,255,255,0.3); color: #F3F2EE; } .ds-chip:focus-visible { outline: 2px solid #8F9DFF; outline-offset: 2px; } .ds-chip-on { background: #2C4BFF; border-color: #2C4BFF; color: #fff; box-shadow: 0 10px 28px -10px rgba(44,75,255,0.8); }"
+    },
+    {
+      "name": "Section Heading",
+      "kind": "custom",
+      "refersTo": "headline",
+      "description": "The one H2 pattern: magenta pixel + uppercase eyebrow, left-aligned sentence-case H2.",
+      "html": "<div class=\"ds-heading\"><p class=\"ds-eyebrow\"><span></span>Concept builds</p><h2>Four live sites. Open any of them.</h2><p class=\"ds-lede\">Concept builds made to show our standard.</p></div>",
+      "css": ".ds-heading { background: #0A0B10; padding: 32px; max-width: 48rem; font-family: 'Inter Tight', system-ui, sans-serif; } .ds-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #A9A8B3; } .ds-eyebrow span { width: 6px; height: 6px; background: #FF2E93; flex-shrink: 0; } .ds-heading h2 { margin: 1rem 0 0; font-size: clamp(2rem, 1.35rem + 2.6vw, 3.25rem); font-weight: 700; line-height: 1.06; letter-spacing: -0.025em; color: #F3F2EE; text-wrap: balance; } .ds-lede { margin: 1.25rem 0 0; max-width: 62ch; font-size: 1.125rem; line-height: 1.625; color: #A9A8B3; }"
+    },
+    {
+      "name": "Concept Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "A real build in a browser frame with its measured Lighthouse score.",
+      "html": "<a class=\"ds-concept\" href=\"#\"><div class=\"ds-frame\"><div class=\"ds-bar\"><i></i><i></i><i></i><span>shopsphere.example</span></div><div class=\"ds-shot\"></div></div><div class=\"ds-meta\"><div><h3>ShopSphere</h3><p>Ecommerce</p><span class=\"ds-tag\"><b></b>Concept build</span></div><p class=\"ds-score\"><strong>100</strong><span>Lighthouse perf.</span></p></div></a>",
+      "css": ".ds-concept { display: block; width: 360px; padding: 24px; background: #0A0B10; text-decoration: none; font-family: 'Inter Tight', system-ui, sans-serif; } .ds-frame { border-radius: 16px; overflow: hidden; border: 1px solid #22232D; background: #12131A; box-shadow: 0 30px 70px -30px rgba(0,0,0,0.85); transition: box-shadow 0.5s cubic-bezier(0.22,1,0.36,1); } .ds-concept:hover .ds-frame, .ds-concept:focus-visible .ds-frame { box-shadow: 0 40px 90px -30px rgba(44,75,255,0.45); } .ds-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; font-size: 11px; color: #A9A8B3; } .ds-bar i { width: 8px; height: 8px; border-radius: 9999px; background: #22232D; } .ds-bar span { margin-left: 8px; } .ds-shot { aspect-ratio: 16/10; background: linear-gradient(160deg, #1b1c26, #0f0f13); } .ds-meta { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-top: 20px; } .ds-meta h3 { margin: 0; font-size: 1.25rem; font-weight: 700; color: #F3F2EE; } .ds-meta p { margin: 4px 0 0; font-size: 0.9375rem; color: #A9A8B3; } .ds-tag { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 4px 10px; border: 1px solid #22232D; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; color: #A9A8B3; } .ds-tag b { width: 6px; height: 6px; background: #FF2E93; } .ds-score { text-align: right; } .ds-score strong { display: block; font-family: var(--font-avenir), 'Avenir', sans-serif; font-weight: 800; font-size: 2.25rem; line-height: 1; color: #0CCE6B; font-variant-numeric: tabular-nums; } .ds-score span { display: block; margin-top: 6px; font-size: 0.75rem; font-weight: 600; color: #A9A8B3; }"
+    },
+    {
+      "name": "Pixel Section",
+      "kind": "custom",
+      "refersTo": "night-ground",
+      "description": "Dark section over the drifting grid; entrances use the seam light and staged reveals (lib/useReveal.ts).",
+      "html": "<section class=\"ds-pixel-section\"><p class=\"ds-eyebrow\"><span></span>How we work</p><h2>Proven workflow, not guesswork.</h2></section>",
+      "css": ".ds-pixel-section { padding: 72px 32px; background-color: #0A0B10; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Crect width='1' height='1' fill='%23ffffff' fill-opacity='0.07'/%3E%3C/svg%3E\"); background-size: 8px 8px; font-family: 'Inter Tight', system-ui, sans-serif; } .ds-pixel-section .ds-eyebrow { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #A9A8B3; } .ds-pixel-section .ds-eyebrow span { width: 6px; height: 6px; background: #FF2E93; } .ds-pixel-section h2 { margin: 1rem 0 0; font-size: clamp(2rem, 1.35rem + 2.6vw, 3.25rem); font-weight: 700; line-height: 1.06; letter-spacing: -0.025em; color: #F3F2EE; }"
+    },
+    {
+      "name": "Gradient-Edge Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Featured 28px panel: brand colour as a gradient border and a blurred light pool, never a fill.",
+      "html": "<div class=\"ds-panel\"><div class=\"ds-pool\"></div><p class=\"ds-eyebrow\"><span></span>For agencies</p><h3>Your overflow dev partner.</h3></div>",
+      "css": ".ds-panel { position: relative; overflow: hidden; max-width: 520px; padding: 40px; border-radius: 28px; border: 1px solid transparent; background: linear-gradient(#101119, #101119) padding-box, linear-gradient(120deg, #2C4BFF, rgba(255,46,147,0.85) 55%, rgba(255,255,255,0.08)) border-box; font-family: 'Inter Tight', system-ui, sans-serif; } .ds-pool { position: absolute; right: -128px; top: -128px; width: 320px; height: 320px; border-radius: 9999px; background: rgba(255,46,147,0.2); filter: blur(120px); pointer-events: none; } .ds-panel .ds-eyebrow { position: relative; display: flex; align-items: center; gap: 10px; margin: 0; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: #A9A8B3; } .ds-panel .ds-eyebrow span { width: 6px; height: 6px; background: #FF2E93; } .ds-panel h3 { position: relative; margin: 1rem 0 0; font-size: 2rem; font-weight: 700; letter-spacing: -0.025em; color: #F3F2EE; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Built Pixel by Pixel",
+    "overview": "The site is a near-black workshop floor where finished work assembles out of square brand-coloured blocks. Everything rests on a deep ground (#0A0B10) under a hairline drafting grid (64px cells, 1px white lines at 5.5% opacity, vignetted toward the edges) that glides slowly left-to-right on a shallow ~12\u00b0 rise (9px/s, swaying \u00b16\u00b0, never vertical, sub-pixel smooth) and lags the scroll at 0.25\u00d7 for parallax; one fixed layer behind every dark section, still under reduced motion. The two brand colours from the Matterpixel M, electric blue and hot magenta, never paint a band. They show up as light (blurred pools behind the proof), as edges (gradient hairlines and borders), and as pixel blocks (the eyebrow dot, the light edge, the closing M). The page reads as one dark field broken by three warm-paper beats (Founder, Engagement models, FAQ).\n\nDensity is editorial rather than dashboard: one 1200px container, generous 120px section rhythm on desktop, left-aligned sentence-case headings, and proof (real builds in browser frames, measured Lighthouse scores) carrying the visual weight in place of illustration. Motion is the signature. Pixel blocks assemble the signature moments (hero build, stack pixels, closing M); a blue\u2192magenta light edge carries the transitions (section seams, the package sweep); every entrance settles on one expo curve.",
+    "keyCharacteristics": [
+      "Dark ground under the drifting parallax grid; three light beats on the homepage (Founder, Engagement models, FAQ), placed where the page turns from showing to reading or deciding; /services adds Build your stack.",
+      "Brand colour as light, edge and pixel, never as a fill.",
+      "One heading pattern: a magenta pixel and an uppercase eyebrow above a left-aligned H2.",
+      "Inter Tight for words, Avenir Heavy for buttons and numerals.",
+      "Pixel-block motion grammar with a static fallback for every effect."
+    ],
+    "rules": [
+      {
+        "name": "The Light, Edge and Pixel Rule",
+        "body": "Blue and magenta appear as blurred light pools (blur 120 to 140px at 15 to 25% alpha), 1px gradient edges, or square blocks. A section, band or full-width panel is never filled with either. Small solid fills are allowed only on interactive state (a selected chip, a selected card's icon) and on the primary button.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two Beats Rule",
+        "body": "The page is dark by default. A section flips to Warm Paper only where the page turns from showing to reading or deciding: on the homepage the Founder strip, Engagement models and FAQ; on /services, Build your stack. Never strict alternation. Light sections are plain Warm Paper with no grid: the grid belongs to the dark ground. Light sections re-scope the same tokens, so components never carry a light/dark variant of their own.",
+        "section": "colors"
+      },
+      {
+        "name": "The Lifted Blue Rule",
+        "body": "Blue text on dark uses Periwinkle Ink, never raw Electric Blue, except at display size.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Heading Rule",
+        "body": "Every section H2 sits under the eyebrow (magenta pixel plus uppercase label) in the Headline style. This eyebrow is a confirmed user decision for this site and applies to H2s only; nothing above an H3.",
+        "section": "typography"
+      },
+      {
+        "name": "The Two Voices Rule",
+        "body": "Inter Tight speaks; Avenir Heavy counts and acts. Avenir never sets a sentence, and Inter Tight never sets a price or a button label.",
+        "section": "typography"
+      },
+      {
+        "name": "The Blue Light Under Work Rule",
+        "body": "Only real work (a browser frame holding a build) gets the blue-tinted float. Everything else uses neutral black shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** set every page section on the night ground over the drifting grid (never a second texture on top), and flip to Warm Paper only for a working or reading beat.",
+      "**Do** lead every section H2 with the magenta-pixel uppercase eyebrow (0.75rem, 0.16em tracking) and keep the H2 left-aligned, sentence case, in the Headline clamp.",
+      "**Do** use Periwinkle Ink for blue text on dark.",
+      "**Do** set prices, stats and scores in Avenir Heavy with tabular figures, and Lighthouse scores in Lighthouse Green.",
+      "**Do** build new motion from the page's three materials (pixel blocks, the light edge, the expo settle) and ship a static or fade fallback under reduced motion.",
+      "**Do** keep proof in browser frames with the blue float, and keep content visible without script."
+    ],
+    "donts": [
+      "**Don't** fill a section, band or full-width panel with brand blue or magenta; use light pools, gradient edges and pixel blocks.",
+      "**Don't** centre section headings or put an eyebrow or kicker above an H3.",
+      "**Don't** introduce a second heading style for H2s or hand-set a new eyebrow treatment.",
+      "**Don't** invent a second entrance style: section entrances go through data-reveal and lib/useReveal.ts.",
+      "**Don't** round the pixel marks; squares stay square.",
+      "**Don't** use raw Electric Blue for body-size text on dark."
+    ]
+  }
+}

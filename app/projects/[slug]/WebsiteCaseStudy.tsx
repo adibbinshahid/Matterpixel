@@ -26,7 +26,7 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
       <section className="px-6 pb-16 sm:px-8 lg:px-12">
         <div className="mx-auto max-w-[1400px]">
           <Reveal>
-            <p className="label-eyebrow mb-4 mt-8">{project.category}</p>
+            <p className="label-eyebrow mb-4 mt-8">{project.category} · Concept build</p>
             <h1 className="max-w-4xl text-display text-ink">{project.name}</h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-soft">
               {project.oneLiner}

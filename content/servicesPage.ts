@@ -1,3 +1,5 @@
+import { BOOKING_URL } from "@/content/siteConfig";
+
 /**
  * Services page — the credibility layer.
  *
@@ -56,8 +58,8 @@ export const standard = {
     },
     {
       id: "05",
-      value: "24h reply",
-      terms: "Every inquiry gets a same-day reply. No exceptions, no queue.",
+      value: "12h reply",
+      terms: "We reply within 12 hours, 7 days a week. No exceptions, no queue.",
     },
   ],
 };
@@ -89,10 +91,10 @@ export const proofBoard = {
       bleed: true,
     },
     {
-      value: "15+",
-      unit: "industries",
-      label: "Served",
-      note: "Solo founders and SMEs through to large corporations.",
+      value: "Fixed",
+      unit: "quote",
+      label: "Upfront",
+      note: "No price increases after the project begins.",
       scale: 2,
       bleed: false,
     },
@@ -113,10 +115,10 @@ export const proofBoard = {
       bleed: false,
     },
     {
-      value: "24h",
+      value: "12h",
       unit: "reply",
-      label: "Guaranteed",
-      note: "Same-day, every inquiry.",
+      label: "Reply time",
+      note: "Within 12 hours, 7 days a week.",
       scale: 3,
       bleed: false,
     },
@@ -142,8 +144,8 @@ export const founderEditorial = {
   ],
   /** Two sentences, not four — same claim as siteConfig.founder.bio,
    * compressed to what fits the compact composition. */
-  body: "Adib leads strategy, creative direction, development and delivery end to end, with a specialist crew behind him where deeper expertise is needed. No account managers — one person owns the direction and stays accountable for the result.",
-  cta: { label: "Talk to Adib directly", href: "/contact?tab=booking" },
+  body: "Adib leads strategy, creative direction, development and delivery end to end. Founder-led, built with vetted specialists where deeper expertise is needed. No account managers — one person owns the direction and stays accountable for the result.",
+  cta: { label: "Talk to Adib directly", href: BOOKING_URL },
 };
 
 /* ── §6 Process ──────────────────────────────────────────────────────────
@@ -151,8 +153,8 @@ export const founderEditorial = {
    homepage's meeting-by-meeting version (siteConfig.processSteps) — same
    five beats, described as method rather than calendar. */
 export const processMethod = {
-  eyebrow: "how we build",
-  heading: "proven workflow, not guesswork.",
+  eyebrow: "How we build",
+  heading: "Proven workflow, not guesswork.",
   steps: [
     {
       id: "01",

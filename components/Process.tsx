@@ -2,9 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { GiantHeading } from "@/components/GiantHeading";
-import { Reveal } from "@/components/Reveal";
-import { servicesIntro } from "@/content/siteConfig";
+import { PixelSection } from "@/components/home/PixelSection";
+import { SectionHeading } from "@/components/home/SectionHeading";
+import { Hl } from "@/components/home/Hl";
 import { processMethod } from "@/content/servicesPage";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { EASE } from "@/lib/utils";
@@ -15,14 +15,10 @@ const CLICK_PAUSE_MS = 15000;
 const total = processMethod.steps.length;
 
 /**
- * Scattered giant step numerals drifting slowly behind the section — the
- * same "01 02 03 04 05" the stepper below makes prominent, doing double
- * duty as this section's background instead of a second, unrelated motif.
- * Fixed px `top` (not %) so it doesn't visually reflow when the panel
- * below changes height on step-switch; `left` as % is safe since the
- * section's width doesn't change. Reduced-motion strips the drift via the
- * global animation kill-switch in globals.css (plain CSS `animation`, not
- * JS-driven, so no separate handling needed here).
+ * Giant step numerals drifting slowly behind the section — the same
+ * "01 02 03 04 05" the stepper below makes prominent, doing double duty as
+ * the background. Plain CSS animation (.process-ghost-num), stilled by
+ * reduced motion.
  */
 const GHOST_POSITIONS: { top: string; left: string; rotate: number }[] = [
   { top: "-60px", left: "4%", rotate: -8 },
@@ -40,7 +36,7 @@ function ProcessGhostNumbers() {
         return (
           <div
             key={s.id}
-            className="absolute select-none font-black leading-none text-ink/[0.1]"
+            className="absolute select-none font-black leading-none text-white/[0.1]"
             style={{ top: pos.top, left: pos.left, fontSize: "20rem", transform: `translateX(-50%) rotate(${pos.rotate}deg)` }}
           >
             <span
@@ -92,7 +88,7 @@ export function Process() {
   const step = processMethod.steps[activeIndex];
   const fillPercent = total > 1 ? (activeIndex / (total - 1)) * 100 : 0;
   const pausedUntilRef = useRef(0);
-  const sectionRef = useRef<HTMLElement>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
 
   // Auto-advance only runs while the section is actually on screen — off-
   // screen, it holds in place rather than silently cycling somewhere the
@@ -141,30 +137,26 @@ export function Process() {
   }
 
   return (
-    <section ref={sectionRef} className="relative panel-blue border-t border-line">
+    <PixelSection seam tone="blue" className="overflow-hidden" labelledBy="process-title">
+      <div ref={sectionRef} className="relative home-section">
       <ProcessGhostNumbers />
-      <div className="relative section-shell py-20 sm:py-24 lg:py-32">
-        <Reveal>
-          <div className="flex flex-col items-center text-center">
-            {/* .label-eyebrow hardcodes color: var(--blue) itself — the
-               section's own token reassignment (panel-blue) only touches
-               --ink/--ink-soft/etc, so this needs an explicit override or
-               it's blue eyebrow text on a blue background. */}
-            <p className="label-eyebrow mb-4" style={{ fontSize: "clamp(0.875rem, 0.6rem + 1.2vw, 1.5rem)", color: "#fff" }}>
-              {processMethod.eyebrow}
-            </p>
-            <h2>
-              <GiantHeading lines={[processMethod.heading]} sizeRef={servicesIntro.headingLines} />
-            </h2>
-          </div>
-        </Reveal>
+      <div className="relative home-shell">
+        <SectionHeading
+          id="process-title"
+          eyebrow={processMethod.eyebrow}
+          title={
+            <>
+              <Hl tone="blue">Proven</Hl> workflow, not <Hl tone="magenta">guesswork</Hl>.
+            </>
+          }
+        />
 
         {/* Progress rail — a plain thick bar above the numeral row, not
            threaded through each marker's center like the old small-circle
            version needed; decoupling the two means the numerals below can
            be as big as they want without fighting the rail's alignment. */}
-        <div className="relative mt-10 h-3 px-5">
-          <div className="h-3 rounded-full bg-white/20" aria-hidden="true" />
+        <div data-reveal="block" className="relative mt-10 h-3 px-5">
+          <div className="h-3 rounded-full bg-line" aria-hidden="true" />
           <motion.div
             className="absolute inset-y-0 left-5 rounded-full bg-magenta"
             initial={false}
@@ -178,7 +170,7 @@ export function Process() {
         {/* Numeral row — the step numbers *are* the primary UI here, not
            a label under a small marker, per "more prominent Step 01,
            02..." feedback on the previous circle-based version. */}
-        <div className="relative mt-6 flex justify-between px-5" role="tablist" aria-label="Project process steps">
+        <div data-reveal="block" className="relative mt-6 flex justify-between px-5" role="tablist" aria-label="Project process steps">
           {processMethod.steps.map((s, i) => {
             const isActive = i === activeIndex;
             return (
@@ -197,7 +189,7 @@ export function Process() {
               >
                 <span
                   className={`text-[0.6rem] font-semibold uppercase tracking-[0.15em] transition-colors duration-300 ${
-                    isActive ? "text-white/80" : "text-ink-soft/50 group-hover:text-ink-soft"
+                    isActive ? "text-ink" : "text-ink-soft/70 group-hover:text-ink-soft"
                   }`}
                 >
                   Step
@@ -234,7 +226,7 @@ export function Process() {
         {/* Panel — min-h reserves space for the tallest step (2-card grid),
            so the section doesn't jump height when a step like 02 has only
            one detail card. */}
-        <div className="relative mt-8 min-h-[220px] sm:min-h-[200px]">
+        <div data-reveal="block" className="relative mt-8 min-h-[220px] sm:min-h-[200px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={step.id}
@@ -256,7 +248,7 @@ export function Process() {
                    one line pushed the whole document ~23px wider than the
                    screen (sideways scroll on every homepage section) and cut
                    the sentence off mid-word. It wraps below `lg`. */}
-                <p className="text-center text-sm font-medium leading-relaxed text-white sm:text-xl lg:whitespace-nowrap lg:text-3xl">
+                <p className="text-base font-medium leading-relaxed text-ink sm:text-xl lg:text-2xl">
                   {step.desc}
                 </p>
               </motion.div>
@@ -271,7 +263,7 @@ export function Process() {
                     initial={reduced ? false : { opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2, delay: reduced ? 0 : 0.05 + i * 0.05, ease: EASE }}
-                    className="rounded-2xl bg-paper-2 p-7"
+                    className="rounded-2xl border border-line bg-paper-2 p-7"
                   >
                     <p className="text-base leading-relaxed text-ink-soft sm:text-lg">
                       <span className="font-semibold text-ink">{d.label}: </span>
@@ -284,6 +276,7 @@ export function Process() {
           </AnimatePresence>
         </div>
       </div>
-    </section>
+      </div>
+    </PixelSection>
   );
 }

@@ -42,7 +42,7 @@ export function SelectedWork() {
                 <tr key={project.slug}>
                   <td className="py-4 pr-4 align-top">
                     <p className="text-sm font-bold text-white">{project.name}</p>
-                    <p className="mt-0.5 text-xs text-white/40">{project.category}</p>
+                    <p className="mt-0.5 text-xs text-white/40">{project.category} · Concept build</p>
                   </td>
                   <td className="py-4 pr-4 align-top text-sm text-white/70">{project.oneLiner}</td>
                   <td className="py-4 pr-4 align-top">

@@ -5,11 +5,11 @@ import { ArrowLeft, ArrowUpRight, Check } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { Accordion } from "@/components/ui/Accordion";
 import { services, getServiceBySlug } from "@/content/services";
-import { siteUrl } from "@/content/siteConfig";
+import { siteUrl, BOOKING_URL } from "@/content/siteConfig";
 import { WebDevServicePage } from "@/components/services/webdev/WebDevServicePage";
 
 const WHY_MATTERPIXEL = [
-  "Senior-led from strategy to final delivery",
+  "Founder-led from strategy to final delivery",
   "Every decision tied to measurable business outcomes",
   "Fast execution without sacrificing craft",
   "One creative partner across design, AI, and development",
@@ -112,7 +112,7 @@ export default async function ServiceDetailPage({
               {service.intro}
             </p>
             <Link
-              href="/contact?tab=booking"
+              href={BOOKING_URL}
               className="btn-brand group mt-8"
             >
               Get a Free Audit
@@ -215,7 +215,7 @@ export default async function ServiceDetailPage({
               Ready to talk {service.title.toLowerCase()}?
             </h2>
             <Link
-              href="/contact?tab=booking"
+              href={BOOKING_URL}
               className="btn-brand btn-on-brand on-blue group mt-8"
             >
               Get a Free Audit

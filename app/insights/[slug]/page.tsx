@@ -5,7 +5,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { getAllPosts, getPostBySlug, slugifyHeading } from "@/lib/posts";
-import { siteUrl } from "@/content/siteConfig";
+import { siteUrl, BOOKING_URL } from "@/content/siteConfig";
 
 const mdxComponents = {
   h2: ({ children, ...props }: React.ComponentProps<"h2">) => (
@@ -200,7 +200,7 @@ export default async function PostPage({
               Got something that matters? Let&rsquo;s build it.
             </h2>
             <Link
-              href="/contact?tab=booking"
+              href={BOOKING_URL}
               className="btn-brand group mt-8"
             >
               Get a Free Audit

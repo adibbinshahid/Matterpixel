@@ -3,38 +3,14 @@
 import { stats } from "@/content/siteConfig";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
-/**
- * Bottom seam (Stats -> ServicesFold): the same hairline grid texture
- * ServicesFold draws behind its own cards, mask-faded to transparent
- * going up — its actual pattern bleeding into this section, not a flat
- * color standing in for it.
- */
-function ServicesBleed() {
-  return (
-    <div
-      className="pointer-events-none absolute inset-x-0 bottom-0 h-32 overflow-hidden"
-      style={{ maskImage: "linear-gradient(to top, black, transparent)", WebkitMaskImage: "linear-gradient(to top, black, transparent)" }}
-      aria-hidden="true"
-    >
-      <div className="absolute inset-0 bg-[#0b0b0d]/70" />
-      <div className="services-grid-bg absolute inset-0 opacity-70" />
-    </div>
-  );
-}
-
-/** Compact chip, not the old tall card — number + label side by side, no
- * desc paragraph (a marquee's items are read at a glance while passing by,
- * not lingered on).
- *
- * Roughly half scale below `sm` (type, padding and gap all step down): at
- * full size only about two chips fit across a phone, so most of the row was
- * a single half-cut capsule. Halved, four to five are in view at once,
- * which is what makes a marquee read as a marquee. Desktop is unchanged. */
+/** Compact chip — number + label side by side, no desc paragraph: a
+ * marquee's items are read at a glance while passing by. Sized so labels
+ * stay legible on a phone while three or four chips still fit across. */
 function StatChip({ stat }: { stat: (typeof stats)[number] }) {
   return (
-    <div className="glass-card flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl px-2.5 py-1.5 sm:gap-3 sm:rounded-2xl sm:px-5 sm:py-3">
-      <span className="text-base font-bold leading-none tracking-tight text-paper sm:text-3xl">{stat.value}</span>
-      <span className="text-[0.55rem] font-semibold uppercase leading-tight tracking-[0.08em] text-paper/75 sm:text-xs">
+    <div className="flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl border border-line bg-paper-2 px-3.5 py-2 sm:gap-3 sm:rounded-2xl sm:px-5 sm:py-3">
+      <span className="font-avenir text-lg font-extrabold leading-none tracking-tight text-ink sm:text-2xl">{stat.value}</span>
+      <span className="text-[0.6875rem] font-semibold uppercase leading-tight tracking-[0.1em] text-ink-soft sm:text-xs">
         {stat.label}
       </span>
     </div>
@@ -80,12 +56,15 @@ function MarqueeRow({ reverse, duration }: { reverse?: boolean; duration: number
 
 export function Stats() {
   return (
-    <section className="relative overflow-hidden bg-blue py-10 sm:py-12" data-nav-scrim="light">
-      {/* Softens the hard cut on the bottom edge of this solid blue section —
-         ServicesFold's own actual grid graphic crossfading inward, not a
-         flat color standing in for it. */}
-      <ServicesBleed />
-      <div className="flex flex-col gap-4">
+    <section className="relative overflow-hidden py-12 sm:py-16" data-nav-scrim="light" aria-label="Track record">
+      {/* Brand-blue band behind the marquee: full strength through the chip
+          rows, fading out above and below into the grid ground, so it
+          lifts the strip without a hard edge. */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[linear-gradient(180deg,rgba(44,75,255,0)_0%,rgba(44,75,255,0.85)_32%,rgba(44,75,255,0.85)_68%,rgba(44,75,255,0)_100%)]"
+      />
+      <div className="relative flex flex-col gap-3 sm:gap-4">
         <MarqueeRow duration={38} />
         <MarqueeRow duration={34} reverse />
       </div>
