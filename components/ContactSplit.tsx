@@ -459,6 +459,8 @@ function FloatingInput({
   autoFocus,
   autoComplete = "on",
   onKeyDown,
+  label,
+  compact,
 }: {
   registration: UseFormRegisterReturn;
   type: string;
@@ -467,6 +469,11 @@ function FloatingInput({
   autoFocus?: boolean;
   autoComplete?: string;
   onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  /** Accessible name — screens with more than one field can't lean on the
+   * headline alone to say what each box is for. */
+  label?: string;
+  /** Tighter box for screens that stack two or three fields. */
+  compact?: boolean;
 }) {
   return (
     <div>
@@ -481,6 +488,7 @@ function FloatingInput({
           // browser/password-manager suggestions are faster than typing.
           autoComplete={autoComplete}
           onKeyDown={onKeyDown}
+          aria-label={label}
           aria-invalid={!!error}
           className={cn(
             // `focus-no-outline` (globals.css) + no focus shadow: nothing
@@ -488,7 +496,8 @@ function FloatingInput({
             // sliced into flat blue bars by the wizard column's
             // overflow-hidden, since the field is exactly as wide as it.
             // Focus reads off the blue border + caret instead.
-            "focus-no-outline peer w-full rounded-2xl border bg-white/10 px-6 py-6 text-xl font-medium text-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] outline-none backdrop-blur-md backdrop-saturate-150 transition-all duration-300 placeholder:font-normal placeholder:text-ink-soft/40",
+            "focus-no-outline peer w-full rounded-2xl border bg-white/10 px-6 font-medium text-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] outline-none backdrop-blur-md backdrop-saturate-150 transition-all duration-300 placeholder:font-normal placeholder:text-ink-soft/40",
+            compact ? "py-4 text-lg" : "py-6 text-xl",
             error ? "border-magenta" : "border-white/15 focus:border-blue",
           )}
         />
@@ -1588,169 +1597,64 @@ function InquiryPanel({ prefill }: { prefill?: string }) {
   );
 }
 
-type BookingStepId =
-  | "fullName"
-  | "email"
-  | "whatsapp"
-  | "company"
-  | "website"
-  | "role"
-  | "auditFocus"
-  | "challenge"
-  | "budget"
-  | "timeline"
-  | "schedule"
-  | "notes";
+type BookingStepId = "schedule" | "contact" | "prepare";
 
 interface BookingStep {
   id: BookingStepId;
-  kind: "text" | "email" | "tel" | "textarea" | "choice" | "multi" | "schedule";
-  /** The schema fields this question owns. Everything is one field except
-   * the schedule step, which collects date + time + zone in one screen. */
+  /** The schema fields this screen owns. */
   fields: (keyof BookingValues)[];
   title: string;
   titleWithName?: (name: string) => string;
   desc: string;
-  placeholder?: string;
-  reviewLabel: string;
-  autoComplete?: string;
-  optional?: boolean;
-  options?: readonly string[];
 }
 
-/** The audit call asks the same qualifying questions as the project wizard
- * before it ever gets to a calendar — a slot is worth booking only once we
- * know who's on the other end and what we'd be auditing. */
+/** Calendar first: the slot is the thing a visitor came here for, so it's
+ * the opening screen, and a call books on slot + name + email alone. The
+ * qualifying questions follow as one optional screen the visitor can skip. */
 const BOOKING_STEPS: BookingStep[] = [
   {
-    id: "fullName",
-    kind: "text",
-    fields: ["fullName"],
-    reviewLabel: "Name",
-    title: "Let's start with your name.",
-    desc: "So we know who we're meeting.",
-    placeholder: "John Smith",
-    autoComplete: "name",
-  },
-  {
-    id: "email",
-    kind: "email",
-    fields: ["email"],
-    reviewLabel: "Email",
-    title: "What's your work email?",
-    titleWithName: (n) => `Nice to meet you, ${n}. What's your work email?`,
-    desc: "Your invite and audit notes land here.",
-    placeholder: "john@company.com",
-    autoComplete: "email",
-  },
-  {
-    id: "whatsapp",
-    kind: "tel",
-    fields: ["whatsapp"],
-    reviewLabel: "WhatsApp",
-    title: "What's your WhatsApp number?",
-    desc: "Optional — handy if the call link ever bounces.",
-    placeholder: "+1 555 000 1234",
-    autoComplete: "tel",
-    optional: true,
-  },
-  {
-    id: "company",
-    kind: "text",
-    fields: ["company"],
-    reviewLabel: "Company",
-    title: "What's your company called?",
-    titleWithName: (n) => `Who do you build for, ${n}?`,
-    desc: "Optional — your company or brand name.",
-    placeholder: "Acme Inc.",
-    autoComplete: "organization",
-    optional: true,
-  },
-  {
-    id: "website",
-    kind: "text",
-    fields: ["website"],
-    reviewLabel: "Website",
-    title: "Which site should we audit?",
-    desc: "Optional — but it's what we review before the call.",
-    placeholder: "acme.com",
-    autoComplete: "url",
-    optional: true,
-  },
-  {
-    id: "role",
-    kind: "choice",
-    fields: ["role"],
-    reviewLabel: "Your role",
-    title: "What's your role?",
-    desc: "Helps us pitch the call at the right level.",
-    options: ROLE_OPTIONS,
-  },
-  {
-    id: "auditFocus",
-    kind: "multi",
-    fields: ["auditFocus"],
-    reviewLabel: "Audit focus",
-    title: "What should we look at?",
-    titleWithName: (n) => `So ${n}, what should we look at?`,
-    desc: "Select all that apply.",
-    options: AUDIT_FOCUS_OPTIONS,
-  },
-  {
-    id: "challenge",
-    kind: "choice",
-    fields: ["challenge"],
-    reviewLabel: "Biggest challenge",
-    title: "What's holding growth back right now?",
-    desc: "Pick the closest match.",
-    options: CHALLENGE_OPTIONS,
-  },
-  {
-    id: "budget",
-    kind: "choice",
-    fields: ["budget"],
-    reviewLabel: "Budget",
-    title: "What budget are you working with?",
-    titleWithName: (n) => `${n}, what budget are you working with?`,
-    desc: "Ballpark is fine — the audit itself stays free.",
-    options: BUDGET_OPTIONS,
-  },
-  {
-    id: "timeline",
-    kind: "choice",
-    fields: ["timeline"],
-    reviewLabel: "Timeline",
-    title: "When would you want to start?",
-    desc: "If we find something on the call, how soon could you act?",
-    options: TIMELINE_OPTIONS,
-  },
-  {
     id: "schedule",
-    kind: "schedule",
     fields: ["slotUtc", "preferredDate", "preferredTime", "timeZone"],
-    reviewLabel: "Your slot",
-    title: "Pick your slot.",
-    titleWithName: (n) => `Nearly there, ${n} — pick your slot.`,
+    title: "Pick a time for your free audit call.",
     // Kept to one line at the card's width — the zone picker sits inside the
-    // scheduler now, so this line no longer has to explain it.
-    desc: `30-min call · ${AVAILABILITY.callsCompact}`,
+    // scheduler, so this line doesn't have to explain it.
+    desc: `30 min · ${AVAILABILITY.callsCompact}`,
   },
   {
-    id: "notes",
-    kind: "textarea",
-    fields: ["notes"],
-    reviewLabel: "Notes",
-    title: "Anything we should know first?",
-    desc: "Optional — context, links, or a specific question.",
-    placeholder: "We just relaunched and traffic dropped…",
-    optional: true,
+    id: "contact",
+    fields: ["fullName", "email"],
+    title: "Who are we meeting?",
+    desc: "Your invite and audit notes land in this inbox.",
+  },
+  {
+    id: "prepare",
+    fields: ["website", "role", "auditFocus", "challenge", "budget", "timeline"],
+    title: "Help us prepare.",
+    titleWithName: (n) => `Help us prepare, ${n}.`,
+    desc: "All optional. Answer what's useful, or skip straight to booking.",
   },
 ];
 
-/** Same contract as `stepIssue` for the inquiry wizard: the message to show
- * for the visible booking question, or null when it's answerable. */
+/** The "Help us prepare" questions, rendered as compact pill rows so all of
+ * them fit on one screen. Single-answer rows toggle off on a second click —
+ * nothing here is required, so an answer has to be retractable. */
+const PREPARE_QUESTIONS: {
+  field: "role" | "auditFocus" | "challenge" | "budget" | "timeline";
+  label: string;
+  options: readonly string[];
+  multi?: boolean;
+}[] = [
+  { field: "role", label: "Your role", options: ROLE_OPTIONS },
+  { field: "auditFocus", label: "What should we look at?", options: AUDIT_FOCUS_OPTIONS, multi: true },
+  { field: "challenge", label: "Biggest challenge", options: CHALLENGE_OPTIONS },
+  { field: "budget", label: "Budget", options: BUDGET_OPTIONS },
+  { field: "timeline", label: "When could you start?", options: TIMELINE_OPTIONS },
+];
+
+/** Same contract as `stepIssue` for the inquiry wizard: the first message to
+ * show for this screen, or null when it can move on. Optional fields pass
+ * when empty because their schemas allow it. */
 function bookingStepIssue(step: BookingStep, values: BookingValues): string | null {
-  if (step.optional && isBookingStepEmpty(step, values)) return null;
   for (const field of step.fields) {
     const schema = bookingFieldSchemas[field as keyof typeof bookingFieldSchemas];
     if (!schema) continue;
@@ -1760,24 +1664,18 @@ function bookingStepIssue(step: BookingStep, values: BookingValues): string | nu
   return null;
 }
 
-function isBookingStepEmpty(step: BookingStep, values: BookingValues): boolean {
-  return step.fields.every((field) => {
-    const v = values[field];
-    if (Array.isArray(v)) return v.length === 0;
-    if (typeof v === "string") return v.trim().length === 0;
-    return v == null;
-  });
+function bookingFieldIssue(field: keyof BookingValues, values: BookingValues): string | null {
+  const v = values[field];
+  if (typeof v !== "string" || !v.trim()) return null;
+  const result = bookingFieldSchemas[field].safeParse(v);
+  return result.success ? null : (result.error.issues[0]?.message ?? "Check this answer.");
 }
 
-function bookingDisplayValue(step: BookingStep, values: BookingValues): string {
-  if (step.id === "schedule") {
-    if (!values.preferredDate || !values.preferredTime) return "—";
-    return `${formatDateKeyLong(values.preferredDate)} · ${formatTimeKey(values.preferredTime)}`;
-  }
-  const v = values[step.fields[0]];
-  if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
-  if (typeof v === "string") return v.trim() ? v : "—";
-  return "—";
+/** The first screen that still needs an answer — where a restored draft
+ * resumes, so a reload never lands past a slot that has since expired. */
+function firstOpenBookingStep(values: BookingValues): number {
+  const index = BOOKING_STEPS.findIndex((s) => bookingStepIssue(s, values));
+  return index < 0 ? BOOKING_STEPS.length - 1 : index;
 }
 
 function BookingPanel() {
@@ -1786,10 +1684,6 @@ function BookingPanel() {
   const [restored, setRestored] = useState(false);
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
-  /** Set when a step was opened from the review grid — Continue then goes
-   * straight back to the summary instead of walking the rest of the wizard
-   * again. */
-  const [returnToReview, setReturnToReview] = useState(false);
   /** Off on mount (and on a restored draft) so the browser never auto-scrolls
    * the page to the field on load — flips on once the visitor actually
    * advances a step. */
@@ -1809,11 +1703,14 @@ function BookingPanel() {
   const values = watch();
 
   // Same draft behaviour as the inquiry wizard — a half-filled call request
-  // survives a reload, question included.
+  // survives a reload. Drafts from the older twelve-question flow carry the
+  // same field names, so they restore as-is; only the step index changed
+  // meaning, which is why it's clamped to the first unanswered screen.
   useEffect(() => {
     const draft = readDraft<BookingValues>(BOOKING_DRAFT_KEY);
     if (draft && !isDraftEmpty(draft.values as Record<string, unknown>)) {
-      const restoredValues = { auditFocus: [], ...draft.values, hp: "" } as BookingValues;
+      const restoredValues = { ...draft.values, hp: "" } as BookingValues;
+      if (!Array.isArray(restoredValues.auditFocus)) restoredValues.auditFocus = [];
       // A slot that has since passed can't be booked. The instant is the one
       // field worth testing — the date/time strings are only its local
       // rendering, so they go with it.
@@ -1824,9 +1721,8 @@ function BookingPanel() {
         restoredValues.preferredTime = "";
       }
       reset(restoredValues);
-      if (typeof draft.step === "number") {
-        setStep(Math.min(Math.max(draft.step, 0), BOOKING_STEPS.length));
-      }
+      const savedStep = typeof draft.step === "number" ? draft.step : 0;
+      setStep(Math.max(0, Math.min(savedStep, firstOpenBookingStep(restoredValues))));
       setRestored(true);
     }
     setDraftLoaded(true);
@@ -1850,12 +1746,10 @@ function BookingPanel() {
     setValue("timeZone", detectTimeZone(), { shouldValidate: false });
   }, [setValue, getValues, draftLoaded]);
 
-  const isReview = step === BOOKING_STEPS.length;
-  const current = BOOKING_STEPS[Math.min(step, BOOKING_STEPS.length - 1)];
+  const current = BOOKING_STEPS[step];
   const currentIssue = bookingStepIssue(current, values);
   const canContinue = !currentIssue;
-  const isSkip = !!current.optional && isBookingStepEmpty(current, values);
-  const visibleIssue = currentIssue && !isBookingStepEmpty(current, values) ? currentIssue : undefined;
+  const isLast = step === BOOKING_STEPS.length - 1;
 
   const displayName = displayNameOf(values.fullName);
   const title = displayName ? (current.titleWithName?.(displayName) ?? current.title) : current.title;
@@ -1864,59 +1758,51 @@ function BookingPanel() {
     clearDraft(BOOKING_DRAFT_KEY);
     reset({ auditFocus: [] });
     setRestored(false);
-    setReturnToReview(false);
     setDirection(-1);
     setStep(0);
   };
 
-  const goNext = () => {
-    if (!canContinue) return;
-    if (current.id === "website") {
-      const typed = getValues("website");
-      if (typed) {
-        const normalized = normalizeWebsite(typed);
-        if (normalized !== typed) setValue("website", normalized, { shouldValidate: false });
-      }
-    }
-    setDirection(1);
-    setAutoFocusStep(true);
-    if (returnToReview) {
-      setReturnToReview(false);
-      setStep(BOOKING_STEPS.length);
-      return;
-    }
-    setStep((s) => Math.min(s + 1, BOOKING_STEPS.length));
+  const normalizeSite = () => {
+    const typed = getValues("website");
+    if (!typed) return;
+    const normalized = normalizeWebsite(typed);
+    if (normalized !== typed) setValue("website", normalized, { shouldValidate: false });
   };
-  const goBack = () => {
-    setDirection(-1);
-    setAutoFocusStep(true);
-    if (returnToReview) {
-      setReturnToReview(false);
-      setStep(BOOKING_STEPS.length);
-      return;
-    }
-    setStep((s) => Math.max(s - 1, 0));
-  };
-  /** Review-screen edit: reopen that question, then come straight back. */
-  const editStep = (id: BookingStepId) => {
-    const index = BOOKING_STEPS.findIndex((s) => s.id === id);
-    if (index < 0) return;
-    setReturnToReview(true);
-    setDirection(-1);
+
+  const goTo = (index: number) => {
+    setDirection(index > step ? 1 : -1);
     setAutoFocusStep(true);
     setStep(index);
   };
-  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      goNext();
-    }
+  const goNext = () => {
+    if (!canContinue || isLast) return;
+    goTo(step + 1);
   };
-  const toggleFocus = (option: string) => {
-    const list = (getValues("auditFocus") as string[] | undefined) ?? [];
-    setValue("auditFocus", list.includes(option) ? list.filter((x) => x !== option) : [...list, option], {
-      shouldValidate: true,
-    });
+  const goBack = () => {
+    if (step > 0) goTo(step - 1);
+  };
+  /** Enter on name jumps to email; Enter on the last field of a screen
+   * moves on. The prepare screen never submits on Enter — booking is an
+   * explicit click. */
+  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (current.id === "contact" && e.currentTarget.name === "fullName") {
+      document.getElementById("email-wiz")?.focus();
+      return;
+    }
+    if (current.id === "prepare") normalizeSite();
+    else goNext();
+  };
+  const pick = (field: (typeof PREPARE_QUESTIONS)[number]["field"], option: string, multi?: boolean) => {
+    if (multi) {
+      const list = (getValues("auditFocus") as string[] | undefined) ?? [];
+      setValue("auditFocus", list.includes(option) ? list.filter((x) => x !== option) : [...list, option], {
+        shouldValidate: true,
+      });
+      return;
+    }
+    setValue(field as "role", getValues(field as "role") === option ? "" : option, { shouldValidate: true });
   };
 
   const onSubmit = async (values: BookingValues) => {
@@ -1925,7 +1811,7 @@ function BookingPanel() {
       const res = await fetch("/api/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, website: values.website ? normalizeWebsite(values.website) : "" }),
       });
       if (!res.ok) throw new Error("Request failed");
       setStatus("success");
@@ -1937,13 +1823,31 @@ function BookingPanel() {
     }
   };
 
-  /** Send is only reachable from the review screen, so a rejected field
-   * reopens its question rather than dumping the visitor at step one. */
+  /** A rejected field reopens the screen it lives on rather than failing
+   * silently on the last one. */
   const onInvalid = (formErrors: FieldErrors<BookingValues>) => {
     const firstKey = Object.keys(formErrors)[0];
-    const failing = BOOKING_STEPS.find((s) => (s.fields as string[]).includes(firstKey));
-    if (failing) editStep(failing.id);
+    const failing = BOOKING_STEPS.findIndex((s) => (s.fields as string[]).includes(firstKey));
+    if (failing >= 0 && failing !== step) goTo(failing);
   };
+
+  /** Skip means skip: whatever was half-picked on the prepare screen is
+   * cleared before booking, so the email never carries answers the visitor
+   * chose not to give. */
+  const skipAndBook = () => {
+    setValue("website", "");
+    setValue("role", "");
+    setValue("auditFocus", []);
+    setValue("challenge", "");
+    setValue("budget", "");
+    setValue("timeline", "");
+    void handleSubmit(onSubmit, onInvalid)();
+  };
+
+  const slotLabel =
+    values.preferredDate && values.preferredTime
+      ? `${formatDateKeyLong(values.preferredDate)} · ${formatTimeKey(values.preferredTime)}`
+      : null;
 
   return (
     <form
@@ -1967,16 +1871,17 @@ function BookingPanel() {
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue text-white">
             <Check className="h-6 w-6" strokeWidth={2.5} />
           </span>
-          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Call requested.</h2>
+          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Free audit call (30 min) requested.</h2>
           <p className="max-w-xs text-sm text-ink-soft">
             We reply within 12 hours to confirm your slot and send a Google Meet link.
           </p>
         </div>
-      ) : !isReview ? (
+      ) : (
         <>
           <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
             <span className="text-[0.7rem] font-bold uppercase tracking-wide text-ink-soft">
               Step {step + 1} of {BOOKING_STEPS.length}
+              {isLast && " · optional"}
             </span>
             {restored && (
               <span className="flex items-center gap-2 text-[0.7rem] font-semibold text-ink-soft">
@@ -1991,6 +1896,33 @@ function BookingPanel() {
               </span>
             )}
           </div>
+
+          {/* The slot rides along once it's picked: it's the one thing the
+             visitor is really confirming, so it stays in view (and
+             changeable) on every later screen instead of on a review page. */}
+          {step > 0 && slotLabel && (
+            <div className="relative z-10 mt-3 flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-blue/40 bg-blue/10 px-4 py-2.5">
+              <div className="min-w-0">
+                <p className="text-[0.6rem] font-bold uppercase tracking-[0.08em] text-blue">
+                  Free audit call (30 min)
+                </p>
+                <p className="truncate text-[0.9rem] font-extrabold tracking-tight text-ink">{slotLabel}</p>
+                {values.timeZone && (
+                  <p className="truncate text-[0.7rem] font-semibold text-ink-soft">
+                    {values.timeZone.replace(/_/g, " ")} ({zoneOffsetLabel(values.timeZone)})
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => goTo(0)}
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue/25 px-3 py-1.5 text-[0.7rem] font-bold text-ink transition-colors hover:bg-blue/40"
+              >
+                <Pencil className="h-3 w-3" />
+                Change
+              </button>
+            </div>
+          )}
 
           {/* overflow-x-hidden is load-bearing, not decoration: `overflow-y:
              auto` alone makes the x axis compute to `auto` as well, and the
@@ -2008,88 +1940,34 @@ function BookingPanel() {
                 exit="exit"
                 className={cn(
                   "flex flex-col gap-6 py-6",
-                  // The schedule screen carries three controls at once: it
-                  // keeps a tighter rhythm than the one-field questions, and
-                  // grows downward from the top (centering a screen taller
-                  // than the pane pushes its headline up under the step
-                  // counter) while the parent scrolls it.
-                  current.kind === "schedule"
-                    ? "justify-start"
-                    : "h-full justify-center sm:gap-10 sm:py-10",
+                  // The schedule and prepare screens carry several controls
+                  // at once: they keep a tighter rhythm and grow downward
+                  // from the top (centering a screen taller than the pane
+                  // pushes its headline up under the step counter) while the
+                  // parent scrolls them.
+                  current.id === "contact" ? "h-full justify-center sm:gap-10 sm:py-10" : "justify-start",
                 )}
               >
                 <div>
                   <h2
                     className={cn(
                       "font-extrabold leading-[1.12] tracking-tight text-ink",
-                      current.kind === "schedule"
-                        ? "text-[1.5rem] sm:text-[1.8rem]"
-                        : "text-[1.9rem] sm:text-[2.35rem]",
+                      current.id === "contact" ? "text-[1.9rem] sm:text-[2.35rem]" : "text-[1.5rem] sm:text-[1.8rem]",
                     )}
                   >
                     {title}
                   </h2>
-                  <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-soft sm:text-base">
-                    {current.desc}
-                  </p>
+                  <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-soft sm:text-base">{current.desc}</p>
                 </div>
 
-                {(current.kind === "text" || current.kind === "email" || current.kind === "tel") && (
-                  <FloatingInput
-                    registration={register(current.fields[0] as "fullName")}
-                    type={current.kind}
-                    placeholder={current.placeholder ?? ""}
-                    error={visibleIssue ?? (errors[current.fields[0]]?.message as string | undefined)}
-                    autoFocus={autoFocusStep}
-                    autoComplete={current.autoComplete}
-                    onKeyDown={handleEnter}
-                  />
-                )}
-
-                {current.kind === "textarea" && (
-                  <FloatingTextarea
-                    registration={register(current.fields[0] as "notes")}
-                    placeholder={current.placeholder ?? ""}
-                    error={visibleIssue ?? (errors[current.fields[0]]?.message as string | undefined)}
-                    autoFocus={autoFocusStep}
-                  />
-                )}
-
-                {current.kind === "choice" && (
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {current.options?.map((opt) => (
-                      <OptionPill
-                        key={opt}
-                        label={opt}
-                        selected={values[current.fields[0]] === opt}
-                        onClick={() => setValue(current.fields[0] as "role", opt, { shouldValidate: true })}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {current.kind === "multi" && (
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {current.options?.map((opt) => (
-                      <OptionPill
-                        key={opt}
-                        label={opt}
-                        selected={Array.isArray(values.auditFocus) && values.auditFocus.includes(opt)}
-                        onClick={() => toggleFocus(opt)}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {current.kind === "schedule" && (
+                {current.id === "schedule" && (
                   <SchedulePicker
                     timeZone={values.timeZone || detectTimeZone()}
                     onTimeZoneChange={(tz) => {
                       setValue("timeZone", tz, { shouldValidate: true });
                       // Same instant, new zone — so what the visitor "sees"
-                      // has to be restated, or the review screen would quote
-                      // the slot's old wall-clock reading against the new
-                      // zone name.
+                      // has to be restated, or later screens would quote the
+                      // slot's old wall-clock reading against the new zone.
                       const iso = getValues("slotUtc");
                       if (!iso) return;
                       const instant = new Date(iso);
@@ -2100,7 +1978,7 @@ function BookingPanel() {
                     slotUtc={values.slotUtc ?? ""}
                     // The instant is what's booked; the date/time strings are
                     // the visitor's own reading of it, kept alongside so the
-                    // review screen and the emails can quote what they saw.
+                    // summary and the emails can quote what they saw.
                     onSelect={({ slotUtc, dateKey, timeKey }) => {
                       setValue("slotUtc", slotUtc, { shouldValidate: true });
                       setValue("preferredDate", dateKey, { shouldValidate: true });
@@ -2108,133 +1986,134 @@ function BookingPanel() {
                     }}
                   />
                 )}
+
+                {current.id === "contact" && (
+                  <div className="flex flex-col gap-3">
+                    <FloatingInput
+                      registration={register("fullName")}
+                      type="text"
+                      label="Your name"
+                      placeholder="Your name"
+                      error={bookingFieldIssue("fullName", values) ?? errors.fullName?.message}
+                      autoFocus={autoFocusStep}
+                      autoComplete="name"
+                      onKeyDown={handleEnter}
+                      compact
+                    />
+                    <FloatingInput
+                      registration={register("email")}
+                      type="email"
+                      label="Work email"
+                      placeholder="you@company.com"
+                      error={bookingFieldIssue("email", values) ?? errors.email?.message}
+                      autoComplete="email"
+                      onKeyDown={handleEnter}
+                      compact
+                    />
+                  </div>
+                )}
+
+                {current.id === "prepare" && (
+                  <div className="flex flex-col gap-4">
+                    <div>
+                      <p className="mb-1.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
+                        Site to audit
+                      </p>
+                      <FloatingInput
+                        registration={register("website", { onBlur: normalizeSite })}
+                        type="text"
+                        label="Site to audit"
+                        placeholder="acme.com"
+                        error={bookingFieldIssue("website", values) ?? errors.website?.message}
+                        autoComplete="url"
+                        onKeyDown={handleEnter}
+                        compact
+                      />
+                    </div>
+                    {PREPARE_QUESTIONS.map((q) => (
+                      <div key={q.field} role="group" aria-label={q.label}>
+                        <p className="mb-1.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
+                          {q.label}
+                          {q.multi && <span className="ml-1 normal-case tracking-normal">· pick any</span>}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {q.options.map((opt) => {
+                            const v = values[q.field];
+                            const selected = Array.isArray(v) ? v.includes(opt) : v === opt;
+                            return (
+                              <ReviewPill
+                                key={opt}
+                                label={opt}
+                                selected={selected}
+                                onClick={() => pick(q.field, opt, q.multi)}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </motion.div>
             </AnimatePresence>
           </div>
 
-          <div className="relative z-10 flex items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={goBack}
-              disabled={step === 0 && !returnToReview}
-              className={cn(
-                "btn-outline group min-w-[10.5rem]",
-                step === 0 && !returnToReview && "invisible",
-              )}
-            >
-              <ChevronLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
-              {returnToReview ? "Back to review" : "Previous"}
-            </button>
-            <button
-              type="button"
-              onClick={goNext}
-              disabled={!canContinue}
-              className={cn(
-                // Skip is the quiet exit, so it takes the secondary pill;
-                // Continue is the step's real action and takes the same
-                // primary pill every conversion action on the site uses.
-                // Exclusive, never stacked — .btn-outline's `background`
-                // shorthand would wipe .btn-brand's gradient.
-                isSkip || !canContinue ? "btn-outline" : "btn-brand",
-                "group min-w-[10.5rem]",
-                !canContinue && "cursor-not-allowed",
-              )}
-            >
-              {returnToReview ? "Save" : isSkip ? "Skip" : "Continue"}
-              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-            </button>
-          </div>
+          {isLast ? (
+            <div className="relative z-10 flex shrink-0 flex-col gap-1 pt-2">
+              <SubmitRow
+                isSubmitting={isSubmitting}
+                status={status}
+                label="Book call"
+                successMsg="Request sent — we'll confirm your slot shortly."
+              />
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  className="focus-no-outline inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:text-ink focus-visible:text-ink"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={skipAndBook}
+                  disabled={isSubmitting}
+                  className="focus-no-outline rounded-full px-2 py-1.5 text-xs font-semibold text-ink underline decoration-ink-soft/40 underline-offset-4 transition-colors hover:decoration-ink focus-visible:decoration-ink disabled:opacity-50"
+                >
+                  Skip &amp; book
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="relative z-10 flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={goBack}
+                disabled={step === 0}
+                className={cn("btn-outline group min-w-[10.5rem]", step === 0 && "invisible")}
+              >
+                <ChevronLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={!canContinue}
+                className={cn(
+                  // Exclusive, never stacked — .btn-outline's `background`
+                  // shorthand would wipe .btn-brand's gradient.
+                  !canContinue ? "btn-outline" : "btn-brand",
+                  "group min-w-[10.5rem]",
+                  !canContinue && "cursor-not-allowed",
+                )}
+              >
+                Continue
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+              </button>
+            </div>
+          )}
         </>
-      ) : (
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col justify-center">
-          <div className="shrink-0">
-            <h2 className="text-2xl font-extrabold tracking-tight text-ink sm:text-[1.7rem]">
-              Here&rsquo;s your call.
-            </h2>
-            <p className="mt-1.5 text-sm text-ink-soft">
-              Check the details, then send it — we&rsquo;ll confirm the slot by email.
-            </p>
-          </div>
-
-          {/* The slot gets its own row above the answer grid: it's the one
-             thing on this screen the visitor is really confirming. */}
-          <div className="mt-3 flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-blue/40 bg-blue/10 px-4 py-3">
-            <div className="min-w-0">
-              <p className="text-[0.6rem] font-bold uppercase tracking-[0.08em] text-blue">
-                30-min audit call
-              </p>
-              <p className="truncate text-[0.95rem] font-extrabold tracking-tight text-ink">
-                {values.preferredDate ? formatDateKeyLong(values.preferredDate) : "—"}
-                <span className="mx-1.5 text-ink-soft">·</span>
-                {values.preferredTime ? formatTimeKey(values.preferredTime) : "—"}
-              </p>
-              <p className="truncate text-[0.7rem] font-semibold text-ink-soft">
-                {values.timeZone
-                  ? `${values.timeZone.replace(/_/g, " ")} (${zoneOffsetLabel(values.timeZone)})`
-                  : "—"}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => editStep("schedule")}
-              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue/25 px-3 py-1.5 text-[0.7rem] font-bold text-ink transition-colors hover:bg-blue/40"
-            >
-              <Pencil className="h-3 w-3" />
-              Change
-            </button>
-          </div>
-
-          {/* Answers are edited by reopening their own question (the schedule
-             step needs its full screen, and once one cell works that way, all
-             of them should) — hence no inline editors here. */}
-          <div className="my-3 max-h-full min-h-0 overflow-y-auto rounded-2xl border border-white/15 bg-white/10 p-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] backdrop-blur-md backdrop-saturate-150">
-            <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
-              {BOOKING_STEPS.filter((s) => s.id !== "schedule").map((s) => {
-                const fieldError =
-                  bookingStepIssue(s, values) ?? (errors[s.fields[0]]?.message as string | undefined);
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => editStep(s.id)}
-                    className={cn(
-                      "group/cell relative flex min-w-0 flex-col gap-0.5 rounded-xl px-3 py-2 text-left transition-colors hover:bg-white/[0.07] focus-visible:bg-white/[0.07]",
-                      s.kind === "textarea" && "sm:col-span-2 lg:col-span-3",
-                      fieldError && "ring-1 ring-inset ring-magenta/60",
-                    )}
-                  >
-                    <span className="flex items-center gap-1.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
-                      {s.reviewLabel}
-                      <Pencil className="h-2.5 w-2.5 shrink-0 text-blue opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-visible/cell:opacity-100" />
-                    </span>
-                    <span
-                      className={cn(
-                        "text-[0.82rem] font-semibold leading-snug",
-                        fieldError ? "text-magenta" : "text-ink",
-                        s.kind === "textarea" || s.kind === "multi" ? "line-clamp-2" : "truncate",
-                      )}
-                    >
-                      {fieldError ?? bookingDisplayValue(s, values)}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="shrink-0">
-            <p className="mb-2 text-center text-[0.7rem] font-semibold text-ink-soft">
-              A Google Meet link is emailed once we confirm your slot.
-            </p>
-            <SubmitRow
-              isSubmitting={isSubmitting}
-              status={status}
-              label="Request Call"
-              successMsg="Request sent — we'll confirm your slot shortly."
-              onStartOver={startOver}
-            />
-          </div>
-        </div>
       )}
     </form>
   );

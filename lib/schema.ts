@@ -144,7 +144,8 @@ export const ROLE_OPTIONS = [
 
 /** Split out of the `bookingSchema` object for the same reason as
  * `inquiryFields` — the booking wizard validates one answer at a time
- * against the exact rules the server will re-run on submit. */
+ * against the exact rules the server will re-run on submit. Required:
+ * the slot, name and email. Everything else is optional context. */
 const bookingFields = z.object({
   fullName: z.string().trim().min(2, "Tell us your name.").max(100, "That name is too long."),
   email: z.string().trim().email("Enter a valid email."),
@@ -161,11 +162,14 @@ const bookingFields = z.object({
     .max(300, "That URL is too long.")
     .optional()
     .refine((v) => !v || isValidWebsite(normalizeWebsite(v)), "Enter a valid website, e.g. acme.com"),
-  role: z.string().min(1, "Pick the closest role."),
-  auditFocus: z.array(z.string()).min(1, "Pick at least one focus area."),
-  challenge: z.string().min(1, "Pick the closest one."),
-  budget: z.string().min(1, "Pick a budget range."),
-  timeline: z.string().min(1, "Pick a timeline."),
+  // "Help us prepare" answers — all optional, so a call books on slot +
+  // name + email alone. Capped rather than enum-checked: the wizard only
+  // offers the listed options, and an odd value is harmless in an email.
+  role: z.string().max(100).optional(),
+  auditFocus: z.array(z.string().max(100)).max(20).optional(),
+  challenge: z.string().max(100).optional(),
+  budget: z.string().max(100).optional(),
+  timeline: z.string().max(100).optional(),
   // The booked instant — the only unambiguous half of a cross-timezone
   // appointment. `preferredDate`/`preferredTime` are what the visitor saw in
   // `timeZone` and travel with it for the confirmation email.

@@ -105,17 +105,18 @@ export async function POST(request: Request) {
     const resend = getResendClient();
 
     const { html, text } = renderConfirmationEmail({
-      heading: "We've got your call request.",
+      heading: "We've got your free audit call (30 min) request.",
       intro:
         "Thanks for reaching us — your query is very important to us. We'll be reverting to you in a very short time.",
       rows: [
+        ["Call", "Free audit call (30 min)"],
         ["Name", data.fullName],
         ["Email", data.email],
         ["WhatsApp", data.whatsapp],
         ["Company", data.company],
         ["Website", data.website],
         ["Role", data.role],
-        ["Audit Focus", data.auditFocus.join(", ")],
+        ["Audit Focus", data.auditFocus?.join(", ")],
         ["Biggest Challenge", data.challenge],
         ["Budget", data.budget],
         ["Timeline", data.timeline],
@@ -123,7 +124,7 @@ export async function POST(request: Request) {
         ["Slot (UTC)", slotUtcLabel],
         ["Notes", data.notes],
       ],
-      closing: `${AVAILABILITY.callsLong} We'll confirm shortly and send over a Google Meet link.`,
+      closing: `${AVAILABILITY.callsLong} We'll confirm your free audit call (30 min) shortly and send over a Google Meet link.`,
     });
 
     const confirmation = await resend.emails.send({
@@ -131,7 +132,7 @@ export async function POST(request: Request) {
       to: data.email,
       cc: CONFIRMATION_CC_EMAIL,
       replyTo: FROM_ADDRESS,
-      subject: `Thank You for Reaching Out, ${toTitleCase(data.fullName)} | Matterpixel`,
+      subject: `Your free audit call (30 min), ${toTitleCase(data.fullName)} | Matterpixel`,
       html,
       text,
     });
