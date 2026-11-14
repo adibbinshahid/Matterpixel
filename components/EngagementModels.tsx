@@ -258,7 +258,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
         </div>
 
         <div data-reveal="block" className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4 border-t border-line pt-6">
-          <CtaLink cta="book" />
+          <CtaLink section="engagement" cta="book" />
           <p className="text-base text-ink-soft">Not sure which fits? We&rsquo;ll recommend one on the call.</p>
         </div>
       </div>

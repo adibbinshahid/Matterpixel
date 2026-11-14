@@ -33,8 +33,8 @@ export function Hero({ service }: { service: Service }) {
             </h1>
             <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">{service.intro}</p>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <CtaLink cta="book" />
-              <CtaLink cta="quote" variant="text" className="text-ink" />
+              <CtaLink section="hero" cta="book" />
+              <CtaLink section="hero" cta="quote" variant="text" className="text-ink" />
             </div>
             <p className="mt-4 text-sm text-ink-soft">{service.processNote}</p>
           </Reveal>

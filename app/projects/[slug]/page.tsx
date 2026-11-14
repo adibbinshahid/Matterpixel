@@ -169,8 +169,8 @@ export default async function CaseStudyPage({
               Same standard, your name on it — scoped against your problem instead of ours.
             </p>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-              <CtaLink cta="book" />
-              <CtaLink cta="quote" variant="text" className="text-paper" />
+              <CtaLink section="closing" cta="book" />
+              <CtaLink section="closing" cta="quote" variant="text" className="text-paper" />
             </div>
           </Reveal>
         </div>

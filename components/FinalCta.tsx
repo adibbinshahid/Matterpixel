@@ -21,8 +21,8 @@ export function FinalCta() {
         {/* On /services the visitor is pricing a build, so the quote leads
            and the audit call is the quieter alternative. */}
         <div className="flex shrink-0 flex-wrap items-center justify-center gap-x-6 gap-y-3">
-          <CtaLink cta="quote" className="btn-on-brand on-magenta" />
-          <CtaLink cta="book" variant="text" className="text-paper" />
+          <CtaLink section="closing" cta="quote" className="btn-on-brand on-magenta" />
+          <CtaLink section="closing" cta="book" variant="text" className="text-paper" />
         </div>
         <p className="max-w-2xl text-center leading-snug text-paper lg:text-right">
           <span className="block text-2xl font-bold sm:text-3xl">Let&rsquo;s build your next win.</span>

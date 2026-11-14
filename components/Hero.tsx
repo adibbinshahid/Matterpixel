@@ -155,8 +155,8 @@ export function Hero() {
           className="hero-rise mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4"
           style={{ animationDelay: "0.4s" }}
         >
-          <CtaLink cta="book" />
-          <CtaLink cta="quote" variant="text" className="text-white" />
+          <CtaLink section="hero" cta="book" />
+          <CtaLink section="hero" cta="quote" variant="text" className="text-white" />
         </div>
 
         {/* The stack, monochrome and small, over a hairline. */}

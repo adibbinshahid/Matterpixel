@@ -3,6 +3,7 @@ import { SiWhatsapp } from "react-icons/si";
 import { PixelSection } from "@/components/home/PixelSection";
 import { Hl } from "@/components/home/Hl";
 import { whiteLabel, ctas } from "@/content/siteConfig";
+import { PartnerLink } from "@/components/CtaLink";
 
 /**
  * Agency / white-label pitch: a full-bleed magenta section before the FAQ,
@@ -47,7 +48,8 @@ export function WhiteLabel() {
               the same short template pre-typed. On magenta the magenta
               primary would vanish: the pill inverts to white. */}
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <a
+            <PartnerLink
+              channel="whatsapp"
               href={ctas.partner.whatsapp.href}
               target="_blank"
               rel="noopener noreferrer"
@@ -56,11 +58,11 @@ export function WhiteLabel() {
               <SiWhatsapp className="h-4 w-4" aria-hidden="true" />
               {ctas.partner.whatsapp.label}
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </a>
-            <a href={ctas.partner.email.href} className="btn-outline group w-fit">
+            </PartnerLink>
+            <PartnerLink channel="email" href={ctas.partner.email.href} className="btn-outline group w-fit">
               <Mail className="h-4 w-4" aria-hidden="true" />
               {ctas.partner.email.label}
-            </a>
+            </PartnerLink>
           </div>
         </div>
       </div>

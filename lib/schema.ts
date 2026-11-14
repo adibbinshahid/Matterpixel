@@ -93,6 +93,8 @@ const inquiryFields = z.object({
   /** What the visitor picked before landing here — a package or a built
    * stack — as the plain-text summary shown on the form. */
   selection: z.string().trim().max(2000).optional(),
+  /** Which CTA sent the visitor (`?src=`, e.g. `services-stack`). */
+  src: z.string().trim().max(100).optional(),
   // Honeypot — real visitors never see or fill this field (see InquiryForm).
   // Any value here means a bot filled every input it could find.
   hp: z.string().max(200).optional(),
@@ -170,6 +172,8 @@ const bookingFields = z.object({
   preferredTime: z.string().min(1, "Pick a time."),
   timeZone: z.string().min(1, "Pick a time zone."),
   notes: z.string().trim().max(1000, "Keep it under 1000 characters.").optional(),
+  /** Which CTA sent the visitor (`?src=`, e.g. `home-hero`). */
+  src: z.string().trim().max(100).optional(),
   // Honeypot — same trick as the inquiry form.
   hp: z.string().max(200).optional(),
 });

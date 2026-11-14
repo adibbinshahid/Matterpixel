@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { ctaHref, ctas } from "@/content/siteConfig";
 import { CtaLink } from "@/components/CtaLink";
+import { sourceFor, trackEvent } from "@/lib/analytics";
 
 const MIN = 10;
 const MAX = 2000;
@@ -18,6 +19,7 @@ const MAX = 2000;
  */
 export function CustomQuote() {
   const router = useRouter();
+  const src = sourceFor(usePathname(), "custom");
   const [text, setText] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +30,8 @@ export function CustomQuote() {
       setError("A sentence or two helps us quote it properly.");
       return;
     }
-    router.push(ctaHref("quote", { details: value }));
+    trackEvent("cta_click", { cta: "quote", src });
+    router.push(ctaHref("quote", { details: value, src }));
   };
 
   return (
@@ -80,7 +83,7 @@ export function CustomQuote() {
               {ctas.quote.label}
               <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </button>
-            <CtaLink cta="book" variant="text" className="text-ink" />
+            <CtaLink section="custom" cta="book" variant="text" className="text-ink" />
           </div>
         </div>
       </form>

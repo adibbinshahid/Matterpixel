@@ -144,8 +144,8 @@ export function FoundingRoster() {
               {/* The offer here is access to Adib, not a discount, so the
                   button says exactly that. */}
               <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-                <CtaLink cta="book" label={ctas.book.withAdib} className="btn-on-brand on-magenta w-fit" />
-                <CtaLink cta="quote" variant="text" className="text-paper" />
+                <CtaLink section="roster" cta="book" label={ctas.book.withAdib} className="btn-on-brand on-magenta w-fit" />
+                <CtaLink section="roster" cta="quote" variant="text" className="text-paper" />
               </div>
 
               <p className="mt-5 max-w-xs text-sm leading-relaxed text-paper/70">

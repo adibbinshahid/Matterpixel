@@ -113,8 +113,8 @@ export default async function ServiceDetailPage({
               {service.intro}
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <CtaLink cta="book" />
-              <CtaLink cta="quote" variant="text" className="text-ink" />
+              <CtaLink section="hero" cta="book" />
+              <CtaLink section="hero" cta="quote" variant="text" className="text-ink" />
             </div>
           </Reveal>
         </div>
@@ -213,8 +213,8 @@ export default async function ServiceDetailPage({
               Ready to talk {service.title.toLowerCase()}?
             </h2>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-              <CtaLink cta="book" className="btn-on-brand on-blue" />
-              <CtaLink cta="quote" variant="text" className="text-paper" />
+              <CtaLink section="closing" cta="book" className="btn-on-brand on-blue" />
+              <CtaLink section="closing" cta="quote" variant="text" className="text-paper" />
             </div>
           </Reveal>
         </div>

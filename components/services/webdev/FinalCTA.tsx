@@ -13,8 +13,8 @@ export function FinalCTA() {
             <GiantHeading lines={["Got something", "worth building?"]} maxFontSize={56} />
           </h2>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-            <CtaLink cta="book" className="btn-on-brand on-blue" />
-            <CtaLink cta="quote" variant="text" className="text-paper" />
+            <CtaLink section="closing" cta="book" className="btn-on-brand on-blue" />
+            <CtaLink section="closing" cta="quote" variant="text" className="text-paper" />
           </div>
         </Reveal>
       </div>

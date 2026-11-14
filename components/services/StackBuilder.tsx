@@ -332,7 +332,7 @@ export function StackBuilder() {
             {details}
           </div>
 
-          <CtaLink
+          <CtaLink section="stack"
             cta="quote"
             params={{ [PARAM]: ids.join(",") }}
             aria-disabled={count === 0}
@@ -340,7 +340,7 @@ export function StackBuilder() {
             className={`mt-3 w-full justify-center lg:mt-4 ${count === 0 ? "pointer-events-none opacity-50" : ""}`}
             tabIndex={count === 0 ? -1 : undefined}
           />
-          <CtaLink cta="book" variant="text" className="w-full justify-center text-sm text-ink" />
+          <CtaLink section="stack" cta="book" variant="text" className="w-full justify-center text-sm text-ink" />
         </aside>
       </div>
     </div>

@@ -123,6 +123,7 @@ export async function POST(request: Request) {
         ["Preferred Slot", slotLocal],
         ["Slot (UTC)", slotUtcLabel],
         ["Notes", data.notes],
+        ["Source", data.src],
       ],
       closing: `${AVAILABILITY.callsLong} We'll confirm your free audit call (30 min) shortly and send over a Google Meet link.`,
     });
@@ -145,7 +146,7 @@ export async function POST(request: Request) {
       );
     }
 
-    logger.info("book.received", { ip, email: data.email, messageId: confirmation.data?.id });
+    logger.info("book.received", { ip, email: data.email, src: data.src, messageId: confirmation.data?.id });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

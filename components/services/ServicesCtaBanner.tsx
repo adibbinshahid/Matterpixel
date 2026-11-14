@@ -33,7 +33,7 @@ export function ServicesCtaBanner({ className }: { className?: string }) {
             </div>
           </div>
 
-          <CtaLink cta="quote" className="btn-on-brand on-blue w-fit" />
+          <CtaLink section="cta-banner" cta="quote" className="btn-on-brand on-blue w-fit" />
         </div>
 
         <div

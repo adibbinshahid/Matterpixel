@@ -206,7 +206,7 @@ export function FounderFeature() {
               {/* Conversion action, same as every other "book a call" link
                   on the site — so it takes the primary pill, not the
                   outlined secondary it was using. */}
-              <CtaLink cta="book" label={ctas.book.withAdib} className="mt-8 w-fit lg:mt-6" />
+              <CtaLink section="founder" cta="book" label={ctas.book.withAdib} className="mt-8 w-fit lg:mt-6" />
             </Reveal>
           </div>
         </div>

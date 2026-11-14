@@ -74,6 +74,7 @@ export async function POST(request: Request) {
         ["Project Type", data.projectTypes.join(", ")],
         ["Budget", data.budget],
         ["Project Details", data.projectDetails],
+        ["Source", data.src],
       ],
       closing: "We'll review your requirements and reply within 12 hours.",
     });
@@ -96,7 +97,7 @@ export async function POST(request: Request) {
       );
     }
 
-    logger.info("contact.received", { ip, email: data.workEmail, messageId: confirmation.data?.id });
+    logger.info("contact.received", { ip, email: data.workEmail, src: data.src, messageId: confirmation.data?.id });
 
     return NextResponse.json({ ok: true });
   } catch (error) {

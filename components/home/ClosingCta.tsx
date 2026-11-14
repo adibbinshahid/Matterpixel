@@ -203,8 +203,8 @@ export function ClosingCta() {
             Claim your free audit and allow us to see exactly what&rsquo;s holding your growth back.
           </p>
           <div data-reveal="block" className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <CtaLink cta="book" className="w-fit" />
-            <CtaLink cta="quote" variant="text" className="text-white" />
+            <CtaLink section="closing" cta="book" className="w-fit" />
+            <CtaLink section="closing" cta="quote" variant="text" className="text-white" />
           </div>
         </div>
       </div>

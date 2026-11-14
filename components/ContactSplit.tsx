@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm, type FieldErrors, type UseFormRegisterReturn } from "react-hook-form";
+import { cleanSrc, trackEvent } from "@/lib/analytics";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence, type Variants } from "motion/react";
 import {
@@ -170,8 +171,22 @@ const TAB_STAGGER_STEP = 0.08;
  * (`?tab=partner` never gets here: next.config redirects it to the
  * homepage's white-label strip.)
  */
-export function ContactSplit({ initialTab, prefill }: { initialTab?: string; prefill?: InquiryPrefill }) {
+export function ContactSplit({
+  initialTab,
+  prefill,
+  src,
+}: {
+  initialTab?: string;
+  prefill?: InquiryPrefill;
+  /** `?src=` from the CTA that linked here, already cleaned. */
+  src?: string;
+}) {
   const [active, setActive] = useState<TabId>(isTabId(initialTab) ? initialTab : DEFAULT_TAB);
+  // Held from the first render: switching tabs rewrites the URL to a bare
+  // `?tab=`, and the page's fresh props would otherwise drop what the
+  // original link carried.
+  const [linkPrefill] = useState(prefill);
+  const [linkSrc] = useState(src);
   const router = useRouter();
   const reduced = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -299,7 +314,7 @@ export function ContactSplit({ initialTab, prefill }: { initialTab?: string; pre
                     exit="exit"
                     className="h-full"
                   >
-                    <InquiryPanel prefill={prefill} />
+                    <InquiryPanel prefill={linkPrefill} src={linkSrc} />
                   </motion.div>
                 )}
                 {active === "booking" && (
@@ -311,7 +326,7 @@ export function ContactSplit({ initialTab, prefill }: { initialTab?: string; pre
                     exit="exit"
                     className="h-full"
                   >
-                    <BookingPanel />
+                    <BookingPanel src={linkSrc} />
                   </motion.div>
                 )}
                 {active === "chat" && (
@@ -1034,6 +1049,7 @@ function sanitizeInquiryDraft(raw: Record<string, unknown>): Partial<InquiryValu
     budget: budget && (BUDGET_OPTIONS as readonly string[]).includes(budget) ? budget : undefined,
     projectDetails: str(raw.projectDetails),
     selection: str(raw.selection),
+    src: cleanSrc(str(raw.src)),
   };
 }
 
@@ -1046,7 +1062,7 @@ function loadInquiryDraft(): { values: Partial<InquiryValues>; step?: number } |
   const draft = current ?? legacy;
   if (!draft) return null;
   const values = sanitizeInquiryDraft(draft.values as Record<string, unknown>);
-  if (isDraftEmpty(values as Record<string, unknown>)) return null;
+  if (isDraftEmpty({ ...values, src: undefined } as Record<string, unknown>)) return null;
   // A legacy step index pointed into a different list of questions.
   return { values, step: current ? draft.step : undefined };
 }
@@ -1133,7 +1149,7 @@ function WizardAmbience() {
   );
 }
 
-function InquiryPanel({ prefill }: { prefill?: InquiryPrefill }) {
+function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string }) {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [stepId, setStepId] = useState<InquiryStepId | "review">("contact");
   const [direction, setDirection] = useState(1);
@@ -1167,6 +1183,7 @@ function InquiryPanel({ prefill }: { prefill?: InquiryPrefill }) {
     ...(prefill?.budget ? { budget: prefill.budget } : {}),
     ...(prefill?.details ? { projectDetails: prefill.details } : {}),
     ...(prefill?.selection ? { selection: prefill.selection } : {}),
+    ...(src ? { src } : {}),
   };
   const linkValuesRef = useRef(linkValues);
   /** The skip set as it stood on mount — what the draft restore resumes
@@ -1230,7 +1247,8 @@ function InquiryPanel({ prefill }: { prefill?: InquiryPrefill }) {
     // hp is dropped, never persisted — a stored honeypot value would come
     // back looking like a bot filled the form.
     const persisted: Partial<InquiryValues> = { ...values, hp: undefined };
-    if (isDraftEmpty(persisted as Record<string, unknown>)) return;
+    // src arrives with the link, not from the visitor — on its own it isn't a draft.
+    if (isDraftEmpty({ ...persisted, src: undefined } as Record<string, unknown>)) return;
     const index = stepId === "review" ? WIZARD_STEPS.length : WIZARD_STEPS.findIndex((s) => s.id === stepId);
     const timer = setTimeout(() => saveDraft(INQUIRY_DRAFT_KEY, persisted, index), 400);
     return () => clearTimeout(timer);
@@ -1239,6 +1257,12 @@ function InquiryPanel({ prefill }: { prefill?: InquiryPrefill }) {
   useEffect(() => () => {
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
   }, []);
+
+  // One event per screen shown, review included.
+  useEffect(() => {
+    if (status === "success") return;
+    trackEvent("contact_step", { tab: "inquiry", step: stepIndex + 1, stepName: stepId });
+  }, [stepId, stepIndex, status]);
 
   const goTo = (target: InquiryStepId | "review", dir: number) => {
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
@@ -1386,6 +1410,7 @@ function InquiryPanel({ prefill }: { prefill?: InquiryPrefill }) {
       });
       if (!res.ok) throw new Error("Request failed");
       setStatus("success");
+      trackEvent("contact_submit", { tab: "inquiry", src: values.src ?? null });
       // Sent — the draft has served its purpose, and leaving it behind would
       // resurrect the whole inquiry on the visitor's next visit.
       clearDraft(INQUIRY_DRAFT_KEY);
@@ -1422,6 +1447,8 @@ function InquiryPanel({ prefill }: { prefill?: InquiryPrefill }) {
       className="relative flex h-full min-h-[26rem] flex-col"
     >
       <WizardAmbience />
+      {/* Which CTA brought the visitor here — rides along to the email. */}
+      <input {...register("src")} type="hidden" />
       {/* Honeypot — hidden from sighted and AT users, real visitors never fill it. */}
       <input
         {...register("hp")}
@@ -1844,7 +1871,7 @@ function firstOpenBookingStep(values: BookingValues): number {
   return index < 0 ? BOOKING_STEPS.length - 1 : index;
 }
 
-function BookingPanel() {
+function BookingPanel({ src }: { src?: string }) {
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [restored, setRestored] = useState(false);
@@ -1864,7 +1891,7 @@ function BookingPanel() {
     formState: { errors, isSubmitting },
   } = useForm<BookingValues>({
     resolver: zodResolver(bookingSchema),
-    defaultValues: { auditFocus: [] },
+    defaultValues: { auditFocus: [], src },
   });
   const values = watch();
 
@@ -1876,6 +1903,8 @@ function BookingPanel() {
     const draft = readDraft<BookingValues>(BOOKING_DRAFT_KEY);
     if (draft && !isDraftEmpty(draft.values as Record<string, unknown>)) {
       const restoredValues = { ...draft.values, hp: "" } as BookingValues;
+      // The link the visitor just followed outranks the one in the draft.
+      restoredValues.src = src ?? cleanSrc(restoredValues.src);
       if (!Array.isArray(restoredValues.auditFocus)) restoredValues.auditFocus = [];
       // A slot that has since passed can't be booked. The instant is the one
       // field worth testing — the date/time strings are only its local
@@ -1892,13 +1921,14 @@ function BookingPanel() {
       setRestored(true);
     }
     setDraftLoaded(true);
-  }, [reset]);
+  }, [reset, src]);
 
   useEffect(() => {
     if (!draftLoaded || status === "success") return;
     const persisted: Partial<BookingValues> = { ...values, hp: undefined };
-    // timeZone is auto-detected, not typed — on its own it isn't a draft.
-    const typed = { ...persisted, timeZone: undefined };
+    // timeZone is auto-detected and src comes with the link — neither is
+    // something the visitor typed, so on their own they aren't a draft.
+    const typed = { ...persisted, timeZone: undefined, src: undefined };
     if (isDraftEmpty(typed as Record<string, unknown>)) return;
     const timer = setTimeout(() => saveDraft(BOOKING_DRAFT_KEY, persisted, step), 400);
     return () => clearTimeout(timer);
@@ -1913,6 +1943,11 @@ function BookingPanel() {
   }, [setValue, getValues, draftLoaded]);
 
   const current = BOOKING_STEPS[step];
+
+  useEffect(() => {
+    if (status === "success") return;
+    trackEvent("contact_step", { tab: "booking", step: step + 1, stepName: BOOKING_STEPS[step].id });
+  }, [step, status]);
   const currentIssue = bookingStepIssue(current, values);
   const canContinue = !currentIssue;
   const isLast = step === BOOKING_STEPS.length - 1;
@@ -1922,7 +1957,7 @@ function BookingPanel() {
 
   const startOver = () => {
     clearDraft(BOOKING_DRAFT_KEY);
-    reset({ auditFocus: [] });
+    reset({ auditFocus: [], src: getValues("src") });
     setRestored(false);
     setDirection(-1);
     setStep(0);
@@ -1981,6 +2016,7 @@ function BookingPanel() {
       });
       if (!res.ok) throw new Error("Request failed");
       setStatus("success");
+      trackEvent("contact_submit", { tab: "booking", src: values.src ?? null });
       clearDraft(BOOKING_DRAFT_KEY);
       setRestored(false);
       reset({ auditFocus: [] });
@@ -2022,6 +2058,8 @@ function BookingPanel() {
       className="relative flex h-full min-h-[26rem] flex-col"
     >
       <WizardAmbience />
+      {/* Which CTA brought the visitor here — rides along to the email. */}
+      <input {...register("src")} type="hidden" />
       {/* Honeypot — hidden from sighted and AT users. */}
       <input
         {...register("hp")}
@@ -2329,6 +2367,7 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
           badge="Fast reply"
           actionLabel="Open WhatsApp"
           href={whatsappHref(siteGreeting(pathname))}
+          onOpen={() => trackEvent("quick_question_click", { channel: "whatsapp" })}
           value={waRaw}
           copied={copied === "whatsapp"}
           onCopy={() => copy("whatsapp", footer.contact.whatsapp)}
@@ -2343,6 +2382,7 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
           badge="Best for details"
           actionLabel="Compose Email"
           href={`mailto:${email}`}
+          onOpen={() => trackEvent("quick_question_click", { channel: "email" })}
           value={email}
           copied={copied === "email"}
           onCopy={() => copy("email", email)}
@@ -2379,7 +2419,10 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
         </p>
         <button
           type="button"
-          onClick={onBookCall}
+          onClick={() => {
+            trackEvent("cta_click", { cta: "book", src: "contact-quick-question" });
+            onBookCall();
+          }}
           className="btn-brand btn-sm group shrink-0"
         >
           <Calendar className="h-4 w-4" aria-hidden="true" />
@@ -2408,6 +2451,7 @@ function ChannelCard({
   badge,
   actionLabel,
   href,
+  onOpen,
   value,
   copied,
   onCopy,
@@ -2421,6 +2465,7 @@ function ChannelCard({
   badge: string;
   actionLabel: string;
   href: string;
+  onOpen: () => void;
   value: string;
   copied: boolean;
   onCopy: () => void;
@@ -2493,6 +2538,7 @@ function ChannelCard({
         href={href}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={onOpen}
         className="relative mt-auto flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-4 py-2.5 text-sm font-bold text-ink transition-colors hover:bg-white/[0.14]"
       >
         {actionLabel}

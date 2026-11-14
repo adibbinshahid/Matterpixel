@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { Accordion } from "@/components/ui/Accordion";
 import { PixelSection } from "@/components/home/PixelSection";
 import { SectionHeading } from "@/components/home/SectionHeading";
 import { Hl } from "@/components/home/Hl";
-import { faq, ctaHref, ctas } from "@/content/siteConfig";
+import { faq } from "@/content/siteConfig";
+import { CtaLink } from "@/components/CtaLink";
 
 /**
  * The second light beat of the page: six plain answers to what a buyer
@@ -37,12 +37,12 @@ export function HomeFaq() {
           />
           <p data-reveal="lede" className="text-base leading-relaxed text-ink-soft md:pb-2">
             Anything not here?{" "}
-            <Link
-              href={ctaHref("book")}
+            <CtaLink
+              cta="book"
+              section="faq"
+              variant="inline"
               className="font-semibold text-ink underline decoration-ink/30 underline-offset-4 transition-colors hover:decoration-ink"
-            >
-              {ctas.book.label}
-            </Link>
+            />
             .
           </p>
         </div>

@@ -229,8 +229,8 @@ function PackagePanel({
         </div>
 
         <div data-m="fade" data-k="cta" data-i="3" className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
-          <CtaLink cta="quote" params={{ package: pkg.slug }} />
-          <CtaLink cta="book" variant="text" className="text-ink" />
+          <CtaLink section="packages" cta="quote" params={{ package: pkg.slug }} />
+          <CtaLink section="packages" cta="book" variant="text" className="text-ink" />
         </div>
 
         {proof && (

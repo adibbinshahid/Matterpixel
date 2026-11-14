@@ -119,8 +119,8 @@ export default function WorkPage() {
               the same way — problem first, then the build that answers it.
             </p>
             <div className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-              <CtaLink cta="book" />
-              <CtaLink cta="quote" variant="text" className="text-ink" />
+              <CtaLink section="closing" cta="book" />
+              <CtaLink section="closing" cta="quote" variant="text" className="text-ink" />
             </div>
           </Reveal>
         </div>

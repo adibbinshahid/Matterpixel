@@ -177,7 +177,7 @@ export function Nav() {
               own `display`, so a `hidden lg:inline-flex` on the link itself
               would fight the class rather than hide it. */}
           <div className="hidden lg:block">
-            <CtaLink cta="book" className="btn-sm" />
+            <CtaLink section="nav" cta="book" className="btn-sm" />
           </div>
 
           <button
@@ -264,7 +264,7 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, delay: 0.06 + nav.links.length * 0.04, ease: EASE }}
               >
-                <CtaLink cta="book" onClick={onClose} className="btn-block" />
+                <CtaLink section="nav-mobile" cta="book" onClick={onClose} className="btn-block" />
               </motion.div>
             </div>
           </motion.div>

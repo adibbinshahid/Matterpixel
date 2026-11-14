@@ -129,7 +129,7 @@ export function FounderEditorial() {
               ))}
             </dl>
 
-            <CtaLink cta="book" label={ctas.book.withAdib} className="mt-5 w-fit" />
+            <CtaLink section="founder" cta="book" label={ctas.book.withAdib} className="mt-5 w-fit" />
           </motion.div>
         </div>
       </div>
