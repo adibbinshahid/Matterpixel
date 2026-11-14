@@ -29,7 +29,10 @@ export function SectionHeading({
 }) {
   return (
     <div className={cn("max-w-3xl", className)}>
-      <p data-reveal="eyebrow" className="flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
+      <p
+        data-reveal="eyebrow"
+        className="flex items-center gap-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-ink-soft md:text-xs"
+      >
         <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 bg-magenta" />
         {eyebrow}
       </p>

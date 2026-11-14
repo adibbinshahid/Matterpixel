@@ -53,6 +53,31 @@ function ProcessGhostNumbers() {
 }
 
 /**
+ * Phones (<768px): all five steps as one compact vertical timeline — a
+ * numbered node on a rail, the step's name and its one-line summary — in
+ * place of the stepper, which hides one step's copy behind a tap.
+ */
+function ProcessTimeline() {
+  return (
+    <ol data-reveal="block" className="relative mt-8 md:hidden" aria-label="Project process steps">
+      <span aria-hidden="true" className="absolute bottom-5 left-[1.375rem] top-5 w-px bg-line" />
+      {processMethod.steps.map((s) => (
+        <li key={s.id} className="relative flex gap-4 pb-5 last:pb-0">
+          <span className="relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-magenta font-avenir text-base font-extrabold tabular-nums text-white">
+            <span className="sr-only">Step </span>
+            {s.id}
+          </span>
+          <div className="min-w-0 pt-2">
+            <h3 className="text-lg font-bold leading-tight tracking-tight text-ink">{s.title}</h3>
+            <p className="mt-1 text-base leading-normal text-ink-soft">{s.desc}</p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/**
  * Auto-advancing (1s/step) as well as click-driven — still not a
  * scroll-triggered stepper, the whole point is a fixed-height
  * single-screen block regardless of how much copy any one step carries,
@@ -97,7 +122,8 @@ export function Process() {
   // 0.3 (not "any pixel") so it doesn't flip on a sliver at the very edge
   // of the viewport.
   useEffect(() => {
-    if (reduced) return;
+    // Phones read the timeline instead; nothing there auto-advances.
+    if (reduced || window.matchMedia("(max-width: 767px)").matches) return;
     const section = sectionRef.current;
     if (!section) return;
 
@@ -155,7 +181,9 @@ export function Process() {
            threaded through each marker's center like the old small-circle
            version needed; decoupling the two means the numerals below can
            be as big as they want without fighting the rail's alignment. */}
-        <div data-reveal="block" className="relative mt-10 h-3 px-5">
+        <ProcessTimeline />
+
+        <div data-reveal="block" className="relative mt-10 h-3 px-5 max-md:hidden">
           <div className="h-3 rounded-full bg-line" aria-hidden="true" />
           <motion.div
             className="absolute inset-y-0 left-5 rounded-full bg-magenta"
@@ -170,7 +198,12 @@ export function Process() {
         {/* Numeral row — the step numbers *are* the primary UI here, not
            a label under a small marker, per "more prominent Step 01,
            02..." feedback on the previous circle-based version. */}
-        <div data-reveal="block" className="relative mt-6 flex justify-between px-5" role="tablist" aria-label="Project process steps">
+        <div
+          data-reveal="block"
+          className="relative mt-6 flex justify-between px-5 max-md:hidden"
+          role="tablist"
+          aria-label="Project process steps"
+        >
           {processMethod.steps.map((s, i) => {
             const isActive = i === activeIndex;
             return (
@@ -226,7 +259,7 @@ export function Process() {
         {/* Panel — min-h reserves space for the tallest step (2-card grid),
            so the section doesn't jump height when a step like 02 has only
            one detail card. */}
-        <div data-reveal="block" className="relative mt-8 min-h-[220px] sm:min-h-[200px]">
+        <div data-reveal="block" className="relative mt-8 min-h-[220px] max-md:hidden sm:min-h-[200px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={step.id}

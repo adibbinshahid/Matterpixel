@@ -71,7 +71,7 @@ function StatTile({ stat, tone, play }: { stat: Stat; tone: "before" | "after"; 
         after ? "bg-blue text-white shadow-[0_18px_40px_-18px_rgba(44,75,255,0.7)]" : "border border-line bg-paper"
       }`}
     >
-      <span className={`text-[0.65rem] font-bold uppercase tracking-[0.14em] ${after ? "text-white/90" : "text-ink-soft"}`}>
+      <span className={`text-[0.8125rem] font-bold uppercase tracking-[0.14em] md:text-[0.65rem] ${after ? "text-white/90" : "text-ink-soft"}`}>
         {after ? "After" : "Before"}
       </span>
       <span
@@ -147,7 +147,7 @@ function ProofCard({ proof }: { proof: ResolvedProof }) {
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="text-xs font-semibold text-ink-soft">Live concept build</span>
-        <span className="truncate text-base font-bold text-ink">{proof.name}</span>
+        <span className="line-clamp-2 text-base font-bold text-ink md:line-clamp-none md:truncate">{proof.name}</span>
         <span className="mt-0.5 flex items-center gap-1.5 text-sm text-ink-soft">
           {proof.metric.label === "Lighthouse performance" ? (
             <Gauge className="h-3.5 w-3.5 text-[#0cce6b]" aria-hidden="true" />
@@ -169,17 +169,22 @@ function PackagePanel({
   pkg,
   proof,
   shown,
+  collapsed,
   leaving,
   play,
   tabId,
   panelId,
   level,
+  order,
   panelRef,
 }: {
   panelRef: (el: HTMLDivElement | null) => void;
+  order: number;
   pkg: ProblemPackage;
   proof?: ResolvedProof;
   shown: boolean;
+  /** Phones: the open accordion row was tapped shut. */
+  collapsed: boolean;
   /** Painted but inert: the outgoing package during a switch. */
   leaving: boolean;
   play: boolean;
@@ -203,10 +208,12 @@ function PackagePanel({
       // accessibility tree) and inert.
       aria-hidden={!shown}
       inert={!shown}
-      style={{ gridArea: "1 / 1" }}
-      className={`grid gap-8 bg-paper-2 p-6 sm:p-8 md:grid-cols-[1.05fr_1fr] md:gap-10 lg:gap-12 lg:p-10 ${
+      // Phones: the panels sit in the accordion, each straight under its
+      // own chip (`order`), and only the open one is displayed.
+      style={{ gridArea: "1 / 1", order: order }}
+      className={`grid gap-6 bg-paper-2 p-5 max-md:mb-2 max-md:rounded-[22px] max-md:border max-md:border-line sm:p-8 md:grid-cols-[1.05fr_1fr] md:gap-10 lg:gap-12 lg:p-10 ${
         shown || leaving ? "visible" : "invisible"
-      }`}
+      } ${shown && !collapsed ? "" : "max-md:hidden"}`}
     >
       <div className="flex min-w-0 flex-col">
         <Title data-m="roll" data-i="0" className="text-balance text-2xl font-bold leading-[1.12] tracking-tight text-ink sm:text-3xl">
@@ -218,7 +225,7 @@ function PackagePanel({
           {pkg.name} package
         </p>
 
-        <div data-m="roll" data-i="2" className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
+        <div data-m="roll" data-i="2" className="mt-5 flex flex-wrap md:mt-6 items-center gap-x-5 gap-y-3">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-ink">
             <Clock className="h-3.5 w-3.5 text-[var(--blue-ink)]" aria-hidden="true" />
             {pkg.timeline}
@@ -228,19 +235,29 @@ function PackagePanel({
           </p>
         </div>
 
-        <div data-m="fade" data-k="cta" data-i="3" className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <div data-m="fade" data-k="cta" data-i="3" className="mt-6 flex md:mt-7 flex-wrap items-center gap-x-6 gap-y-3">
           <CtaLink section="packages" cta="quote" params={{ package: pkg.slug }} />
           <CtaLink section="packages" cta="book" variant="text" className="text-ink" />
         </div>
 
-        {proof && (
-          <div data-m="swap" data-i="4" className="mt-7">
+        {proof ? (
+          <div data-m="swap" data-i="4" className="mt-6 md:mt-7">
             <ProofCard proof={proof} />
           </div>
+        ) : (
+          pkg.noProofNote && (
+            <p
+              data-m="swap"
+              data-i="4"
+              className="mt-7 rounded-2xl border border-dashed border-line p-4 text-sm leading-relaxed text-ink-soft"
+            >
+              {pkg.noProofNote}
+            </p>
+          )
         )}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-7">
+      <div className="flex min-w-0 flex-col gap-6 md:gap-7">
         <BeforeAfter pkg={pkg} play={play} />
         <div>
           <Sub data-m="fade" data-k="wyg" data-i="5" className="text-sm font-bold text-ink-soft">
@@ -288,6 +305,7 @@ export function ProblemPicker({
 }) {
   const [shown, setShown] = useState(0);
   const [leaving, setLeaving] = useState<number | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const dirRef = useRef<1 | -1>(1);
   const edgeRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -322,6 +340,27 @@ export function ProblemPicker({
   const select = (i: number, focus = false) => {
     const next = (i + packages.length) % packages.length;
     if (focus) tabRefs.current[next]?.focus();
+    // Phones: the chips are accordion rows. Tapping the open row closes
+    // it; opening another skips the sweep (the panels aren't stacked in
+    // one cell there) and keeps its chip on screen as the row above it
+    // collapses.
+    const phone = window.matchMedia("(max-width: 767px)").matches;
+    if (phone) {
+      if (next === shown && !focus) {
+        setCollapsed((c) => !c);
+        return;
+      }
+      setCollapsed(false);
+      if (next === shown) return;
+      setShown(next);
+      requestAnimationFrame(() => {
+        const chip = tabRefs.current[next];
+        if (!chip) return;
+        const top = chip.getBoundingClientRect().top;
+        if (top < 72) window.scrollBy({ top: top - 80 });
+      });
+      return;
+    }
     if (next === shown) return;
     dirRef.current = next > shown ? 1 : -1;
     setLeaving(prefersReducedMotion() ? null : shown);
@@ -354,12 +393,16 @@ export function ProblemPicker({
         }
       />
 
+      {/* Phones: the tablist and the card dissolve into one column
+          (display: contents) where each chip is followed by its own panel —
+          an accordion, first row open — from the same markup. */}
+      <div className="max-md:mt-10 max-md:flex max-md:flex-col">
       <div
         role="tablist"
         data-reveal="block"
         aria-label="Pick the problem closest to yours"
         onKeyDown={onKeyDown}
-        className="mt-10 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 xl:grid-cols-4"
+        className="grid grid-cols-1 gap-2 max-md:contents sm:grid-cols-2 sm:gap-3 md:mt-10 xl:grid-cols-4"
       >
         {packages.map((pkg, i) => {
           const isSelected = i === shown;
@@ -373,10 +416,12 @@ export function ProblemPicker({
               type="button"
               role="tab"
               aria-selected={isSelected}
+              aria-expanded={isSelected && !collapsed}
               aria-controls={`problem-panel-${pkg.slug}`}
               tabIndex={isSelected ? 0 : -1}
               onClick={() => select(i)}
-              className={`relative min-h-11 rounded-full border px-4 py-2.5 text-center text-base font-semibold transition-[color,border-color] duration-300 sm:px-5 ${
+              style={{ order: i * 2 }}
+              className={`relative min-h-11 rounded-full border px-4 py-2.5 text-center text-base font-semibold transition-[color,border-color] duration-300 max-md:mb-2 sm:px-5 ${
                 isSelected
                   ? "border-transparent text-white"
                   : "border-line bg-white/[0.03] text-ink-soft hover:border-white/30 hover:text-ink"
@@ -400,7 +445,11 @@ export function ProblemPicker({
         })}
       </div>
 
-      <div ref={cardRef} data-reveal="block" className="relative mt-8 grid overflow-hidden rounded-[28px] border border-line bg-paper-2">
+      <div
+        ref={cardRef}
+        data-reveal="block"
+        className="relative grid overflow-hidden rounded-[28px] border border-line bg-paper-2 max-md:contents md:mt-8"
+      >
         {packages.map((pkg, i) => (
           <PackagePanel
             key={pkg.slug}
@@ -410,6 +459,8 @@ export function ProblemPicker({
             pkg={pkg}
             proof={proofs[pkg.slug]}
             shown={i === shown}
+            collapsed={collapsed}
+            order={i * 2 + 1}
             leaving={i === leaving}
             play={seen && i === shown}
             tabId={`problem-tab-${pkg.slug}`}
@@ -418,6 +469,7 @@ export function ProblemPicker({
           />
         ))}
         <div ref={edgeRef} hidden aria-hidden="true" className="sweep-edge" />
+      </div>
       </div>
     </div>
   );

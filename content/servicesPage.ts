@@ -37,7 +37,7 @@ export const standard = {
     {
       id: "01",
       value: "90+ PageSpeed",
-      terms: "Every build ships at a 90+ Google PageSpeed score, or it isn't finished.",
+      terms: "Minimum 90+ Google PageSpeed score on every build, or it isn't finished.",
     },
     {
       id: "02",
@@ -84,7 +84,7 @@ export const proofBoard = {
       value: "150+",
       unit: "projects",
       label: "Delivered",
-      note: "Real work, shipped and live.",
+      note: "Adib’s Fiverr track record, shipped and live.",
       scale: 1,
       bleed: true,
     },
@@ -100,14 +100,14 @@ export const proofBoard = {
       value: "4.9",
       unit: "rating",
       label: "Verified reviews",
-      note: "Across delivered commercial work.",
+      note: "Adib’s Fiverr rating across delivered work.",
       scale: 2,
       bleed: false,
     },
     {
       value: "90+",
       unit: "pagespeed",
-      label: "Guaranteed",
+      label: "Minimum",
       note: "The performance floor every build has to clear.",
       scale: 3,
       bleed: false,
@@ -146,9 +146,9 @@ export const founderEditorial = {
 };
 
 /* ── §6 Process ──────────────────────────────────────────────────────────
-   The studio's actual operating sequence, at a higher altitude than the
-   homepage's meeting-by-meeting version (siteConfig.processSteps) — same
-   five beats, described as method rather than calendar. */
+   The studio's actual operating sequence — the one process on the site.
+   The homepage stepper (Process) and /services (ProcessSystem) both read
+   it, so the two can never disagree. */
 export const processMethod = {
   eyebrow: "How we build",
   heading: "Proven workflow, not guesswork.",

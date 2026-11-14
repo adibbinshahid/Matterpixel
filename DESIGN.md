@@ -5,11 +5,11 @@ colors:
   brand-blue: "#2C4BFF"
   brand-magenta: "#FF2E93"
   blue-ink: "#8F9DFF"
-  night-ground: "#0A0B10"
-  night-raised: "#12131A"
-  night-line: "#22232D"
-  night-text: "#F3F2EE"
-  night-text-soft: "#A9A8B3"
+  night-ground: "#0B0C0E"
+  night-raised: "#141518"
+  night-line: "#26272C"
+  night-text: "#EDEDEF"
+  night-text-soft: "#8E8F98"
   paper: "#FAF8F3"
   paper-raised: "#F2EFE8"
   paper-line: "#E4E0D6"
@@ -118,7 +118,7 @@ components:
 
 **Creative North Star: "Built Pixel by Pixel"**
 
-The site is a near-black workshop floor where finished work assembles out of square brand-coloured blocks. Everything rests on a deep ground (#0A0B10) under a hairline drafting grid (64px cells, 1px white lines at 5.5% opacity, vignetted toward the edges) that glides slowly left-to-right on a shallow ~12° rise (9px/s, swaying ±6°, never vertical, sub-pixel smooth) and lags the scroll at 0.25× for parallax; one fixed layer behind every dark section, still under reduced motion. The two brand colours from the Matterpixel M, electric blue and hot magenta, never paint a band. They show up as light (blurred pools behind the proof), as edges (gradient hairlines and borders), and as pixel blocks (the eyebrow dot, the light edge, the closing M). The page reads as one dark field broken by three warm-paper beats (Founder, Engagement models, FAQ).
+The site is a near-black workshop floor where finished work assembles out of square brand-coloured blocks. Everything rests on a deep ground (#0B0C0E) under a hairline drafting grid (64px cells, 1px white lines at 5.5% opacity, vignetted toward the edges) that glides slowly left-to-right on a shallow ~12° rise (9px/s, swaying ±6°, never vertical, sub-pixel smooth) and lags the scroll at 0.25× for parallax; one fixed layer behind every dark section, still under reduced motion. The two brand colours from the Matterpixel M, electric blue and hot magenta, never paint a band. They show up as light (blurred pools behind the proof), as edges (gradient hairlines and borders), and as pixel blocks (the eyebrow dot, the light edge, the closing M). The page reads as one dark field broken by three warm-paper beats (Founder, Engagement models, FAQ).
 
 Density is editorial rather than dashboard: one 1200px container, generous 120px section rhythm on desktop, left-aligned sentence-case headings, and proof (real builds in browser frames, measured Lighthouse scores) carrying the visual weight in place of illustration. Motion is the signature. Pixel blocks assemble the signature moments (the hero build, the stack pixels, the closing M); a blue→magenta light edge carries the transitions (section seams, the package sweep); and every entrance settles on one expo curve, so the page has a single motion language and no animation library cost.
 

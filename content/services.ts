@@ -28,6 +28,9 @@ export type Service = {
    * (`#software`) on the web-app detail page until it gets a page of its own. */
   businessSoftware?: string[];
   proofNote?: string;
+  /** Replaces the "see the work" line above the projects link when no
+   * published project shows this service — said plainly, never implied. */
+  projectsNote?: string;
   processNote: string;
   faq: { q: string; a: string }[];
   metaKeyword: string;
@@ -92,7 +95,7 @@ export const services: Service[] = [
     faq: [
       {
         q: "What's the typical timeline?",
-        a: "A focused marketing site runs 2–4 weeks; a fuller product build runs 6–10 weeks depending on scope. We'll give you a real range after a discovery call, not a placeholder estimate.",
+        a: "A focused website ships in 7–14 days; a web app takes 3–6 weeks depending on scope. You get an exact range after the free audit call, not a placeholder estimate.",
       },
       {
         q: "Do you work with an existing design, or design too?",
@@ -222,12 +225,13 @@ export const services: Service[] = [
         a: "It's strongest when it does — the brand system directly informs the design tokens we ship into the actual site or product.",
       },
     ],
+    projectsNote: "No branding case study published yet. See the standard we build to in our projects.",
     metaKeyword: "branding and identity design",
   },
   {
     slug: "ai-product-photography",
     id: "05",
-    title: "AI Image / Product Photography",
+    title: "AI Product Visuals",
     shortDesc: "AI-powered product imagery with studio-quality results, delivered in a fraction of the time.",
     startingPrice: 300,
     heroClaim: "Studio-quality product photography, without the studio.",
@@ -267,7 +271,7 @@ export const services: Service[] = [
     processNote:
       "Every image begins with an AI-assisted production workflow and is then refined manually for realism, lighting, composition, and brand consistency. The result is commercial-quality imagery that looks intentional rather than obviously AI-generated.",
     proofNote:
-      "This workflow has been refined through hundreds of commercial projects delivered as a Fiverr Top Rated Seller, and is now available directly through Matterpixel.",
+      "This workflow has been refined across 150+ projects Adib delivered as a Fiverr Top Rated Seller, and is now available directly through Matterpixel.",
     faq: [
       {
         q: "Is this fully AI-generated, or edited by a person?",
@@ -287,9 +291,9 @@ export const services: Service[] = [
   {
     slug: "ai-video",
     id: "05",
-    title: "AI Video Commercial",
+    title: "AI Product Video",
     shortDesc: "Cinematic AI videos that help brands communicate faster, better, and at scale.",
-    startingPrice: 400,
+    startingPrice: 300,
     heroClaim: "AI-powered video production, without the production crew.",
     intro:
       "Create high-quality marketing videos in days instead of weeks. Our AI-assisted production workflow combines scripting, motion design, and manual direction to produce polished videos that are ready for campaigns, social media, and product launches.",
@@ -348,18 +352,14 @@ export const services: Service[] = [
     startingPrice: 600,
     heroClaim: "Digital growth driven by strategy, search, and performance marketing.",
     intro:
-      "Growing online takes more than great design. We help brands attract, engage, and convert through technical SEO, content strategy, social media, paid advertising, and data-driven marketing campaigns, all aligned around measurable business outcomes.",
+      "Growing online takes more than great design. We start with a one-off SEO and tracking setup that gets the fundamentals right, then, if you want it, run the ongoing marketing month by month: content, social, paid ads and reporting.",
     deliverables: [
       "Technical SEO audit and optimization",
       "On-page SEO and keyword strategy",
-      "Google Ads and Meta Ads campaign management",
-      "Social media strategy and content creation",
-      "Social media post design and scheduling",
-      "Content planning and copywriting",
-      "Analytics, conversion tracking, and reporting",
+      "Analytics and conversion tracking setup",
       "Landing page optimization",
-      "Email marketing campaigns",
-      "Monthly growth strategy and performance reviews",
+      "Content plan for the first 90 days",
+      "Baseline performance report",
     ],
     idealFor: [
       "Businesses launching a new brand",
@@ -371,13 +371,19 @@ export const services: Service[] = [
     ],
     fileDeliverables: [
       "SEO implementation roadmap",
-      "Monthly performance reports",
+      "Baseline performance report",
       "Content calendar",
       "Social media creative assets",
       "Ad creatives and campaign setup",
       "Keyword research and competitor analysis",
       "Conversion tracking configuration",
       "Growth recommendations",
+    ],
+    addOns: [
+      "Google Ads and Meta Ads management (monthly)",
+      "Social media content and scheduling (monthly)",
+      "Email marketing campaigns (monthly)",
+      "Monthly performance reports and growth reviews",
     ],
     whyChooseUs: [
       "One partner for SEO, content, social media, and paid advertising",
@@ -390,6 +396,10 @@ export const services: Service[] = [
       "Every growth strategy starts with understanding your business goals, audience, and competitive landscape. From technical SEO and content creation to social media management and paid advertising, we focus on building a sustainable marketing system that attracts the right audience and converts them into customers.",
     faq: [
       {
+        q: "Is this one-off or monthly?",
+        a: "The SEO setup is a one-off fixed quote. Ongoing ads, content and reporting are optional and run monthly, scoped on the call.",
+      },
+      {
         q: "Do you guarantee rankings?",
         a: "No one honestly can. We guarantee the technical fundamentals — speed, structure, crawlability — that rankings depend on.",
       },
@@ -398,6 +408,7 @@ export const services: Service[] = [
         a: "Yes — technical SEO audits work on any codebase.",
       },
     ],
+    projectsNote: "No SEO case study published yet. Every live concept build scores 100 on Lighthouse SEO.",
     metaKeyword: "technical SEO agency",
   },
 ];
@@ -416,7 +427,8 @@ export type ServiceListing = {
   id: string;
   title: string;
   shortDesc: string;
-  startingPrice: number;
+  /** null = custom-quoted, matching the stack builder's "Custom quote". */
+  startingPrice: number | null;
   href: string;
 };
 
@@ -449,7 +461,7 @@ export const serviceLineup: ServiceListing[] = [
     title: "Business Software",
     shortDesc:
       "Dashboards, internal tools, portals and lightweight CRMs built around how your business actually runs.",
-    startingPrice: detail("web-app-development").startingPrice,
+    startingPrice: null,
     href: "/services/web-app-development#software",
   },
   {

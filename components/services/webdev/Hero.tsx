@@ -1,49 +1,30 @@
-"use client";
-
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { Reveal } from "@/components/Reveal";
 import type { Service } from "@/content/services";
 import { ComparisonCard } from "./ComparisonCard";
 import { CtaLink } from "@/components/CtaLink";
+import { PageHero } from "@/components/PageHero";
 
 export function Hero({ service }: { service: Service }) {
   return (
-    <section className="relative overflow-hidden px-6 pb-12 pt-28 sm:px-8 lg:px-12">
-      <div className="relative z-10 mx-auto max-w-[1400px]">
-        <Reveal>
-          <Link
-            href="/services"
-            className="group mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition-colors duration-300 hover:text-blue"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
-            Back to Services
-          </Link>
-          <p className="label-eyebrow mb-4 flex items-center gap-2">
-            [ {service.id} ] {service.title}
-            <span className="h-px w-5 bg-blue" />
-            <span className="h-1 w-1 rounded-full bg-magenta" />
-          </p>
-        </Reveal>
-
-        <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-8">
-          <Reveal delay={0.05}>
-            <h1 className="max-w-2xl text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-5xl">
-              {service.heroClaim}
-            </h1>
-            <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">{service.intro}</p>
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <CtaLink section="hero" cta="book" />
-              <CtaLink section="hero" cta="quote" variant="text" className="text-ink" />
-            </div>
-            <p className="mt-4 text-sm text-ink-soft">{service.processNote}</p>
-          </Reveal>
-
-          <Reveal delay={0.15}>
-            <ComparisonCard />
-          </Reveal>
-        </div>
+    <PageHero
+      eyebrow={`${service.id} · ${service.title}`}
+      lines={[service.heroClaim]}
+      lede={service.intro}
+      aside={<ComparisonCard />}
+    >
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        <CtaLink section="hero" cta="book" />
+        <CtaLink section="hero" cta="quote" variant="text" className="text-white" />
       </div>
-    </section>
+      <p className="mt-4 text-sm text-ink-soft">{service.processNote}</p>
+      <Link
+        href="/services"
+        className="group mt-8 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition-colors duration-300 hover:text-ink"
+      >
+        <ArrowLeft className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-x-1" />
+        All services
+      </Link>
+    </PageHero>
   );
 }

@@ -42,14 +42,13 @@ const PARTNER_TEMPLATE =
  * here; never hard-code either. Swap `book.href` for an external scheduler
  * (e.g. a Calendly link) and every booking CTA follows.
  *
- * `book.withAdib` is the same booking action, worded for the founder
- * sections where the offer is access to Adib himself. `partner` is the
+ * The booking label is the one standard wording everywhere, founder
+ * sections included — never reword it per section. `partner` is the
  * agency strip's direct line: no form, straight to WhatsApp or email.
  */
 export const ctas = {
   book: {
     label: "Book a free audit call",
-    withAdib: "Book a call with Adib",
     href: "/contact?tab=booking",
   },
   quote: {
@@ -91,7 +90,7 @@ export const nav = {
 };
 
 export const hero = {
-  eyebrow: "Websites & Apps · AI Automation · Business Software · Branding & Visuals",
+  eyebrow: "Websites & Apps · AI Automation · Business Software · Branding · AI Visuals · SEO",
   headline: "We Build Websites and AI systems that win customers and save hours.",
   sub: "Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
 };
@@ -106,7 +105,7 @@ export const hero = {
 export const trust = {
   eyebrow: "Built to a standard, not just a deadline",
   badges: [
-    "90+ Google PageSpeed Score",
+    "Minimum 90+ PageSpeed Score",
     "Fiverr Top Rated Seller",
     "NDA Friendly",
     "No Surprise Budget Increase",
@@ -119,18 +118,18 @@ export const trust = {
  * invented, same standard as every other credibility claim on this site.
  */
 export const stats = [
-  { value: "90+", label: "PageSpeed Score", desc: "Every build hits a 90+ Google PageSpeed score." },
+  { value: "90+", label: "PageSpeed Minimum", desc: "No build ships under a 90+ Google PageSpeed score." },
   { value: "NDA", label: "Friendly", desc: "Comfortable working under NDA from day one." },
   { value: "100%", label: "Founder-Led", desc: "No bench, no juniors learning on your dime." },
-  { value: "4.9", label: "Client Rating", desc: "Verified reviews across every project." },
-  { value: "150+", label: "Projects Delivered", desc: "Real work, shipped and live." },
+  { value: "4.9", label: "Adib’s Rating", desc: "Verified Fiverr reviews from Adib’s client work." },
+  { value: "150+", label: "Projects by Adib", desc: "Delivered by Adib as a Fiverr Top Rated Seller." },
   {
     value: "Fixed",
     label: "Quote Upfront",
     desc: "Fixed pricing with no unexpected price increases after the project begins.",
   },
   { value: "12h", label: "Reply Time", desc: "Every inquiry gets a reply within 12 hours, 7 days a week." },
-  { value: "7 Days", label: "Avg Turnaround", desc: "From kickoff to first delivery." },
+  { value: "7–14 Days", label: "Website Launch", desc: "A focused website, from kickoff to live." },
   { value: "7+", label: "Years Experience", desc: "Senior craft, not junior guesswork." },
 ];
 
@@ -150,61 +149,9 @@ export const servicesCta = {
 
 export const workIntro = {
   eyebrow: "selected builds",
-  heading: "real custom codes. production quality.",
   conceptLine: "Concept builds made to show our standard, not client work.",
   honestLine:
     "A collection of extraordinary, production-quality builds showcasing our approach to design, development, and performance. Every project is crafted with the same attention to detail, usability, and technical excellence that we bring to real-world digital products.",
-};
-
-export const processSteps = {
-  eyebrow: "how we build",
-  heading: "proven workflow, not guesswork.",
-  steps: [
-    {
-      id: "01",
-      title: "Video meetup",
-      desc: "We'll meet (Zoom) to discuss your project.",
-      details: [
-        { label: "Specifications", text: "We'll write the specifications for your project's functionality and features." },
-        { label: "Research", text: "We'll do research based on your needs." },
-      ],
-    },
-    {
-      id: "02",
-      title: "Requirements",
-      desc: "We'll make sure we have everything needed to complete your project.",
-      details: [
-        { label: "Planning", text: "We'll use your provided requirements to start planning your project." },
-      ],
-    },
-    {
-      id: "03",
-      title: "Prototype",
-      desc: "We'll build a prototype of your project.",
-      details: [
-        { label: "Prototype", text: "We'll build a working prototype of your project." },
-        { label: "Follow-up session", text: "We'll have a follow-up session to discuss any open questions." },
-      ],
-    },
-    {
-      id: "04",
-      title: "Development",
-      desc: "We'll develop your project and deliver a working product for your review.",
-      details: [
-        { label: "Content Upload", text: "We'll upload your content (copy, images, videos, etc.) to your project." },
-        { label: "Progress check", text: "We'll meet to review your project status and the steps needed to finish it." },
-      ],
-    },
-    {
-      id: "05",
-      title: "Delivery",
-      desc: "We'll send you the final delivery for review and feedback.",
-      details: [
-        { label: "Modifications", text: "We'll modify assets based on your feedback." },
-        { label: "Delivery", text: "We'll send you the final delivery for review and feedback." },
-      ],
-    },
-  ],
 };
 
 export const founder = {
@@ -242,8 +189,8 @@ export const founder = {
   /** Proof row beside the portrait. Every figure is an existing site claim
    * (see `stats` above) restated here — nothing new is asserted. */
   proof: [
-    { value: "4.9", label: "Client rating", note: "Verified reviews" },
-    { value: "150+", label: "Projects delivered", note: "Shipped and live" },
+    { value: "4.9", label: "Fiverr rating", note: "Verified reviews" },
+    { value: "150+", label: "Projects delivered", note: "Adib’s Fiverr track record" },
     { value: "7+", label: "Years", note: "Senior-level practice" },
   ],
 };
@@ -324,33 +271,23 @@ export const team = {
   note: "You get one thread, one person answering, and one person accountable for the result.",
 };
 
-/** Closing CTA on /about. Positioning note: Matterpixel is a new studio,
+/** Closing beat on /about. Positioning note: Matterpixel is a new studio,
  * but Adib is not a new operator — the copy sells limited availability and
  * senior access, never inexperience or discounting. */
 export const foundingOffer = {
   eyebrow: "now open",
-  /** Two lines, set as one oversized typographic composition. */
-  heading: ["A few projects.", "Full attention."],
-  body: "Matterpixel is opening its first studio roster with a limited number of clients. Early projects get direct involvement from Adib from strategy through delivery, built with vetted specialists where deeper expertise is needed.",
+  body: "Matterpixel is opening its first studio roster with a limited number of clients. Every project gets Adib directly, from strategy through delivery, built with vetted specialists where deeper expertise is needed.",
   /** The founding-client offer, phrased as terms rather than a discount. */
-  terms: "Early clients receive preferred founding-client terms while the initial roster is being built.",
+  terms: "Founding clients also get preferred terms while the initial roster is being built.",
   micro: "Limited availability for the initial Matterpixel roster.",
-  /** Status indicator in the corner of the panel — state, not a countdown. */
-  status: { label: "Roster", value: "Open · Limited" },
-  /** The availability module on the panel's right column. Deliberately
-   * states a condition, never a slot count — no invented scarcity. */
-  availability: {
-    label: "Initial roster",
-    lines: ["Limited", "availability"],
-  },
 };
 
 /** Agency / white-label strip above the homepage's closing CTA. */
 export const whiteLabel = {
   eyebrow: "For agencies",
   heading: "Your trusted white-label development partner.",
-  body: "We build websites, web apps and AI automations white-label: your brand, NDA, no client contact. Fixed prices.",
-  bullets: ["Your brand, NDA, no client contact", "Pre-discussed rate card for all development", "We build while you sleep"],
+  body: "We build websites, web apps and AI automations white-label: your brand, NDA, no client contact. Fixed prices, with a 10–20% retainer discount based on work volume.",
+  bullets: ["Your brand, NDA, no client contact", "10–20% retainer discount by work volume", "We build while you sleep"],
 };
 
 /**
@@ -369,7 +306,7 @@ export const faq = [
   },
   {
     q: "Who owns what you build?",
-    a: "You do. Code, design files and content are handed over to you. No lock-in, and no ongoing fees to us unless you choose a care plan.",
+    a: "You do. Code, design files and content are handed over to you. No lock-in, and no ongoing fees to us unless you choose the Support and Growth plan.",
   },
   {
     q: "How fast do you reply?",
@@ -381,7 +318,7 @@ export const faq = [
   },
   {
     q: "Do you work with agencies?",
-    a: "Yes, white-label. We build websites, web apps and AI automations under your brand, under NDA, with no client contact. Fixed prices from $400.",
+    a: "Yes, white-label. We build websites, web apps and AI automations under your brand, under NDA, with no client contact. Ongoing partners get a 10–20% retainer discount based on monthly work volume.",
   },
 ];
 

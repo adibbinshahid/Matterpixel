@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowUpRight, Info, Layers, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Info, Layers, Sparkles } from "lucide-react";
+import { PageHero } from "@/components/PageHero";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { MediaGallery } from "@/components/ProjectMedia";
 import type { MediaProject } from "@/content/projects";
@@ -34,34 +35,31 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <section className="px-6 pb-16 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
-          <Reveal>
-            <p className="label-eyebrow mb-4 mt-8">{project.category}</p>
-            <h1 className="max-w-4xl text-display text-ink">{project.name}</h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-soft">
-              {project.oneLiner}
-            </p>
-
+      <PageHero eyebrow={project.category} lines={[project.name]} lede={project.oneLiner}>
             {/* The only outbound link a media piece has. A generated set has
                 no URL of its own to open, so where it was made for one of
                 our own builds, that build is the nearest thing to a "go and
                 check" — and it is a real one: the imagery is in use there. */}
             {project.madeFor && (
-              <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
+              <div className="mb-8 flex flex-wrap items-center gap-x-6 gap-y-4">
                 <Link href={project.madeFor.href} className="btn-brand group">
                   {project.madeFor.label}
                   <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                 </Link>
               </div>
             )}
-          </Reveal>
-        </div>
-      </section>
+              <Link
+                href="/projects"
+                className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-ink-soft transition-colors duration-300 hover:text-ink"
+              >
+                <ArrowLeft className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-x-1" />
+                All projects
+              </Link>
+      </PageHero>
 
       {/* ── Honest framing ───────────────────────────────────────────── */}
-      <section className="px-6 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section>
+        <div className="section-shell">
           <Reveal>
             <div className="flex max-w-3xl items-start gap-3 border-l-2 border-blue py-2 pl-5">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue" aria-hidden="true" />
@@ -78,8 +76,8 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
       </section>
 
       {/* ── The set ──────────────────────────────────────────────────── */}
-      <section className="px-6 pb-20 pt-14 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="pb-20 pt-14">
+        <div className="section-shell">
           <Reveal>
             <p className="label-eyebrow">The set</p>
             <h2 className="mt-4 max-w-2xl text-h2 text-ink">
@@ -102,8 +100,8 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
       </section>
 
       {/* ── Brief / problem / solution ───────────────────────────────── */}
-      <section className="px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="py-[72px] lg:py-[120px]">
+        <div className="section-shell">
           <RevealGroup className="grid gap-x-12 gap-y-12 lg:grid-cols-3">
             {[
               { label: "The brief", body: project.brief },
@@ -122,8 +120,8 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
       </section>
 
       {/* ── What was delivered ───────────────────────────────────────── */}
-      <section className="border-y border-line bg-paper-2 px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="border-y border-line bg-paper-2 py-[72px] lg:py-[120px]">
+        <div className="section-shell">
           <Reveal>
             <p className="label-eyebrow flex items-center gap-2">
               <Layers className="h-3.5 w-3.5" aria-hidden="true" />
@@ -177,8 +175,8 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
       </section>
 
       {/* ── What's in the set ────────────────────────────────────────── */}
-      <section className="px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="py-[72px] lg:py-[120px]">
+        <div className="section-shell">
           <Reveal>
             <p className="label-eyebrow">What&rsquo;s in the set</p>
             <h2 className="mt-4 max-w-2xl text-h2 text-ink">
@@ -203,8 +201,8 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
       </section>
 
       {/* ── Production decisions ─────────────────────────────────────── */}
-      <section className="px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-[1400px] gap-x-16 gap-y-14 lg:grid-cols-3">
+      <section className="py-[72px] lg:py-[120px]">
+        <div className="section-shell grid gap-x-16 gap-y-14 lg:grid-cols-3">
           <Reveal className="lg:col-span-1">
             <p className="label-eyebrow">How it was produced</p>
             <h2 className="mt-4 text-h2 text-ink">

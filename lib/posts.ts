@@ -68,3 +68,9 @@ export function getPostBySlug(slug: string) {
     toc: extractToc(content),
   };
 }
+
+/** "Feb 24, 2026 · 4 min read" — the one date line every post card uses. */
+export function formatPostMeta(date: string, readingTime: string): string {
+  const day = new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  return `${day} · ${readingTime}`;
+}

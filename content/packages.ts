@@ -35,8 +35,11 @@ export type ProblemPackage = {
    * arrives from this package, so that step is skipped. */
   projectTypes: ProjectType[];
   /** Proof card. The project is resolved on the server (name, cover,
-   * measured Lighthouse score) so this file never hand-writes a score. */
-  proof: { projectSlug: string; label?: string };
+   * measured Lighthouse score) so this file never hand-writes a score.
+   * Omitted when no published build actually shows this package's work —
+   * `noProofNote` then says so plainly instead of borrowing a build. */
+  proof?: { projectSlug: string; label?: string };
+  noProofNote?: string;
 };
 
 export const problemPackages: ProblemPackage[] = [
@@ -53,7 +56,7 @@ export const problemPackages: ProblemPackage[] = [
     items: [
       "Custom design",
       "Mobile-first build",
-      "90+ PageSpeed guaranteed",
+      "90+ PageSpeed minimum",
       "Basic SEO setup",
       "6 months free support",
     ],
@@ -104,12 +107,13 @@ export const problemPackages: ProblemPackage[] = [
     timeline: "7–14 days",
     priceFrom: 500,
     projectTypes: ["AI automation"],
-    proof: { projectSlug: "lcinco-pizza", label: "L'Cinco Pizza ordering flow" },
+    noProofNote:
+      "No public automation build yet: workflows run inside a business's own tools. On the free audit call we map yours and show where the hours go.",
   },
   {
     slug: "brand-visuals",
     problem: "My brand looks like everyone else",
-    name: "Brand & Visuals",
+    name: "AI Product Visuals",
     headline: "Look premium without a photoshoot.",
     beforeAfter: {
       kind: "image",
@@ -119,15 +123,15 @@ export const problemPackages: ProblemPackage[] = [
       after: "Campaign visual",
     },
     items: [
-      "Brand identity",
       "AI product visuals",
       "Video ads",
       "Social kit",
       "Usage rights included",
+      "Full brand identity as an add-on",
     ],
     timeline: "5–10 days",
     priceFrom: 300,
-    projectTypes: ["Branding & identity", "AI visuals & video"],
+    projectTypes: ["AI visuals & video"],
     proof: { projectSlug: "ai-product-photography", label: "AI visuals gallery" },
   },
 ];
@@ -182,7 +186,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "web-app",
-    projectType: "Web app or software",
+    projectType: "Web app",
     icon: "webapp",
     name: "Web app",
     benefit: "Logins, dashboards and workflows, built custom.",
@@ -227,7 +231,7 @@ export const stackItems: StackItem[] = [
   },
   {
     id: "business-software",
-    projectType: "Web app or software",
+    projectType: "Business software",
     icon: "software",
     name: "Business software",
     benefit: "ERPs, internal tools and portals, scoped to you.",
@@ -264,7 +268,7 @@ export const stackItems: StackItem[] = [
   {
     id: "care-plan",
     icon: "care",
-    name: "Care plan",
+    name: "Support and Growth",
     benefit: "Updates, monitoring and fixes every month.",
     monthly: { price: 149, note: "first 6 months free" },
   },

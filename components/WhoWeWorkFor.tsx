@@ -1,8 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowUpRight,
   Briefcase,
+  ChevronDown,
   Calculator,
   Coffee,
   Dumbbell,
@@ -123,10 +127,15 @@ const INDUSTRIES: Industry[] = [
  * Each tile carries its number, name and one line on what we build there;
  * on hover (or keyboard focus within) the photo eases in and brightens, a
  * magenta rim lights, and the business types rise from the bottom. Touch
- * screens and reduced motion show the types from the start. CSS only — no
- * script on this section beyond the shared entrance.
+ * screens and reduced motion show the types from the start.
+ *
+ * Phones (<768px) show the first three tiles and a "View all" button that
+ * opens the rest; the other three stay in the markup, hidden.
  */
+const PHONE_VISIBLE = 3;
+
 export function WhoWeWorkFor() {
+  const [all, setAll] = useState(false);
   return (
     <PixelSection seam labelledBy="industries-title">
       <div className="home-shell home-section">
@@ -141,12 +150,17 @@ export function WhoWeWorkFor() {
           lede="Six sectors we know well — four with a live concept build you can open."
         />
 
-        <ul className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:mt-14 xl:auto-rows-[320px] xl:grid-cols-4">
+        <ul
+          id="industries-list"
+          className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:mt-12 lg:mt-14 xl:auto-rows-[320px] xl:grid-cols-4"
+        >
           {INDUSTRIES.map((ind, i) => (
             <li
               key={ind.label}
               data-reveal="block"
-              className={`bento-tile group relative isolate flex min-h-[300px] flex-col justify-start overflow-hidden rounded-[22px] border border-white/10 p-6 pt-[5.25rem] sm:p-7 sm:pt-[5.5rem] ${ind.span}`}
+              className={`bento-tile group relative isolate flex flex-col justify-start overflow-hidden rounded-[22px] border border-white/10 p-6 sm:p-7 md:min-h-[300px] md:pt-[5.5rem] ${ind.span} ${
+                i >= PHONE_VISIBLE && !all ? "max-md:hidden" : ""
+              }`}
             >
               <Image
                 src={ind.image}
@@ -161,23 +175,23 @@ export function WhoWeWorkFor() {
                 className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(11,12,14,0.55)_0%,rgba(11,12,14,0.85)_55%,rgba(11,12,14,0.95)_100%)]"
               />
 
-              <span className="absolute left-6 top-6 flex h-9 w-9 items-center justify-center rounded-full bg-magenta font-avenir text-sm font-extrabold tabular-nums text-white shadow-[0_6px_16px_-6px_rgba(255,46,147,0.7)] sm:left-7 sm:top-7">
+              <span className="absolute right-6 top-6 flex h-9 w-9 items-center justify-center rounded-full bg-magenta font-avenir text-sm font-extrabold tabular-nums text-white shadow-[0_6px_16px_-6px_rgba(255,46,147,0.7)] sm:right-7 sm:top-7 md:left-7 md:right-auto">
                 {String(i + 1).padStart(2, "0")}
               </span>
 
-              <h3 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-2xl font-bold leading-tight tracking-tight text-white">
+              <h3 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pr-12 text-2xl font-bold leading-tight tracking-tight text-white md:pr-0">
                 {ind.label}
                 {ind.tag && (
-                  <span className="rounded-full border border-white/30 px-2.5 py-1 text-[0.6875rem] font-bold uppercase leading-none tracking-[0.12em] text-white/90">
+                  <span className="rounded-full border border-white/30 px-2.5 py-1 text-[0.8125rem] font-bold uppercase leading-none tracking-[0.12em] text-white/90 md:text-[0.6875rem]">
                     {ind.tag}
                   </span>
                 )}
               </h3>
-              <p className="mt-2 max-w-[34ch] text-base leading-snug text-white/80">{ind.build}</p>
+              <p className="mt-2 max-w-[34ch] text-base leading-normal text-white/80 md:leading-snug">{ind.build}</p>
               {ind.proof && (
                 <Link
                   href={ind.proof.href}
-                  className="group/proof mt-3 inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-white underline decoration-white/30 underline-offset-4 transition-colors hover:text-magenta hover:decoration-magenta"
+                  className="tap-area group/proof mt-3 inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-white underline decoration-white/30 underline-offset-4 transition-colors hover:text-magenta hover:decoration-magenta"
                 >
                   <span className="h-1.5 w-1.5 shrink-0 bg-magenta" aria-hidden="true" />
                   Concept build: {ind.proof.name}
@@ -205,6 +219,22 @@ export function WhoWeWorkFor() {
             </li>
           ))}
         </ul>
+        {/* Wrapper carries the breakpoint: .btn-outline sets its own display. */}
+        <div className="mt-6 md:hidden">
+          <button
+            type="button"
+            aria-expanded={all}
+            aria-controls="industries-list"
+            onClick={() => setAll((v) => !v)}
+            className="btn-outline btn-block"
+          >
+            {all ? "Show fewer" : `View all ${INDUSTRIES.length} industries`}
+            <ChevronDown
+              className={`h-4 w-4 transition-transform duration-300 ${all ? "rotate-180" : ""}`}
+              aria-hidden="true"
+            />
+          </button>
+        </div>
       </div>
     </PixelSection>
   );

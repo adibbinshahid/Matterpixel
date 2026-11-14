@@ -9,6 +9,7 @@ import { PixelSection } from "@/components/home/PixelSection";
 import { HomeFaq } from "@/components/home/HomeFaq";
 import { ClosingCta } from "@/components/home/ClosingCta";
 import { DriftGrid } from "@/components/home/DriftGrid";
+import { MobileStickyCta } from "@/components/home/MobileStickyCta";
 import { Process } from "@/components/Process";
 import { EngagementModels } from "@/components/EngagementModels";
 import { WhoWeWorkFor } from "@/components/WhoWeWorkFor";
@@ -42,6 +43,7 @@ export default function Home() {
       <WhiteLabel />
       <HomeFaq />
       <ClosingCta />
+      <MobileStickyCta />
     </div>
   );
 }

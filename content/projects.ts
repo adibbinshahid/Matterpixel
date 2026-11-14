@@ -590,9 +590,9 @@ export const projects: Project[] = [
    * to be stated exactly — those are the claims a client can hold us to.
    *
    * `specs` on the seven image sets are a fixed four — outputs, ratios,
-   * resolution, variations — so a visitor comparing two cards is comparing
-   * the same four things. Three of them are measured off the source masters;
-   * `Variations` is the studio's own generate-then-select ratio and is the
+   * resolution, takes per frame — so a visitor comparing two cards is
+   * comparing the same four things. Three of them are measured off the source
+   * masters; `Takes per frame` is the studio's own generate-then-select ratio and is the
    * one number in this file that no file can prove, so it is stated as the
    * constant it is rather than dressed up per project. If that ratio ever
    * changes, it changes here in seven places and nowhere else.
@@ -640,7 +640,7 @@ export const projects: Project[] = [
         value: "up to 2K",
       },
       {
-        label: "Variations",
+        label: "Takes per frame",
         value: "8",
       },
     ],
@@ -803,7 +803,7 @@ export const projects: Project[] = [
         value: "1K",
       },
       {
-        label: "Variations",
+        label: "Takes per frame",
         value: "8",
       },
     ],
@@ -1168,7 +1168,7 @@ export const projects: Project[] = [
         value: "1K",
       },
       {
-        label: "Variations",
+        label: "Takes per frame",
         value: "8",
       },
     ],
@@ -1313,7 +1313,7 @@ export const projects: Project[] = [
         value: "up to 4K",
       },
       {
-        label: "Variations",
+        label: "Takes per frame",
         value: "8",
       },
     ],
@@ -1360,7 +1360,7 @@ export const projects: Project[] = [
       {
         kind: "image",
         src: "/projects/ai-influencer-personas/02.webp",
-        caption: "Nine scenes, one persona: rooftop, poolside, robe, evening dress, beach, cabin, restaurant. The face has to survive all nine.",
+        caption: "Nine scenes, one persona: rooftop, infinity pool, window at dawn, sun lounger, bathroom, dressing-room mirror, beach, private jet, restaurant. The face has to survive all nine.",
         aspect: "1600 / 966",
       },
       {
@@ -1422,7 +1422,7 @@ export const projects: Project[] = [
         value: "1K",
       },
       {
-        label: "Variations",
+        label: "Takes per frame",
         value: "8",
       },
     ],
@@ -1561,7 +1561,7 @@ export const projects: Project[] = [
         value: "1K",
       },
       {
-        label: "Variations",
+        label: "Takes per frame",
         value: "8",
       },
     ],
@@ -1688,7 +1688,7 @@ export const projects: Project[] = [
         value: "1K",
       },
       {
-        label: "Variations",
+        label: "Takes per frame",
         value: "8",
       },
     ],

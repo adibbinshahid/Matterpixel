@@ -15,12 +15,12 @@ export const engagementModelsIntro = {
 export const engagementModels = [
   {
     stage: "One project",
-    tag: "Most popular",
+    tag: "Best starting point",
     title: "Fixed-Scope Project",
     desc: "Best for well-defined projects with a clear scope, timeline, and agreed deliverables — web, AI, brand, or content.",
     features: ["Defined milestones and sign-off points", "Fixed quote upfront with no surprises", "Strategy, build, QA, and delivery included"],
     anchor: "From $300",
-    anchorNote: "Founding-client pricing for our first 10 projects.",
+    anchorNote: "Founding-client pricing for our first 10 projects. Websites from $700.",
     featured: true,
   },
   {
@@ -37,8 +37,8 @@ export const engagementModels = [
     stage: "Embedded",
     tag: "Best for long-term work",
     title: "Growth Partner",
-    desc: "Ongoing builds across web, apps, software and AI. Priority queue and a direct WhatsApp line.",
-    features: ["Monthly engagement, scales up or down", "Priority turnaround", "Direct founder access"],
+    desc: "Ongoing builds across web, apps, software and AI, with capacity reserved for you every month.",
+    features: ["Monthly engagement, scales up or down", "Priority turnaround", "Dedicated monthly capacity"],
     anchor: "Monthly",
     anchorNote: "Scoped to your roadmap, scales up or down.",
     featured: false,

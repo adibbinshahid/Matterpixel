@@ -6,7 +6,7 @@ import { cleanSrc } from "@/lib/analytics";
 export const metadata: Metadata = {
   title: "Contact",
   description:
-    "Start a project or book a free 30-minute strategy call. NDA-friendly, fixed quotes, founder-led. We reply within 12 hours.",
+    "Get a fixed quote or book a free audit call (30 min). NDA-friendly, fixed quotes, founder-led. We reply within 12 hours.",
   alternates: { canonical: "/contact" },
 };
 

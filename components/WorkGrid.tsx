@@ -290,7 +290,7 @@ function ProjectCard({ project, index, reduced }: { project: WorkCard; index: nu
               href={project.liveDemoUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-blue btn-sm group/live relative z-10 min-h-11"
+              className="btn-outline btn-sm group/live relative z-10 min-h-11"
             >
               Live site
               <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 ease-[var(--ease-site)] group-hover/live:translate-x-0.5 group-hover/live:-translate-y-0.5" />
@@ -406,13 +406,13 @@ export function WorkGrid({ cards, lanes }: { cards: WorkCard[]; lanes: Lane[] })
                 />
               )}
               <span
-                className={`font-avenir relative z-10 ${isActive ? "text-paper" : "text-ink-soft"}`}
+                className={`font-avenir relative z-10 ${isActive ? "text-white" : "text-ink-soft"}`}
               >
                 {f.label}
               </span>
               <span
                 className={`relative z-10 text-xs tabular-nums ${
-                  isActive ? "text-paper/70" : "text-ink-soft/60"
+                  isActive ? "text-white/70" : "text-ink-soft/60"
                 }`}
               >
                 {count}

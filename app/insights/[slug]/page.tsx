@@ -4,9 +4,13 @@ import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { ArrowLeft } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
-import { getAllPosts, getPostBySlug, slugifyHeading } from "@/lib/posts";
+import { formatPostMeta, getAllPosts, getPostBySlug, slugifyHeading } from "@/lib/posts";
 import { siteUrl } from "@/content/siteConfig";
-import { CtaLink } from "@/components/CtaLink";
+import { DarkPage } from "@/components/DarkPage";
+import { PageHero } from "@/components/PageHero";
+import { InsightCard } from "@/components/InsightCard";
+import { ClosingCta } from "@/components/home/ClosingCta";
+import { Hl } from "@/components/home/Hl";
 
 const mdxComponents = {
   h2: ({ children, ...props }: React.ComponentProps<"h2">) => (
@@ -94,98 +98,90 @@ export default async function PostPage({
   };
 
   return (
-    <>
+    <DarkPage>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <article className="px-6 pb-16 pt-32 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-3xl">
-          <Reveal>
-            <Link
-              href="/insights"
-              className="group inline-flex w-fit items-center gap-2 text-sm font-semibold text-ink-soft transition-all duration-300 hover:scale-105 hover:text-ink"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              All insights
-            </Link>
+      <PageHero
+        eyebrow={post.tag}
+        lines={[post.title]}
+        lede={formatPostMeta(post.date, post.readingTime)}
+      >
+        <Link
+          href="/insights"
+          className="group inline-flex w-fit items-center gap-2 text-sm font-semibold text-ink-soft transition-colors duration-300 hover:text-ink"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-x-1" />
+          All insights
+        </Link>
+      </PageHero>
 
-            <p className="label-eyebrow mb-4 mt-8">{post.tag}</p>
-            <h1 className="text-3xl font-bold leading-tight tracking-tight text-ink sm:text-5xl">
-              {post.title}
-            </h1>
-            <div className="mt-4 text-sm text-ink-soft">
-              {new Date(post.date).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}{" "}
-              · {post.readingTime}
-            </div>
-          </Reveal>
+      <article className="pb-[72px] lg:pb-[120px]">
+        <div className="home-shell">
+          <div className="max-w-3xl">
+            {post.toc.length > 1 && (
+              <Reveal delay={0.05} className="rounded-[20px] border border-line bg-paper-2 p-6">
+                <p className="label-eyebrow mb-3">On this page</p>
+                <ul className="flex flex-col gap-2">
+                  {post.toc.map((item) => (
+                    <li key={item.id}>
+                      <a
+                        href={`#${item.id}`}
+                        className="text-sm text-ink-soft transition-colors hover:text-[var(--blue-ink)]"
+                      >
+                        {item.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+            )}
 
-          {post.toc.length > 1 && (
-            <Reveal delay={0.05} className="mt-10 border border-line bg-paper-2 p-6">
-              <p className="label-eyebrow mb-3">On this page</p>
-              <ul className="flex flex-col gap-2">
-                {post.toc.map((item) => (
-                  <li key={item.id}>
-                    <a
-                      href={`#${item.id}`}
-                      className="text-sm text-ink-soft transition-colors hover:text-blue"
-                    >
-                      {item.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+            <Reveal delay={0.1} className="mt-12">
+              <MDXRemote source={post.content} components={mdxComponents} />
             </Reveal>
-          )}
 
-          <Reveal delay={0.1} className="mt-12">
-            <MDXRemote source={post.content} components={mdxComponents} />
-          </Reveal>
-
-          <Reveal delay={0.15} className="mt-14 flex flex-wrap items-center gap-4 border-t border-line pt-8">
-            <span className="text-sm font-semibold text-ink-soft">Share:</span>
-            <a
-              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(postUrl)}&text=${encodeURIComponent(post.title)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block w-fit origin-left text-sm font-semibold text-blue transition-transform duration-300 hover:scale-105 hover:underline"
-            >
-              X / Twitter
-            </a>
-            <a
-              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(postUrl)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block w-fit origin-left text-sm font-semibold text-blue transition-transform duration-300 hover:scale-105 hover:underline"
-            >
-              LinkedIn
-            </a>
-          </Reveal>
+            <Reveal delay={0.15} className="mt-14 flex flex-wrap items-center gap-4 border-t border-line pt-8">
+              <span className="text-sm font-semibold text-ink-soft">Share:</span>
+              <a
+                href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(postUrl)}&text=${encodeURIComponent(post.title)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block w-fit text-sm font-semibold text-[var(--blue-ink)] underline-offset-4 hover:underline"
+              >
+                X / Twitter
+              </a>
+              <a
+                href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(postUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block w-fit text-sm font-semibold text-[var(--blue-ink)] underline-offset-4 hover:underline"
+              >
+                LinkedIn
+              </a>
+            </Reveal>
+          </div>
         </div>
       </article>
 
       {related.length > 0 && (
-        <section className="border-t border-line bg-paper-2 px-6 py-20 sm:px-8 lg:px-12">
-          <div className="mx-auto max-w-[1400px]">
+        <section className="border-t border-line py-[72px] lg:py-[120px]">
+          <div className="home-shell">
             <Reveal>
               <p className="label-eyebrow mb-6">Related</p>
             </Reveal>
-            <RevealGroup className="grid grid-cols-1 gap-8 md:grid-cols-2">
+            <RevealGroup className="grid grid-cols-1 gap-5 md:grid-cols-2">
               {related.map((p) => (
                 <RevealItem key={p.slug}>
-                  <Link
-                    href={`/insights/${p.slug}`}
-                    className="group block border border-line bg-paper p-8 transition-all duration-300 hover:scale-[1.02] hover:border-blue"
-                  >
-                    <span className="label-eyebrow">{p.tag}</span>
-                    <h3 className="mt-3 text-lg font-bold tracking-tight text-ink">{p.title}</h3>
-                    <p className="mt-2 text-sm text-ink-soft">{p.excerpt}</p>
-                  </Link>
+                  <InsightCard
+                    slug={p.slug}
+                    tag={p.tag}
+                    title={p.title}
+                    excerpt={p.excerpt}
+                    meta={formatPostMeta(p.date, p.readingTime)}
+                  />
                 </RevealItem>
               ))}
             </RevealGroup>
@@ -193,20 +189,14 @@ export default async function PostPage({
         </section>
       )}
 
-      <section className="relative overflow-hidden px-6 py-24 sm:px-8 lg:px-12">
-        <div className="absolute inset-0 bg-ink" aria-hidden="true" />
-        <div className="relative mx-auto max-w-[1400px] text-center">
-          <Reveal>
-            <h2 className="text-3xl font-bold tracking-tight text-paper sm:text-5xl">
-              Got something that matters? Let&rsquo;s build it.
-            </h2>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-              <CtaLink section="closing" cta="book" />
-              <CtaLink section="closing" cta="quote" variant="text" className="text-ink" />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-    </>
+      <ClosingCta
+        eyebrow="Free audit"
+        title={
+          <>
+            Got something that <Hl tone="magenta">matters</Hl>? Let&rsquo;s build it.
+          </>
+        }
+      />
+    </DarkPage>
   );
 }

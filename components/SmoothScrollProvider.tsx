@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type Lenis from "lenis";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { loadGsap, refreshScrollTrigger } from "@/lib/loadGsap";
@@ -21,14 +21,25 @@ export function getLenis() {
 /**
  * Wires Lenis smooth-scroll into GSAP's ticker so ScrollTrigger stays in
  * sync with Lenis's virtual scroll position. Skipped entirely under
- * prefers-reduced-motion — native scroll takes over instead.
+ * prefers-reduced-motion and below 768px — native scroll takes over
+ * instead. On a phone, smoothed touch scroll lags the finger and a flick
+ * can outrun the reveal observers, so phones keep the browser's own.
  */
 export function SmoothScrollProvider({ children }: { children: ReactNode }) {
   const reduced = useReducedMotion();
   const lenisRef = useRef<Lenis | null>(null);
+  const [wide, setWide] = useState(false);
 
   useEffect(() => {
-    if (reduced) return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    setWide(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setWide(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    if (reduced || !wide) return;
 
     // lenis is not needed for first paint or first input, so it's
     // code-split out of the initial bundle and only fetched + initialized
@@ -100,7 +111,7 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       cic(handle);
       cleanup?.();
     };
-  }, [reduced]);
+  }, [reduced, wide]);
 
   return <>{children}</>;
 }

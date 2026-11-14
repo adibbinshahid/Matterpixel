@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight, ChevronRight } from "lucide-react";
-import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
-import { PixelField } from "@/components/PixelField";
+import { RevealGroup, RevealItem } from "@/components/Reveal";
+import { DarkPage } from "@/components/DarkPage";
+import { PageHero } from "@/components/PageHero";
 import { nav } from "@/content/siteConfig";
 import { mediums, projectsByMedium } from "@/content/projects";
 import { services } from "@/content/services";
@@ -72,36 +73,31 @@ export default function SitemapPage() {
   const total = groups.reduce((n, g) => n + g.entries.length, 0);
 
   return (
-    <>
-      <section className="relative overflow-hidden px-6 pb-14 pt-32 sm:px-8 lg:px-12">
-        <PixelField className="pointer-events-none absolute inset-0 z-0" />
-        <div className="relative z-10 mx-auto max-w-[1400px]">
-          <Reveal>
-            <p className="label-eyebrow mb-4">sitemap</p>
-            <h1 className="max-w-2xl text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-5xl">
-              Every page, in one place.
-            </h1>
-            <p className="mt-5 max-w-xl text-sm leading-relaxed text-ink-soft">
-              {total} pages across services, case studies, and writing. Looking for
-              the machine-readable version?{" "}
-              <a
-                href="/sitemap.xml"
-                className="group inline-flex items-center gap-1 font-semibold text-blue underline-offset-4 hover:underline"
-              >
-                sitemap.xml
-                <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-              </a>
-            </p>
-          </Reveal>
-        </div>
-      </section>
+    <DarkPage>
+      <PageHero
+        eyebrow="sitemap"
+        lines={["Every page, in one place."]}
+        lede={
+          <>
+            {total} pages across services, case studies, and writing. Looking for the machine-readable
+            version?{" "}
+            <a
+              href="/sitemap.xml"
+              className="group inline-flex items-center gap-1 font-semibold text-[var(--blue-ink)] underline-offset-4 hover:underline"
+            >
+              sitemap.xml
+              <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+            </a>
+          </>
+        }
+      />
 
-      <section className="px-6 pb-32 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="pb-[72px] lg:pb-[120px]">
+        <div className="section-shell">
           <RevealGroup className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {groups.map((group) => (
               <RevealItem key={group.title}>
-                <div className="flex h-full flex-col border border-line bg-paper-2 p-8 transition-colors duration-300 hover:border-blue">
+                <div className="flex h-full flex-col rounded-[20px] border border-line bg-paper-2 p-8 transition-colors duration-300 hover:border-blue">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="label-eyebrow">{group.title}</span>
                     <span className="text-xs tabular-nums text-ink-soft">
@@ -120,7 +116,7 @@ export default function SitemapPage() {
                           className="group flex min-h-11 items-start gap-3 py-2"
                         >
                           <span className="flex min-w-0 flex-col">
-                            <span className="truncate text-sm font-semibold text-ink transition-colors duration-300 group-hover:text-blue">
+                            <span className="truncate text-sm font-semibold text-ink transition-colors duration-300 group-hover:text-[var(--blue-ink)]">
                               {entry.label}
                             </span>
                             {entry.note ? (
@@ -140,6 +136,6 @@ export default function SitemapPage() {
           </RevealGroup>
         </div>
       </section>
-    </>
+    </DarkPage>
   );
 }

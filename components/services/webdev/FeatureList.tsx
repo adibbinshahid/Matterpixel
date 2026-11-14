@@ -25,7 +25,7 @@ export function FeatureList({ service }: { service: Service }) {
 
   return (
     <section className="panel-dark relative border-t border-line">
-      <div className="section-shell py-16 lg:py-20">
+      <div className="section-shell py-[72px] lg:py-[120px]">
         <Reveal>
           <p className="label-eyebrow mb-3" style={{ color: "#fff" }}>
             what&rsquo;s included

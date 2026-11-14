@@ -31,7 +31,7 @@ function CardBody({
       <span className={iconPlate}>{children}</span>
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-[13px] font-semibold">{title}</span>
-        <span className={`text-[11px] text-white/45 transition-colors duration-700 ${EASE} group-hover:text-white/65`}>
+        <span className={`text-[12px] text-white/45 transition-colors md:text-[11px] duration-700 ${EASE} group-hover:text-white/65`}>
           {sub}
         </span>
       </span>
@@ -49,7 +49,7 @@ function Eyebrow({ children }: { children: string }) {
   return (
     <span className="flex items-center gap-2">
       <span className="h-1 w-1 rounded-full bg-[var(--magenta)]" />
-      <span className="label-eyebrow !text-[0.68rem] !text-[var(--magenta)]">{children}</span>
+      <span className="label-eyebrow !text-[0.8125rem] !text-[var(--magenta)] md:!text-[0.68rem]">{children}</span>
     </span>
   );
 }
@@ -57,18 +57,18 @@ function Eyebrow({ children }: { children: string }) {
 export function Footer() {
 
   return (
-    <footer className="relative overflow-hidden bg-[#0b0c0e] px-6 pb-6 pt-10 text-white sm:px-8 lg:px-12">
+    <footer className="relative overflow-hidden bg-[#0b0c0e] pb-6 pt-10 text-white">
       {/* Magenta hairline capping the footer — the same brand rule that
          separates the CTA band above it, run edge to edge. */}
       <div className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,#6d1140,var(--magenta),#ff7ac0,var(--magenta),#6d1140)]" />
 
-      <div className="relative mx-auto flex max-w-[1400px] flex-col gap-7">
+      <div className="section-shell relative flex flex-col gap-7">
         <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-[1.5fr_0.8fr_1.15fr]">
           {/* Brand */}
           <div className="flex max-w-sm flex-col gap-3">
             <Logo imgClassName="h-9 w-auto brightness-0 invert" sizes="200px" />
-            <p className="text-[13px] leading-relaxed text-white/65">{footer.description}</p>
-            <p className="text-[13px] leading-relaxed text-white/65">{brand.tagline}</p>
+            <p className="text-base leading-normal text-white/65 md:text-[13px] md:leading-relaxed">{footer.description}</p>
+            <p className="text-base leading-normal text-white/65 md:text-[13px] md:leading-relaxed">{brand.tagline}</p>
             <p className="text-[13px] font-semibold text-white">
               {footer.foundingLine}
             </p>
@@ -77,7 +77,7 @@ export function Footer() {
           {/* Navigate */}
           <div className="flex flex-col gap-1.5">
             <Eyebrow>Navigate</Eyebrow>
-            <div className="flex flex-col">
+            <div className="grid grid-cols-2 gap-x-6 md:flex md:flex-col">
               {footer.links.map((l) => (
                 <Link
                   key={l.href}
@@ -141,7 +141,7 @@ export function Footer() {
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black ring-1 ring-white/10">
               <MarkImg className="h-3 w-auto brightness-0 invert" />
             </span>
-            <span className="text-[11px] text-white/50">{footer.copyright}</span>
+            <span className="text-[12px] text-white/50 md:text-[11px]">{footer.copyright}</span>
 
             <span aria-hidden className="hidden h-4 w-px bg-white/12 sm:block" />
 
@@ -151,14 +151,14 @@ export function Footer() {
                scale: nothing moves but the light and the late arrow. */}
             <Link
               href="/sitemap"
-              className={`group relative flex min-h-9 items-center gap-2 rounded-lg border border-white/10 px-2.5 py-1.5 transition-[border-color,background-color] duration-700 ${EASE} hover:border-white/25 hover:bg-white/[0.04]`}
+              className={`group relative flex min-h-11 items-center gap-2 rounded-lg md:min-h-9 border border-white/10 px-2.5 py-1.5 transition-[border-color,background-color] duration-700 ${EASE} hover:border-white/25 hover:bg-white/[0.04]`}
             >
               <Network
                 aria-hidden
                 className={`h-3.5 w-3.5 shrink-0 text-white/60 transition-colors duration-700 ${EASE} group-hover:text-white`}
               />
               <span
-                className={`text-[11px] font-semibold text-white/70 transition-colors duration-700 ${EASE} group-hover:text-white`}
+                className={`text-[12px] font-semibold text-white/70 transition-colors md:text-[11px] duration-700 ${EASE} group-hover:text-white`}
               >
                 Sitemap
               </span>

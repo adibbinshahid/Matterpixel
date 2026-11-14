@@ -59,13 +59,11 @@ const STAGGER = 0.09;
 const DRAW: Transition = { duration: 0.75, ease: EASE };
 
 /**
- * Specialist-plate surface. Deliberately not --paper and deliberately not a
- * grey: a couple of points darker than the page and a couple of points
- * cooler, which is enough for the four plates to read as physical surfaces
- * laid on the warm page without any shadow, tint or fill doing the work.
- * Local to this section rather than a global token — nothing else uses it.
+ * Specialist-plate surface: the night palette's raised ground, a step
+ * lighter than the page, so the four plates read as surfaces laid on the
+ * dark ground without any shadow, tint or fill doing the work.
  */
-const PLATE = "#f3f3f5";
+const PLATE = "var(--paper-2)";
 
 function useTimeline() {
   const reduced = useReducedMotion();
@@ -145,7 +143,7 @@ function Port({
  * thing in the diagram because handing it over is all they have to do. */
 function BriefNode() {
   return (
-    <div className="relative rounded-[20px] border border-line bg-paper px-6 py-5">
+    <div className="relative rounded-[20px] border border-line bg-paper-2 px-6 py-5">
       <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue">
         {team.brief.label}
       </p>
@@ -169,7 +167,7 @@ function LeadNode({ active }: { active: boolean }) {
     // Ports sit outside the clipped plate: the plate has to clip its own
     // gradient field to the 28px radius, and a port is meant to overhang.
     <div className="relative">
-      <div className="relative overflow-hidden rounded-[28px] bg-ink px-7 py-9 sm:px-10 sm:py-10">
+      <div className="relative overflow-hidden rounded-[28px] border border-line bg-paper-2 px-7 py-9 sm:px-10 sm:py-10">
         {/* Faint field behind the hub — the site's blue→magenta pairing at
             low opacity, so the control point reads warmer than flat ink. */}
         <span
@@ -183,15 +181,15 @@ function LeadNode({ active }: { active: boolean }) {
         />
 
         <div className="relative">
-          <p className="text-[0.6875rem] font-bold uppercase tracking-[0.18em] text-paper/50">
+          <p className="text-[0.6875rem] font-bold uppercase tracking-[0.18em] text-white/50">
             Your single point of contact
           </p>
 
           <div className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <p className="text-4xl font-bold leading-none tracking-tight text-paper sm:text-5xl">
+            <p className="text-4xl font-bold leading-none tracking-tight text-white sm:text-5xl">
               {team.lead.name}
             </p>
-            <p className="text-sm font-semibold text-paper/70">{team.lead.role}</p>
+            <p className="text-sm font-semibold text-white/70">{team.lead.role}</p>
           </div>
 
           {/* The four things he holds. Hairline-divided rather than pilled, so
@@ -203,7 +201,7 @@ function LeadNode({ active }: { active: boolean }) {
             {team.lead.duties.map((duty, i) => (
               <motion.li
                 key={duty}
-                className="flex items-center gap-2.5 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-paper/85"
+                className="flex items-center gap-2.5 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-white/85"
                 initial={{ opacity: 0, y: 8 }}
                 animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
                 transition={{
@@ -324,17 +322,17 @@ function ResultNode({ active }: { active: boolean }) {
           magenta, the magenta trunk terminating into it *is* the landing —
           any bar drawn there only notches the edge. */}
       <div className="relative overflow-hidden rounded-[28px] bg-magenta px-7 py-9 text-center sm:px-10 sm:py-11">
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-paper/75">
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/75">
         {team.result.label}
       </p>
-      <p className="mt-3 text-[2.75rem] font-bold leading-none tracking-tight text-paper sm:text-[3.5rem]">
+      <p className="mt-3 text-[2.75rem] font-bold leading-none tracking-tight text-white sm:text-[3.5rem]">
         {team.result.title}
       </p>
       <ul className="mx-auto mt-7 flex max-w-md flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-paper/30 pt-6">
         {team.result.marks.map((mark, i) => (
           <motion.li
             key={mark}
-            className="inline-flex items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-paper/90"
+            className="inline-flex items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-white/90"
             initial={{ opacity: 0, y: 6 }}
             animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
             transition={{
@@ -343,7 +341,7 @@ function ResultNode({ active }: { active: boolean }) {
               delay: t(BEAT.result + 0.2 + i * STAGGER),
             }}
           >
-            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-paper" />
+            <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-white" />
             {mark}
           </motion.li>
         ))}
@@ -541,8 +539,8 @@ export function CrewThread() {
   const railRef = useFlowRail(onScreen && !reduced);
 
   return (
-    <section className="border-t border-line px-6 py-16 sm:px-8 lg:px-12 lg:py-20">
-      <div ref={ref} className="mx-auto max-w-[1400px]">
+    <section className="home-section border-t border-line">
+      <div ref={ref} className="home-shell">
         {/* Header — the headline carries the section, so it takes two thirds
             of the grid and the supporting line sits small beside it. */}
         <div className="grid gap-5 lg:grid-cols-12 lg:items-end lg:gap-10">
@@ -556,11 +554,7 @@ export function CrewThread() {
             }
             transition={{ duration: 0.7, ease: EASE }}
           >
-            <p className="label-eyebrow mb-4 inline-flex items-center gap-2">
-              {team.eyebrow}
-              <span className="h-px w-5 bg-blue" />
-              <span className="h-1 w-1 rounded-full bg-magenta" />
-            </p>
+            <p className="label-eyebrow mb-4">{team.eyebrow}</p>
             <h2 className="text-4xl font-bold leading-[1.04] tracking-tight text-ink sm:text-6xl lg:text-[clamp(2.5rem,4.2vw,3.875rem)]">
               {team.heading[0]}
               <br />

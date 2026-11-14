@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useReveal } from "@/lib/useReveal";
 import { Hl } from "@/components/home/Hl";
 import { CtaLink } from "@/components/CtaLink";
+import type { CtaKind } from "@/content/siteConfig";
 import { easeOutExpo, markCells, prefersReducedMotion, rng } from "@/lib/pixels";
 
 const COLS = 30;
@@ -17,7 +18,7 @@ const HOVER_PUSH = 1.4;
  * The page's close: the Matterpixel M, built from the same pixel blocks the
  * rest of the page has been throwing around, assembles behind the last line
  * the first time it scrolls into view, then holds. Reduced motion draws the
- * finished mark. The canvas repaints the finished mark on resize.
+ * finished mark, and so do phones. The canvas repaints the finished mark on resize.
  */
 function PixelMark() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -141,7 +142,9 @@ function PixelMark() {
       raf = requestAnimationFrame(frame);
     };
 
-    if (prefersReducedMotion()) {
+    // Phones draw the finished mark: the 1.6s assembly would leave an
+    // empty canvas on screen for most of a flick past it.
+    if (prefersReducedMotion() || window.matchMedia("(max-width: 767px)").matches) {
       drawFinal();
       done = true;
     }
@@ -172,40 +175,71 @@ function PixelMark() {
   return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-auto block aspect-[3/2] w-full" />;
 }
 
-export function ClosingCta() {
+/**
+ * The site's one closing beat. Every page ends here; only the words and
+ * which action leads change per page. Defaults are the homepage's copy.
+ */
+export function ClosingCta({
+  eyebrow = "Free audit",
+  title = (
+    <>
+      Let&rsquo;s <Hl tone="blue">build</Hl> your next <Hl tone="magenta">win</Hl>.
+    </>
+  ),
+  lede = <>Claim your free audit and allow us to see exactly what&rsquo;s holding your growth back.</>,
+  note,
+  lead = "book",
+}: {
+  eyebrow?: string;
+  title?: ReactNode;
+  lede?: ReactNode;
+  /** Small print under the actions (terms, availability). */
+  note?: ReactNode;
+  /** Which action is the solid button; the other sits beside it as text. */
+  lead?: CtaKind;
+} = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   useReveal(sectionRef);
+  const second: CtaKind = lead === "book" ? "quote" : "book";
   return (
     <section ref={sectionRef} data-nav-scrim="light" aria-labelledby="closing-title" className="relative overflow-hidden">
-      <div className="home-shell relative py-24 lg:py-36">
+      <div className="home-shell relative py-16 md:py-24 lg:py-36">
         {/* Phones: the M stands above the line. From lg it sits in its own
             column right of the copy, close enough to read as the line's
             backdrop without a block ever crossing the text. */}
-        <div className="pointer-events-none mb-12 w-2/3 max-w-[420px] lg:absolute lg:inset-y-0 lg:right-0 lg:mb-0 lg:flex lg:w-[50%] lg:max-w-none lg:items-center lg:px-8">
+        <div className="pointer-events-none mb-8 w-1/2 md:mb-12 md:w-2/3 max-w-[420px] lg:absolute lg:inset-y-0 lg:right-0 lg:mb-0 lg:flex lg:w-[50%] lg:max-w-none lg:items-center lg:px-8">
           <div className="w-full">
             <PixelMark />
           </div>
         </div>
 
         <div className="relative max-w-[34rem]">
-          <p data-reveal="eyebrow" className="flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft">
+          <p
+            data-reveal="eyebrow"
+            className="flex items-center gap-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-ink-soft md:text-xs"
+          >
             <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 bg-magenta" />
-            Free audit
+            {eyebrow}
           </p>
           <h2
             id="closing-title"
             data-reveal="title"
             className="mt-4 text-balance text-[clamp(2.5rem,1.6rem+4vw,5rem)] font-bold leading-[1.02] tracking-[-0.035em] text-white [text-shadow:0_2px_30px_rgba(10,11,16,0.6)]"
           >
-            Let&rsquo;s <Hl tone="blue">build</Hl> your next <Hl tone="magenta">win</Hl>.
+            {title}
           </h2>
           <p data-reveal="lede" className="mt-6 max-w-[38ch] text-base leading-relaxed text-white/80 sm:text-lg">
-            Claim your free audit and allow us to see exactly what&rsquo;s holding your growth back.
+            {lede}
           </p>
           <div data-reveal="block" className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <CtaLink section="closing" cta="book" className="w-fit" />
-            <CtaLink section="closing" cta="quote" variant="text" className="text-white" />
+            <CtaLink section="closing" cta={lead} className="w-fit" />
+            <CtaLink section="closing" cta={second} variant="text" className="text-white" />
           </div>
+          {note && (
+            <p data-reveal="lede" className="mt-6 max-w-[42ch] text-sm leading-relaxed text-white/55">
+              {note}
+            </p>
+          )}
         </div>
       </div>
     </section>

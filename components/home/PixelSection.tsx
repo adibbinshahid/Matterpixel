@@ -38,6 +38,7 @@ export function PixelSection({
       aria-label={label}
       aria-labelledby={labelledBy}
       data-nav-scrim={tone === "light" ? undefined : "light"}
+      data-nav-light={tone === "light" ? "" : undefined}
       className={cn(
         "relative",
         tone === "light" && "home-light isolate overflow-hidden",

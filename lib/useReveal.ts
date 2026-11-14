@@ -21,6 +21,11 @@ import { prefersReducedMotion } from "@/lib/pixels";
  * elements still below the fold, so a failed script or a deep link shows
  * the page as-is. Each animation is cancelled when it finishes, leaving no
  * inline styles behind. Reduced motion: a plain 400ms fade.
+ *
+ * Phones (<768px) get one short recipe for every kind: a 12px lift over
+ * 300ms with no stagger and no blur or clip. A flick covers a screen in a
+ * fraction of a second, and a long staged entrance there reads as blank
+ * sections rather than motion.
  */
 
 const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
@@ -69,11 +74,20 @@ const FRAMES: Record<string, { frames: Keyframe[]; duration: number; easing?: st
 
 const FADE: Keyframe[] = [{ opacity: 0 }, { opacity: 1 }];
 
+const MOBILE: { frames: Keyframe[]; duration: number; easing?: string } = {
+  frames: [
+    { opacity: 0, transform: "translateY(12px)" },
+    { opacity: 1, transform: "translateY(0)" },
+  ],
+  duration: 300,
+};
+
 export function useReveal(rootRef: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
     const reduced = prefersReducedMotion();
+    const phone = window.matchMedia("(max-width: 767px)").matches;
     const fold = window.innerHeight * 0.92;
     const targets = [...root.querySelectorAll<HTMLElement>("[data-reveal]")].filter(
       (el) => el.getBoundingClientRect().top > fold,
@@ -83,9 +97,9 @@ export function useReveal(rootRef: RefObject<HTMLElement | null>) {
     // Stage: each element's first frame applies now, paused.
     const staged = new Map<Element, Animation>();
     for (const el of targets) {
-      const spec = FRAMES[el.dataset.reveal ?? "block"] ?? FRAMES.block;
+      const spec = phone ? MOBILE : (FRAMES[el.dataset.reveal ?? "block"] ?? FRAMES.block);
       const anim = el.animate(reduced ? FADE : spec.frames, {
-        duration: reduced ? 400 : spec.duration,
+        duration: reduced ? (phone ? 300 : 400) : spec.duration,
         easing: reduced ? "ease-out" : (spec.easing ?? EASE),
         fill: "both",
       });
@@ -103,12 +117,15 @@ export function useReveal(rootRef: RefObject<HTMLElement | null>) {
           io.unobserve(el);
           const anim = staged.get(el);
           if (!anim) return;
-          anim.effect?.updateTiming({ delay: reduced ? 0 : Math.min(i, MAX_STEPS) * STAGGER_MS });
+          anim.effect?.updateTiming({ delay: reduced || phone ? 0 : Math.min(i, MAX_STEPS) * STAGGER_MS });
           anim.play();
           anim.finished.then(() => anim.cancel()).catch(() => undefined);
         });
       },
-      { rootMargin: "0px 0px -10% 0px" },
+      // Phones play on the first pixel in view: a held -10% band could
+      // leave a heading invisible at the foot of the screen if the scroll
+      // stops with it there.
+      { rootMargin: phone ? "0px" : "0px 0px -10% 0px" },
     );
     targets.forEach((el) => io.observe(el));
 

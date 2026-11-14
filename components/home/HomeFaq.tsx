@@ -41,13 +41,13 @@ export function HomeFaq() {
               cta="book"
               section="faq"
               variant="inline"
-              className="font-semibold text-ink underline decoration-ink/30 underline-offset-4 transition-colors hover:decoration-ink"
+              className="tap-area font-semibold text-ink underline decoration-ink/30 underline-offset-4 transition-colors hover:decoration-ink"
             />
             .
           </p>
         </div>
         <div data-reveal="block" className="mt-8">
-          <Accordion items={faq} reserve compact columns={2} />
+          <Accordion items={faq} defaultOpen closedOnPhones compact columns={2} />
         </div>
       </div>
     </PixelSection>

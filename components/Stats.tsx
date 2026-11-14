@@ -10,7 +10,7 @@ function StatChip({ stat }: { stat: (typeof stats)[number] }) {
   return (
     <div className="flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl border border-line bg-paper-2 px-3.5 py-2 sm:gap-3 sm:rounded-2xl sm:px-5 sm:py-3">
       <span className="font-avenir text-lg font-extrabold leading-none tracking-tight text-ink sm:text-2xl">{stat.value}</span>
-      <span className="text-[0.6875rem] font-semibold uppercase leading-tight tracking-[0.1em] text-ink-soft sm:text-xs">
+      <span className="text-[0.8125rem] font-semibold uppercase leading-tight tracking-[0.1em] text-ink-soft md:text-xs">
         {stat.label}
       </span>
     </div>

@@ -8,6 +8,10 @@ import { services, getServiceBySlug } from "@/content/services";
 import { siteUrl } from "@/content/siteConfig";
 import { CtaLink } from "@/components/CtaLink";
 import { WebDevServicePage } from "@/components/services/webdev/WebDevServicePage";
+import { DarkPage } from "@/components/DarkPage";
+import { PageHero } from "@/components/PageHero";
+import { ClosingCta } from "@/components/home/ClosingCta";
+import { Hl } from "@/components/home/Hl";
 
 const WHY_MATTERPIXEL = [
   "Founder-led from strategy to final delivery",
@@ -63,13 +67,13 @@ export default async function ServiceDetailPage({
 
   if (service.slug === "web-app-development") {
     return (
-      <>
+      <DarkPage>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <WebDevServicePage service={service} />
-      </>
+      </DarkPage>
     );
   }
 
@@ -83,45 +87,36 @@ export default async function ServiceDetailPage({
     { title: "Deliverables", items: service.fileDeliverables },
     { title: "Optional add-ons", items: service.addOns },
     { title: "Frequently requested", items: service.frequentlyRequested },
-    { title: "Why clients choose this service", items: service.whyChooseUs },
+    { title: "Why choose this service", items: service.whyChooseUs },
   ].filter((s): s is { title: string; items: string[] } => !!s.items?.length);
 
   return (
-    <>
+    <DarkPage>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <section className="px-6 pb-16 pt-32 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
-          <Reveal>
-            <Link
-              href="/services"
-              className="group mb-6 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition-colors duration-300 hover:text-blue"
-            >
-              <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
-              Back to Services
-            </Link>
-            <p className="label-eyebrow mb-4">
-              [ {service.id} ] {service.title}
-            </p>
-            <h1 className="max-w-3xl text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-6xl">
-              {service.heroClaim}
-            </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-ink-soft">
-              {service.intro}
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
-              <CtaLink section="hero" cta="book" />
-              <CtaLink section="hero" cta="quote" variant="text" className="text-ink" />
-            </div>
-          </Reveal>
+      <PageHero
+        eyebrow={`${service.id} · ${service.title}`}
+        lines={[service.heroClaim]}
+        lede={service.intro}
+      >
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <CtaLink section="hero" cta="book" />
+          <CtaLink section="hero" cta="quote" variant="text" className="text-white" />
         </div>
-      </section>
+        <Link
+          href="/services"
+          className="group mt-8 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-soft transition-colors duration-300 hover:text-ink"
+        >
+          <ArrowLeft className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-x-1" />
+          All services
+        </Link>
+      </PageHero>
 
-      <section className="border-t border-line px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-[1400px] gap-16 lg:grid-cols-2">
+      <section className="border-t border-line py-[72px] lg:py-[120px]">
+        <div className="section-shell grid gap-16 lg:grid-cols-2">
           <Reveal>
             <h2 className="text-2xl font-bold tracking-tight text-ink">What&rsquo;s included</h2>
             <ul className="mt-6 flex flex-col gap-4">
@@ -144,7 +139,7 @@ export default async function ServiceDetailPage({
                 </li>
               ))}
             </ul>
-            <p className="mt-6 border border-line bg-paper-2 p-5 text-sm leading-relaxed text-ink-soft">
+            <p className="mt-6 rounded-[20px] border border-line bg-paper-2 p-5 text-sm leading-relaxed text-ink-soft">
               {service.processNote}
             </p>
             {service.proofNote && (
@@ -155,8 +150,8 @@ export default async function ServiceDetailPage({
       </section>
 
       {breakdownSections.length > 0 && (
-        <section className="border-t border-line bg-paper-2 px-6 py-20 sm:px-8 lg:px-12">
-          <div className="mx-auto max-w-[1400px]">
+        <section className="border-t border-line py-[72px] lg:py-[120px]">
+          <div className="section-shell">
             <RevealGroup className="grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-3">
               {breakdownSections.map(({ title, items }) => (
                 <RevealItem key={title}>
@@ -176,10 +171,10 @@ export default async function ServiceDetailPage({
         </section>
       )}
 
-      <section className="border-t border-line bg-ink px-6 py-10 text-paper sm:px-8 lg:px-12">
-        <Reveal className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
-          <h2 className="text-xl font-bold tracking-tight text-paper sm:text-2xl">
-            See the work behind the promise — visit our projects.
+      <section className="border-t border-line bg-paper-2 py-10">
+        <Reveal className="section-shell flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+          <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+            {service.projectsNote ?? "See the work behind the promise — visit our projects."}
           </h2>
           <Link
             href="/projects"
@@ -191,8 +186,8 @@ export default async function ServiceDetailPage({
         </Reveal>
       </section>
 
-      <section className="border-t border-line px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="border-t border-line py-[72px] lg:py-[120px]">
+        <div className="section-shell">
           <Reveal>
             <p className="label-eyebrow mb-6">FAQ</p>
             <h2 className="mb-8 text-3xl font-bold tracking-tight text-ink">
@@ -205,20 +200,15 @@ export default async function ServiceDetailPage({
         </div>
       </section>
 
-      <section className="relative overflow-hidden px-6 py-24 sm:px-8 lg:px-12">
-        <div className="absolute inset-0 bg-blue" aria-hidden="true" />
-        <div className="relative mx-auto max-w-[1400px] text-center">
-          <Reveal>
-            <h2 className="text-3xl font-bold tracking-tight text-paper sm:text-5xl">
-              Ready to talk {service.title.toLowerCase()}?
-            </h2>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-              <CtaLink section="closing" cta="book" className="btn-on-brand on-blue" />
-              <CtaLink section="closing" cta="quote" variant="text" className="text-paper" />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-    </>
+      <ClosingCta
+        eyebrow={service.title}
+        title={
+          <>
+            Ready to talk <Hl tone="blue">{service.title.toLowerCase()}</Hl>?
+          </>
+        }
+        lede="Book a free audit call and we'll show you what's worth building first, with a fixed quote to follow."
+      />
+    </DarkPage>
   );
 }

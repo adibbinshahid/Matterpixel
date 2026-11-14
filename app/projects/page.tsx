@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
-import { Reveal } from "@/components/Reveal";
 import { WorkGrid } from "@/components/WorkGrid";
-import { PixelField } from "@/components/PixelField";
+import { DarkPage } from "@/components/DarkPage";
+import { PageHero } from "@/components/PageHero";
+import { ClosingCta } from "@/components/home/ClosingCta";
+import { Hl } from "@/components/home/Hl";
 import { projects, mediums, websiteProjects, mediaProjects, toWorkCards } from "@/content/projects";
 import { workIntro, siteUrl } from "@/content/siteConfig";
-import { CtaLink } from "@/components/CtaLink";
 
 export const metadata: Metadata = {
   title: "Projects",
@@ -65,66 +66,57 @@ export default function WorkPage() {
   };
 
   return (
-    <>
+    <DarkPage>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <PageHero
+        eyebrow={workIntro.eyebrow}
+        lines={[
+          <>
+            Real custom <Hl tone="blue">code</Hl>.
+          </>,
+          <>
+            Production <Hl tone="magenta">quality</Hl>.
+          </>,
+        ]}
+        lede={
+          <>
+            <p className="font-semibold text-white">{workIntro.conceptLine}</p>
+            <p className="mt-3">{workIntro.honestLine}</p>
+          </>
+        }
+      >
+        {/* The proof strip: one line of type rather than a stat block, so
+            the grid below still lands in the first viewport. */}
+        <dl className="flex max-w-3xl flex-wrap gap-x-8 gap-y-3 border-t border-white/10 pt-6">
+          {proofPoints.map((p) => (
+            <div key={p.label} className="flex items-baseline gap-1.5">
+              <dd className="whitespace-nowrap text-lg font-extrabold tracking-tight text-white">{p.value}</dd>
+              <dt className="text-sm text-ink-soft">{p.label}</dt>
+            </div>
+          ))}
+        </dl>
+      </PageHero>
 
-      <section className="relative overflow-hidden px-6 pb-10 pt-28 sm:px-8 lg:px-12">
-        <PixelField className="pointer-events-none absolute inset-0 z-0" />
-        {/* Headline and supporting copy run side by side rather than stacked:
-            the grid below is what the page is for, and every line of intro
-            stacked above it pushes a card row off the first screen. */}
-        <div className="relative z-10 mx-auto grid max-w-[1400px] gap-x-12 gap-y-6 lg:grid-cols-12 lg:items-end">
-          <Reveal className="lg:col-span-7">
-            <p className="label-eyebrow mb-4">{workIntro.eyebrow}</p>
-            <h1 className="text-display text-ink">{workIntro.heading}</h1>
-          </Reveal>
-
-          <Reveal delay={0.1} className="lg:col-span-5">
-            <p className="max-w-xl font-semibold leading-relaxed text-ink">{workIntro.conceptLine}</p>
-            <p className="mt-3 max-w-xl leading-relaxed text-ink-soft">{workIntro.honestLine}</p>
-            <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-2 border-t border-line pt-5">
-              {proofPoints.map((p) => (
-                <div key={p.label} className="flex items-baseline gap-1.5">
-                  <dd className="whitespace-nowrap text-lg font-extrabold tracking-tight text-blue">
-                    {p.value}
-                  </dd>
-                  <dt className="text-sm text-ink-soft">{p.label}</dt>
-                </div>
-              ))}
-            </dl>
-          </Reveal>
-        </div>
-      </section>
-
-      <section className="px-6 pb-24 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="relative pb-[72px] lg:pb-[120px]">
+        <div className="home-shell">
           {/* Projected on the server — see toWorkCards for why the grid
               never imports the project content itself. */}
           <WorkGrid cards={toWorkCards(projects)} lanes={mediums} />
         </div>
       </section>
 
-      <section className="relative overflow-hidden px-6 py-24 sm:px-8 lg:px-12">
-        <div className="absolute inset-0 bg-ink" aria-hidden="true" />
-        <div className="relative mx-auto max-w-[1400px] text-center">
-          <Reveal>
-            <h2 className="mx-auto max-w-3xl text-3xl font-bold tracking-tight text-paper sm:text-5xl">
-              Your project would be the one with a real client name on it.
-            </h2>
-            <p className="mx-auto mt-5 max-w-xl leading-relaxed text-paper/70">
-              Every build above was set as our own brief. Bring us yours and we&rsquo;ll scope it
-              the same way — problem first, then the build that answers it.
-            </p>
-            <div className="mt-9 flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-              <CtaLink section="closing" cta="book" />
-              <CtaLink section="closing" cta="quote" variant="text" className="text-ink" />
-            </div>
-          </Reveal>
-        </div>
-      </section>
-    </>
+      <ClosingCta
+        eyebrow="Your brief next"
+        title={
+          <>
+            Your project would be the one with a real <Hl tone="magenta">client name</Hl> on it.
+          </>
+        }
+        lede="Every build above was set as our own brief. Bring us yours and we’ll scope it the same way: problem first, then the build that answers it."
+      />
+    </DarkPage>
   );
 }

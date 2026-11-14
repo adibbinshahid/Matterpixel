@@ -15,6 +15,8 @@ export type ConceptBuild = {
   host: string;
   score: number;
   thumb: string;
+  /** Phone capture (390×844 at 2×), shown in the phone carousel. */
+  mobile: string;
   full: { src: string; width: number; height: number };
 };
 
@@ -153,8 +155,9 @@ export function ConceptShowcase({ builds }: { builds: ConceptBuild[] }) {
   };
 
   return (
-    <div className="mt-12 lg:mt-14">
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-stretch lg:gap-12">
+    <div className="mt-10 md:mt-12 lg:mt-14">
+      <PhoneCarousel builds={builds} />
+      <div className="grid grid-cols-1 items-start gap-8 max-md:hidden lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-stretch lg:gap-12">
         {/* Stage */}
         <div
           data-reveal="block"
@@ -287,11 +290,67 @@ export function ConceptShowcase({ builds }: { builds: ConceptBuild[] }) {
       {/* Below both columns, so the list can match the frame's height exactly. */}
       <p className="mt-4 flex items-center gap-2 text-sm text-ink-soft">
         <span className="h-1.5 w-1.5 bg-magenta" aria-hidden="true" />
-        <span className="[@media(hover:hover)]:hidden">Concept build · tap to open the case study</span>
-        <span className="hidden [@media(hover:hover)]:inline">
+        <span className="md:hidden">Concept build · swipe for more, tap to open the case study</span>
+        <span className="max-md:hidden [@media(hover:hover)]:hidden">Concept build · tap to open the case study</span>
+        <span className="hidden md:[@media(hover:hover)]:inline">
           Concept build · hover to scroll the live page, click to open the case study
         </span>
       </p>
     </div>
+  );
+}
+
+/**
+ * Phones (<768px): the four builds as a swipe row instead of the stage and
+ * list. Each card is the build's real phone capture (not the desktop shot
+ * scaled down), 85vw wide so the next card peeks in at the edge, snapping
+ * one card at a time. Each card opens the case study.
+ */
+function PhoneCarousel({ builds }: { builds: ConceptBuild[] }) {
+  return (
+    <ul
+      data-reveal="block"
+      data-hscroll
+      aria-label="Concept builds"
+      className="no-scrollbar -mx-6 flex snap-x snap-mandatory scroll-px-6 gap-3 overflow-x-auto px-6 pb-2 md:hidden"
+    >
+      {builds.map((b) => (
+        <li key={b.slug} className="w-[85vw] max-w-[340px] shrink-0 snap-start">
+          <Link
+            href={`/projects/${b.slug}`}
+            className="group block overflow-hidden rounded-[22px] border border-line bg-paper shadow-[0_24px_50px_-28px_rgba(11,12,14,0.45)]"
+          >
+            <span className="relative block aspect-[4/5] overflow-hidden bg-[#0f0f13]">
+              <Image
+                src={b.mobile}
+                alt={`${b.name} on a phone`}
+                fill
+                loading="lazy"
+                sizes="85vw"
+                className="object-cover object-top"
+              />
+            </span>
+            <span className="flex items-start gap-3 p-4">
+              <span className="min-w-0 flex-1">
+                <span className="flex items-center gap-2 text-lg font-bold tracking-tight text-ink">
+                  <span className="h-1.5 w-1.5 shrink-0 bg-magenta" aria-hidden="true" />
+                  {b.name}
+                </span>
+                <span className="mt-0.5 line-clamp-2 text-sm text-ink-soft">{b.category}</span>
+              </span>
+              <span className="flex shrink-0 flex-col items-end">
+                <span className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0a9150]" aria-hidden="true" />
+                  <span className="font-avenir text-2xl font-extrabold leading-none text-[#0a9150] tabular-nums">
+                    {b.score}
+                  </span>
+                </span>
+                <span className="mt-1 text-xs font-medium text-ink-soft">Lighthouse</span>
+              </span>
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }

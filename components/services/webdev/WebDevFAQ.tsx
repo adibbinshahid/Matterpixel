@@ -9,8 +9,8 @@ import { EASE_CSS } from "@/lib/utils";
 
 export function WebDevFAQ({ service }: { service: Service }) {
   return (
-    <section className="border-t border-line px-6 py-16 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-[1400px]">
+    <section className="border-t border-line py-[72px] lg:py-[120px]">
+      <div className="section-shell">
         <Reveal>
           <p className="label-eyebrow mb-4">faq</p>
           <h2 className="mb-8 max-w-2xl">
@@ -23,7 +23,7 @@ export function WebDevFAQ({ service }: { service: Service }) {
             {service.faq.map((item, i) => (
               <RadixAccordion.Item key={i} value={`item-${i}`}>
                 <RadixAccordion.Header>
-                  <RadixAccordion.Trigger className="group flex w-full items-center justify-between gap-4 py-5 text-left text-base font-semibold text-ink transition-colors hover:text-blue">
+                  <RadixAccordion.Trigger className="group flex w-full items-center justify-between gap-4 py-5 text-left text-base font-semibold text-ink transition-colors hover:text-[var(--blue-ink)]">
                     {item.q}
                     <ChevronDown
                       className="h-5 w-5 shrink-0 text-ink-soft transition-transform duration-300 group-data-[state=open]:rotate-180"

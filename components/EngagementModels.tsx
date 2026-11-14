@@ -9,6 +9,8 @@ import { engagementModels, engagementModelsIntro } from "@/content/engagementMod
 import { CtaLink } from "@/components/CtaLink";
 
 const LAST = engagementModels.length - 1;
+/** Phones show this many ticks per card; the rest open on "See all". */
+const PHONE_FEATURES = 3;
 
 /**
  * The engagement models as a commitment spectrum: one line from a single
@@ -19,8 +21,10 @@ const LAST = engagementModels.length - 1;
  * page's blue→magenta light, and the other columns step back. Desktop:
  * hover or keyboard focus picks the model (resting on the most popular).
  * Phones: the line runs vertically and the light follows the reader down
- * it, tracking whichever model sits mid-screen. Reduced motion: the same
- * states without the travel.
+ * it, tracking whichever model sits mid-screen. Below 768px the models are
+ * swipe cards instead (most popular first, snapping one at a time) and the
+ * card in view is the active one. Reduced motion: the same states without
+ * the travel.
  */
 export function EngagementModels({ firstSection = false }: { firstSection?: boolean }) {
   const featured = engagementModels.findIndex((m) => m.featured);
@@ -29,6 +33,8 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
   // around the whole column cutting across the spectrum line.
   const [kbd, setKbd] = useState(false);
   const [scrolled, setScrolled] = useState(featured);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const rowRef = useRef<HTMLDivElement>(null);
   const cols = useRef<(HTMLDivElement | null)[]>([]);
   const bodies = useRef<(HTMLDivElement | null)[]>([]);
   const nodes = useRef<(HTMLSpanElement | null)[]>([]);
@@ -85,10 +91,23 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
     return () => ro.disconnect();
   }, []);
 
-  // Phones: the model crossing the middle of the screen is the active one.
+  // Phones: the model crossing the middle of the screen is the active one —
+  // or, below 768px where they're swipe cards, the card in view.
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
     if (mq.matches) return;
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      const swipe = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) setScrolled(cols.current.indexOf(e.target as HTMLDivElement));
+          }
+        },
+        { root: rowRef.current, threshold: 0.6 },
+      );
+      cols.current.forEach((c) => c && swipe.observe(c));
+      return () => swipe.disconnect();
+    }
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -143,7 +162,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
             <div
               aria-hidden="true"
               data-focus={kbd || undefined}
-              className="spectrum-plate"
+              className="spectrum-plate max-md:hidden"
               style={{
                 transform: `translate3d(${boxes[active].x}px, ${boxes[active].y}px, 0)`,
                 width: boxes[active].w,
@@ -153,7 +172,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
           )}
 
           {line && (
-            <div aria-hidden="true" className="spectrum-track" data-vertical={line.vertical} style={line.style}>
+            <div aria-hidden="true" className="spectrum-track max-md:hidden" data-vertical={line.vertical} style={line.style}>
               <div className="spectrum-fill" style={{ ["--p" as string]: progress }} />
             </div>
           )}
@@ -162,7 +181,11 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
               every row — stage, name, price, note, description, ticks —
               lines up across the models and the three plates are the same
               size. */}
-          <div className="grid gap-8 pl-6 lg:grid-cols-3 lg:grid-rows-[repeat(6,auto)] lg:gap-x-16 lg:gap-y-0 lg:pl-0">
+          <div
+            ref={rowRef}
+            data-hscroll
+            className="no-scrollbar grid gap-8 pl-6 max-md:-mx-6 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:scroll-px-6 max-md:gap-3 max-md:overflow-x-auto max-md:px-6 max-md:pb-2 lg:grid-cols-3 lg:grid-rows-[repeat(6,auto)] lg:gap-x-16 lg:gap-y-0 lg:pl-0"
+          >
             {engagementModels.map((m, i) => {
               const isActive = i === active;
               const reached = i <= active;
@@ -182,7 +205,9 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                   }}
                   tabIndex={0}
                   aria-label={`${m.title}: ${m.anchor}`}
-                  className={`group relative z-10 transition-opacity duration-200 focus-visible:outline-none motion-reduce:transition-none lg:row-span-6 lg:grid lg:grid-rows-subgrid ${
+                  className={`group relative z-10 transition-opacity duration-200 focus-visible:outline-none motion-reduce:transition-none max-md:w-[85vw] max-md:max-w-[340px] max-md:shrink-0 max-md:snap-start max-md:rounded-[22px] max-md:border max-md:bg-paper-2 max-md:p-5 max-md:focus-visible:border-[var(--blue-ink)] ${
+                    isActive ? "max-md:border-magenta" : "max-md:border-line"
+                  } lg:row-span-6 lg:grid lg:grid-rows-subgrid ${
                     dimOthers && !isActive ? "opacity-45" : "opacity-100"
                   }`}
                 >
@@ -193,7 +218,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                         nodes.current[i] = el;
                       }}
                       aria-hidden="true"
-                      className={`relative z-10 -ml-[calc(1.5rem+6px)] block h-3 w-3 shrink-0 transition-[background-color,box-shadow,border-color] duration-200 motion-reduce:transition-none lg:ml-0 ${
+                      className={`relative z-10 -ml-[calc(1.5rem+6px)] block h-3 w-3 max-md:ml-0 shrink-0 transition-[background-color,box-shadow,border-color] duration-200 motion-reduce:transition-none lg:ml-0 ${
                         isActive
                           ? "border border-magenta bg-magenta shadow-[0_0_0_4px_rgba(255,46,147,0.25),0_0_18px_rgba(255,46,147,0.7)]"
                           : reached
@@ -202,7 +227,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                       }`}
                     />
                     <span
-                      className={`text-xs font-semibold uppercase tracking-[0.16em] transition-colors duration-200 lg:mt-1 ${
+                      className={`text-[0.8125rem] font-semibold uppercase tracking-[0.16em] transition-colors duration-200 md:text-xs lg:mt-1 ${
                         isActive ? "text-ink" : "text-ink-soft"
                       }`}
                     >
@@ -217,12 +242,12 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                     ref={(el) => {
                       bodies.current[i] = el;
                     }}
-                    className="-mx-5 mt-2 p-5 lg:row-span-5 lg:-mx-6 lg:mt-3 lg:grid lg:grid-rows-subgrid lg:p-6"
+                    className="-mx-5 mt-2 p-5 max-md:mx-0 max-md:mt-3 max-md:p-0 lg:row-span-5 lg:-mx-6 lg:mt-3 lg:grid lg:grid-rows-subgrid lg:p-6"
                   >
                     <h3 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xl font-bold tracking-tight text-ink">
                       {m.title}
                       {m.featured && (
-                        <span className="rounded-full bg-magenta px-2.5 py-1 text-[0.6875rem] font-extrabold uppercase tracking-[0.12em] text-white">
+                        <span className="rounded-full bg-magenta px-2.5 py-1 text-[0.8125rem] font-extrabold uppercase tracking-[0.12em] text-white md:text-[0.6875rem]">
                           {m.tag}
                         </span>
                       )}
@@ -237,8 +262,13 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                     <p className="mt-2 text-sm font-medium text-ink-soft">{m.anchorNote}</p>
                     <p className="mt-4 text-base leading-relaxed text-ink-soft">{m.desc}</p>
                     <ul className="mt-4 flex flex-col gap-2 self-start border-t border-line pt-4">
-                      {m.features.map((f) => (
-                        <li key={f} className="flex items-start gap-2.5 text-base leading-snug text-ink">
+                      {m.features.map((f, k) => (
+                        <li
+                          key={f}
+                          className={`flex items-start gap-2.5 text-base leading-snug text-ink max-md:leading-normal ${
+                            k >= PHONE_FEATURES && !expanded[i] ? "max-md:hidden" : ""
+                          }`}
+                        >
                           <Check
                             className={`mt-0.5 h-4 w-4 shrink-0 transition-colors duration-200 ${
                               isActive ? "text-magenta" : "text-ink-soft"
@@ -250,6 +280,16 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                         </li>
                       ))}
                     </ul>
+                    {m.features.length > PHONE_FEATURES && (
+                      <button
+                        type="button"
+                        aria-expanded={!!expanded[i]}
+                        onClick={() => setExpanded((x) => ({ ...x, [i]: !x[i] }))}
+                        className="mt-2 inline-flex min-h-11 items-center text-base font-semibold text-ink underline underline-offset-4 md:hidden"
+                      >
+                        {expanded[i] ? "Show less" : `See all ${m.features.length}`}
+                      </button>
+                    )}
                   </div>
                 </div>
               );

@@ -13,11 +13,12 @@ import { easeOutExpo, prefersReducedMotion } from "@/lib/pixels";
  * order a buyer weighs them: tenure, quality, volume. */
 const PROOF = [
   { value: 7, suffix: "+", decimals: 0, label: "Years in practice" },
-  { value: 4.9, suffix: "", decimals: 1, label: "Client rating" },
-  { value: 150, suffix: "+", decimals: 0, label: "Projects delivered" },
+  { value: 4.9, suffix: "", decimals: 1, label: "Fiverr rating" },
+  { value: 150, suffix: "+", decimals: 0, label: "Projects by Adib" },
 ];
 
 const CURTAIN_MS = 1300;
+const isPhone = () => window.matchMedia("(max-width: 767px)").matches;
 const COUNT_MS = 1400;
 const COUNT_STAGGER_MS = 160;
 /** Parallax travel of the portrait inside its frame, px each way. */
@@ -36,7 +37,9 @@ const DRIFT = 40;
  *  - a soft light follows a fine pointer across the portrait
  *  - the proof rule draws across, then each figure counts up in turn
  * Text runs on the page's shared staggered entrance (data-reveal).
- * Reduced motion: everything is shown finished and still.
+ * Reduced motion: everything is shown finished and still. Phones skip the
+ * curtain and the count (both run over a second, longer than a flick takes
+ * to pass the section) and show the portrait and figures finished.
  */
 export function FounderStrip() {
   const frameRef = useRef<HTMLDivElement>(null);
@@ -52,7 +55,7 @@ export function FounderStrip() {
     const frame = frameRef.current;
     const img = imgRef.current;
     const grid = gridRef.current;
-    if (!frame || !img || !grid || prefersReducedMotion()) return;
+    if (!frame || !img || !grid || prefersReducedMotion() || isPhone()) return;
     if (frame.getBoundingClientRect().top < window.innerHeight * 0.85) return;
     const curtain = frame.animate([{ clipPath: "inset(100% 0 0 0)" }, { clipPath: "inset(0% 0 0 0)" }], {
       duration: CURTAIN_MS,
@@ -123,7 +126,7 @@ export function FounderStrip() {
     const proof = proofRef.current;
     const rule = ruleRef.current;
     const nums = numRefs.current;
-    if (!proof || !rule || prefersReducedMotion()) return;
+    if (!proof || !rule || prefersReducedMotion() || isPhone()) return;
     if (proof.getBoundingClientRect().top < window.innerHeight * 0.85) return;
     const draw = rule.animate([{ scale: "0 1" }, { scale: "1 1" }], {
       duration: 900,
@@ -177,7 +180,7 @@ export function FounderStrip() {
           ref={frameRef}
           onPointerMove={onMove}
           onPointerLeave={() => lightRef.current && (lightRef.current.style.opacity = "0")}
-          className="relative aspect-[4/5] overflow-hidden bg-[#0b0c0e] sm:aspect-[16/11] lg:aspect-auto"
+          className="relative aspect-[5/4] overflow-hidden bg-[#0b0c0e] sm:aspect-[16/11] lg:aspect-auto"
         >
           <div ref={imgRef} className="absolute -inset-y-12 inset-x-0 will-change-transform">
             {founder.photo && (
@@ -210,10 +213,10 @@ export function FounderStrip() {
         </div>
 
         {/* Statement */}
-        <div className="flex flex-col justify-center px-6 py-14 sm:px-10 lg:py-20 lg:pl-16 lg:pr-[max(3rem,calc((100vw-1200px)/2))]">
+        <div className="flex flex-col justify-center px-6 py-12 sm:px-10 md:py-14 lg:py-20 lg:pl-16 lg:pr-[max(3rem,calc((100vw-1200px)/2))]">
           <p
             data-reveal="eyebrow"
-            className="flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft"
+            className="flex items-center gap-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-ink-soft md:text-xs"
           >
             <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 bg-magenta" />
             Who builds it
@@ -225,11 +228,14 @@ export function FounderStrip() {
           >
             You talk to the <Hl tone="magenta">founder</Hl>, never an account manager.
           </h2>
-          <p data-reveal="lede" className="mt-6 max-w-[46ch] text-lg leading-relaxed text-ink-soft">
+          <p
+            data-reveal="lede"
+            className="mt-6 max-w-[46ch] text-lg leading-relaxed text-ink-soft max-md:text-[1.1875rem] max-md:font-semibold max-md:text-white"
+          >
             One person owns the direction, keeps the work moving, and stays accountable for the result.
           </p>
 
-          <div ref={proofRef} data-reveal="block" className="mt-10">
+          <div ref={proofRef} data-reveal="block" className="mt-8 md:mt-10">
             <span ref={ruleRef} aria-hidden="true" className="block h-px origin-left bg-white/50" />
             <dl className="mt-6 grid grid-cols-3 gap-4">
               {PROOF.map((p, i) => (
@@ -254,7 +260,7 @@ export function FounderStrip() {
           <Link
             href="/about"
             data-reveal="lede"
-            className="group mt-10 inline-flex min-h-11 w-fit items-center gap-1.5 text-base font-semibold text-ink underline decoration-white/50 underline-offset-4 transition-colors hover:decoration-white"
+            className="group mt-8 inline-flex min-h-11 md:mt-10 w-fit items-center gap-1.5 text-base font-semibold text-ink underline decoration-white/50 underline-offset-4 transition-colors hover:decoration-white"
           >
             More about Adib
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />

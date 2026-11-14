@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { Code2, Megaphone, PenTool, Sparkles } from "lucide-react";
 import { PixelResolve } from "@/components/PixelResolve";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
-import { founder, ctas } from "@/content/siteConfig";
+import { founder } from "@/content/siteConfig";
 import { CtaLink } from "@/components/CtaLink";
 import { EASE } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
@@ -38,7 +38,7 @@ function PortraitPlate() {
       // its cue from the screen and lets the 4:5 ratio derive the width.
       className="aspect-[4/5] w-full rounded-[28px] lg:h-[min(62svh,600px)] lg:w-auto"
     >
-      <div className="relative h-full w-full overflow-hidden rounded-[28px] bg-ink">
+      <div className="relative h-full w-full overflow-hidden rounded-[28px] border border-line bg-paper-2">
         {founder.photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -64,7 +64,7 @@ function PortraitPlate() {
             />
             <span
               aria-hidden="true"
-              className="absolute inset-0 flex items-center justify-center text-[9rem] font-black leading-none tracking-tighter text-paper/90 sm:text-[11rem] lg:text-[clamp(6rem,18svh,9rem)]"
+              className="absolute inset-0 flex items-center justify-center text-[9rem] font-black leading-none tracking-tighter text-white/90 sm:text-[11rem] lg:text-[clamp(6rem,18svh,9rem)]"
             >
               {founder.initials}
             </span>
@@ -96,7 +96,7 @@ function PortraitPlate() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.6 }}
             transition={{ duration: 0.6, ease: EASE, delay: 0.35 }}
-            className="text-2xl font-bold leading-tight tracking-tight text-paper sm:text-3xl"
+            className="text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl"
           >
             {founder.name}
           </motion.p>
@@ -105,7 +105,7 @@ function PortraitPlate() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.6 }}
             transition={{ duration: 0.6, ease: EASE, delay: 0.45 }}
-            className="mt-0.5 text-[0.9625rem] font-bold leading-relaxed text-paper/85"
+            className="mt-0.5 text-[0.9625rem] font-bold leading-relaxed text-white/85"
           >
             {founder.role}
           </motion.p>
@@ -114,7 +114,7 @@ function PortraitPlate() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.6 }}
             transition={{ duration: 0.6, ease: EASE, delay: 0.52 }}
-            className="mt-1 text-xs tracking-[0.06em] text-paper/60"
+            className="mt-1 text-xs tracking-[0.06em] text-white/60"
           >
             {founder.roleScope}
           </motion.p>
@@ -132,8 +132,8 @@ function PortraitPlate() {
  */
 export function FounderFeature() {
   return (
-    <section className="border-t border-line px-6 py-14 sm:px-8 lg:px-12 lg:py-16">
-      <div className="mx-auto max-w-[1400px]">
+    <section className="home-section border-t border-line">
+      <div className="home-shell">
         {/* The founder beat is sized to sit inside a single screen on desktop:
             the portrait is capped against viewport height and the block takes
             only the room it needs, so portrait and copy read in one pass. */}
@@ -144,11 +144,7 @@ export function FounderFeature() {
 
           <div>
             <Reveal delay={0.1}>
-              <p className="label-eyebrow mb-4 inline-flex items-center gap-2">
-                {founder.eyebrow}
-                <span className="h-px w-5 bg-blue" />
-                <span className="h-1 w-1 rounded-full bg-magenta" />
-              </p>
+              <p className="label-eyebrow mb-4">{founder.eyebrow}</p>
               <h2 className="max-w-xl text-3xl font-bold leading-[1.1] tracking-tight text-ink sm:text-5xl lg:text-[clamp(2rem,3.4vw,3rem)]">
                 {founder.heading}
               </h2>
@@ -192,7 +188,7 @@ export function FounderFeature() {
               stagger={0.08}
             >
               {founder.proof.map((p) => (
-                <RevealItem key={p.label} className="bg-paper px-5 py-5 lg:py-4">
+                <RevealItem key={p.label} className="bg-paper-2 px-5 py-5 lg:py-4">
                   <p className="text-3xl font-bold leading-none tracking-tight text-ink lg:text-2xl">
                     {p.value}
                   </p>
@@ -206,7 +202,7 @@ export function FounderFeature() {
               {/* Conversion action, same as every other "book a call" link
                   on the site — so it takes the primary pill, not the
                   outlined secondary it was using. */}
-              <CtaLink section="founder" cta="book" label={ctas.book.withAdib} className="mt-8 w-fit lg:mt-6" />
+              <CtaLink section="founder" cta="book" className="mt-8 w-fit lg:mt-6" />
             </Reveal>
           </div>
         </div>

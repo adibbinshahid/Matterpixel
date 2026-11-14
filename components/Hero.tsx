@@ -23,15 +23,26 @@ import { loadGsap, refreshScrollTrigger } from "@/lib/loadGsap";
  */
 
 const TRUST_BADGE_ICONS: Record<string, LucideIcon> = {
+  "Minimum 90+ PageSpeed Score": Gauge,
   "90+ Google PageSpeed Score": Gauge,
   "Fiverr Top Rated Seller": Star,
   "NDA Friendly": ShieldCheck,
   "No Surprise Budget Increase": Wallet,
 };
+/** Phones show only these two badges, on one row, under a short label. */
+const PHONE_BADGES: Record<string, string> = {
+  "Fiverr Top Rated Seller": "Fiverr Top Rated Seller",
+  "Minimum 90+ PageSpeed Score": "90+ PageSpeed",
+};
+
 /**
  * Homepage hero: one centred poster over the full-screen background clip —
  * eyebrow pill, three-line headline, subline, actions, stack and trust
  * badges, and the scroll cue at the foot of the first screen.
+ *
+ * Phones get the minimal cut: headline, subline, both actions and two
+ * badges, sized to its content rather than the full screen. The service
+ * pill, stack row and scroll cue stay in the markup but are hidden there.
  */
 export function Hero() {
   const reduced = useReducedMotion();
@@ -115,9 +126,9 @@ export function Hero() {
 
       {/* Centred poster: the offer, the actions and the proof stack on one
           axis and fill the first screen, with the scroll cue at its foot. */}
-      <div className="home-shell flex min-h-[100svh] flex-col items-center justify-center pb-6 pt-28 text-center sm:pt-28">
+      <div className="home-shell flex flex-col items-center justify-center pb-14 pt-24 text-center md:min-h-[100svh] md:pb-6 md:pt-28">
         <p
-          className="hero-rise inline-flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1.5 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-white backdrop-blur-xl sm:px-5 sm:py-2.5 sm:text-sm"
+          className="hero-rise inline-flex max-w-full flex-wrap max-md:hidden items-center justify-center gap-x-3 gap-y-1.5 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-white backdrop-blur-xl sm:px-5 sm:py-2.5 sm:text-sm"
         >
           {/* A marker leads every item, so a wrapped line never opens on an
               orphaned separator. */}
@@ -130,7 +141,7 @@ export function Hero() {
         </p>
 
         {/* Three lines, the middle one — what we build — set largest. */}
-        <h1 className="mt-6 text-balance text-[clamp(1.75rem,0.9rem+2.6vw,3.5rem)] font-bold leading-[1.08] tracking-[-0.03em] text-white">
+        <h1 className="text-balance md:mt-6 text-[clamp(1.75rem,0.9rem+2.6vw,3.5rem)] font-bold leading-[1.08] tracking-[-0.03em] text-white">
           <HeroLine delay="0.1s">
             We <span className="text-blue">build</span>
           </HeroLine>
@@ -161,7 +172,7 @@ export function Hero() {
 
         {/* The stack, monochrome and small, over a hairline. */}
         <div
-          className="hero-rise mt-10 flex w-full max-w-3xl flex-wrap items-center justify-center gap-x-5 gap-y-3 border-t border-white/10 pt-6"
+          className="hero-rise mt-10 flex w-full max-w-3xl flex-wrap items-center justify-center gap-x-5 gap-y-3 border-t border-white/10 pt-6 max-md:hidden"
           style={{ animationDelay: "0.5s" }}
           aria-label="Built with"
           role="img"
@@ -172,19 +183,29 @@ export function Hero() {
         </div>
 
         <ul
-          className="hero-rise mt-6 flex flex-wrap justify-center gap-2"
+          className="hero-rise mt-8 flex justify-center gap-2 max-md:flex-nowrap md:mt-6 md:flex-wrap"
           style={{ animationDelay: "0.6s" }}
           aria-label="Standards"
         >
           {trust.badges.map((badge) => {
             const Icon = TRUST_BADGE_ICONS[badge] ?? ShieldCheck;
+            const phone = PHONE_BADGES[badge];
             return (
               <li
                 key={badge}
-                className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.05] px-3.5 py-1.5 text-[0.8125rem] font-medium text-white/80 backdrop-blur-md"
+                className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[0.8125rem] font-medium text-white/80 backdrop-blur-md md:px-3.5 ${
+                  phone ? "" : "max-md:hidden"
+                }`}
               >
-                <Icon className="h-3.5 w-3.5 text-[var(--blue-ink)]" aria-hidden="true" />
-                {badge}
+                <Icon className="h-3.5 w-3.5 shrink-0 text-[var(--blue-ink)]" aria-hidden="true" />
+                {phone && phone !== badge ? (
+                  <>
+                    <span className="md:hidden">{phone}</span>
+                    <span className="max-md:hidden">{badge}</span>
+                  </>
+                ) : (
+                  badge
+                )}
               </li>
             );
           })}
@@ -192,7 +213,7 @@ export function Hero() {
 
         {/* Scroll cue: a slow breathing chevron, purely a hint. */}
         <div
-          className="hero-rise mt-8 flex flex-col items-center gap-2 text-white/50"
+          className="hero-rise mt-8 flex flex-col items-center gap-2 text-white/50 max-md:hidden"
           style={{ animationDelay: "0.7s" }}
           aria-hidden="true"
         >

@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import * as RadixAccordion from "@radix-ui/react-accordion";
 import { ChevronDown } from "lucide-react";
 import { EASE } from "@/lib/utils";
@@ -9,49 +9,39 @@ const EASE_CSS = `cubic-bezier(${EASE.join(",")})`;
 
 /**
  * Radix Accordion restyled to brand — accessible (keyboard, ARIA) FAQ list.
- *
- * `reserve`: the list keeps the height it would have with its longest
- * answer open, whatever is open, so expanding or collapsing a question
- * never moves anything below it. Measured from hidden copies of every
- * answer at the list's real width, and re-measured on resize.
+ * No reserved height: a click-driven shift doesn't count toward CLS, and
+ * Lenis's autoResize picks up the new page height on its own.
  */
 export function Accordion({
   items,
-  reserve = false,
   compact = false,
   columns = 1,
+  defaultOpen = false,
+  closedOnPhones = false,
 }: {
   items: { q: string; a: string }[];
-  reserve?: boolean;
   /** Tighter rows (16px, 1rem question type) for dense lists. */
   compact?: boolean;
   /** 2: two independent columns from md up — first half left, second half right. */
   columns?: 1 | 2;
+  /** Every answer starts open; each still collapses on its own. */
+  defaultOpen?: boolean;
+  /** With `defaultOpen`: below 768px every answer starts closed instead. */
+  closedOnPhones?: boolean;
 }) {
   const twoCol = columns === 2;
   const rowPad = compact ? "py-4" : "py-6";
   const ansPad = compact ? "pb-4" : "pb-6";
-  const rootRef = useRef<HTMLDivElement>(null);
-  const probeRef = useRef<HTMLDivElement>(null);
-  const [minH, setMinH] = useState<number | undefined>(undefined);
-
-  useLayoutEffect(() => {
-    if (!reserve) return;
-    const root = rootRef.current;
-    const probe = probeRef.current;
-    if (!root || !probe) return;
-    const measure = () => {
-      // Collapsed height of the list: every item minus any open answer.
-      const open = root.querySelector<HTMLElement>("[data-state=open][role=region]");
-      const collapsed = root.offsetHeight - (open?.offsetHeight ?? 0);
-      const tallest = Math.max(0, ...[...probe.children].map((c) => (c as HTMLElement).offsetHeight));
-      setMinH(collapsed + tallest);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(probe);
-    return () => ro.disconnect();
-  }, [reserve, items]);
+  const allOpen = items.map((_, i) => `item-${i}`);
+  // Controlled only so a phone can close everything after mount; the
+  // server HTML (and so every crawler) still carries each answer open.
+  const [open, setOpen] = useState<string[]>(defaultOpen ? allOpen : []);
+  useEffect(() => {
+    if (defaultOpen && closedOnPhones && window.matchMedia("(max-width: 767px)").matches) setOpen([]);
+  }, [defaultOpen, closedOnPhones]);
+  const rootProps = defaultOpen
+    ? { type: "multiple" as const, value: open, onValueChange: setOpen }
+    : { type: "single" as const, collapsible: true };
 
   const renderItem = (item: { q: string; a: string }, i: number) => (
     <RadixAccordion.Item key={i} value={`item-${i}`}>
@@ -66,8 +56,11 @@ export function Accordion({
           />
         </RadixAccordion.Trigger>
       </RadixAccordion.Header>
+      {/* Kept mounted (hidden when closed) so an answer is never removed
+          from the page, only collapsed. */}
       <RadixAccordion.Content
-        className={`overflow-hidden ${ansPad} text-ink-soft data-[state=closed]:animate-none data-[state=open]:animate-none`}
+        forceMount
+        className={`overflow-hidden ${ansPad} text-ink-soft data-[state=closed]:hidden data-[state=closed]:animate-none data-[state=open]:animate-none`}
       >
         <p className="max-w-2xl leading-relaxed">{item.a}</p>
       </RadixAccordion.Content>
@@ -75,25 +68,9 @@ export function Accordion({
   );
 
   return (
-    <div ref={rootRef} className="relative" style={reserve ? { minHeight: minH } : undefined}>
-      {reserve && (
-        <div
-          ref={probeRef}
-          aria-hidden="true"
-          className={`pointer-events-none invisible absolute left-0 top-0 h-0 overflow-hidden ${
-            twoCol ? "w-full md:w-[calc(50%-1.25rem)]" : "w-full"
-          }`}
-        >
-          {items.map((item, i) => (
-            <div key={i} className={`${ansPad} text-ink-soft`}>
-              <p className="max-w-2xl leading-relaxed">{item.a}</p>
-            </div>
-          ))}
-        </div>
-      )}
+    <div className="relative">
       <RadixAccordion.Root
-        type="single"
-        collapsible
+        {...rootProps}
         className={twoCol ? "grid items-start md:grid-cols-2 md:gap-x-10" : "divide-y divide-line border-y border-line"}
       >
         {twoCol

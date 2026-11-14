@@ -41,7 +41,7 @@ export function BrowserFrame({
           <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
         </div>
         <div className="flex min-w-0 flex-1 items-center justify-center">
-          <span className="truncate rounded-full bg-[rgba(255,255,255,0.07)] px-3 py-1 font-mono text-[11px] tracking-tight text-[#a5a2b0]">
+          <span className="truncate rounded-full bg-[rgba(255,255,255,0.07)] px-3 py-1 font-mono text-[12px] tracking-tight md:text-[11px] text-[#a5a2b0]">
             {url}
           </span>
         </div>

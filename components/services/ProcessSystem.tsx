@@ -97,7 +97,7 @@ export function ProcessSystem() {
     // whole mechanism pinning the active step through the list. Nothing in
     // this section bleeds past its bounds, so the clip isn't needed.
     <section ref={sectionRef} className="panel-blue relative border-t border-line">
-      <div className="section-shell py-24 lg:py-32">
+      <div className="section-shell py-[72px] lg:py-[120px]">
         <Reveal>
           <div className="flex flex-col items-center text-center">
             {/* .label-eyebrow hardcodes var(--blue) — invisible on a blue

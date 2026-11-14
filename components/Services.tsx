@@ -37,8 +37,14 @@ function ServiceCard({ service }: { service: ServiceListing }) {
 
         <div className="mt-6 flex items-center justify-between gap-3">
           <span className="inline-flex items-center gap-2 rounded-full border border-blue bg-blue px-3.5 py-1.5 transition-colors duration-300 group-hover:border-transparent group-hover:bg-white/20">
-            <span className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-white/80">Starting at</span>
-            <span className="text-sm font-bold tracking-tight text-white">${service.startingPrice.toLocaleString()}</span>
+            {service.startingPrice === null ? (
+              <span className="text-sm font-bold tracking-tight text-white">Custom quote</span>
+            ) : (
+              <>
+                <span className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-white/80">Starting at</span>
+                <span className="text-sm font-bold tracking-tight text-white">${service.startingPrice.toLocaleString()}</span>
+              </>
+            )}
           </span>
 
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-ink transition-colors duration-300 group-hover:text-white">
@@ -70,7 +76,7 @@ export function Services({
 }) {
   return (
     <section id="capabilities" className="relative scroll-mt-24 border-t border-line">
-      <div className={`section-shell ${showHeading ? "section-py-spacious" : "pb-28 pt-10 lg:pt-12"}`}>
+      <div className={`section-shell ${showHeading ? "section-py-spacious" : "py-[72px] lg:py-[120px]"}`}>
         {showHeading && (
           <Reveal>
             <p className="label-eyebrow mb-4">{servicesIntro.eyebrow}</p>

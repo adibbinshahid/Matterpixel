@@ -1,5 +1,7 @@
 import Image from "next/image";
-import { ArrowUpRight, Check, Gauge, Info, KeyRound, Smartphone } from "lucide-react";
+import Link from "next/link";
+import { PageHero } from "@/components/PageHero";
+import { ArrowLeft, ArrowUpRight, Check, Gauge, Info, KeyRound, Smartphone } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { PixelResolve } from "@/components/PixelResolve";
 import { BrowserFrame, PhoneFrame } from "@/components/BrowserFrame";
@@ -23,16 +25,12 @@ function hostOf(url: string) {
 export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
   return (
     <>
-      <section className="px-6 pb-16 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
-          <Reveal>
-            <p className="label-eyebrow mb-4 mt-8">{project.category} · Concept build</p>
-            <h1 className="max-w-4xl text-display text-ink">{project.name}</h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-ink-soft">
-              {project.oneLiner}
-            </p>
-
-            <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-4">
+      <PageHero
+        eyebrow={`${project.category} · Concept build`}
+        lines={[project.name]}
+        lede={project.oneLiner}
+      >
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
               <a
                 href={project.liveDemoUrl}
                 target="_blank"
@@ -54,9 +52,18 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
                 </a>
               )}
             </div>
-          </Reveal>
+        <Link
+                href="/projects"
+                className="group mt-8 inline-flex w-fit items-center gap-2 text-sm font-semibold text-ink-soft transition-colors duration-300 hover:text-ink"
+              >
+                <ArrowLeft className="h-4 w-4 transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-x-1" />
+                All projects
+              </Link>
+      </PageHero>
 
-          <Reveal delay={0.1} className="mt-14">
+      <section className="pb-16">
+        <div className="section-shell">
+          <Reveal delay={0.1}>
             <PixelResolve trigger="view" className="block rounded-[var(--mp-radius-md)]">
               <BrowserFrame url={hostOf(project.liveDemoUrl)} bodyClassName="aspect-[16/10]">
                 <Image
@@ -74,8 +81,8 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
       </section>
 
       {/* ── Honest framing ───────────────────────────────────────────── */}
-      <section className="px-6 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section>
+        <div className="section-shell">
           <Reveal>
             <div className="flex max-w-3xl items-start gap-3 border-l-2 border-blue py-2 pl-5">
               <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue" aria-hidden="true" />
@@ -100,8 +107,8 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
       </section>
 
       {/* ── Brief / problem / solution ───────────────────────────────── */}
-      <section className="px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="py-[72px] lg:py-[120px]">
+        <div className="section-shell">
           <RevealGroup className="grid gap-x-12 gap-y-12 lg:grid-cols-3">
             {[
               { label: "The brief", body: project.brief },
@@ -120,8 +127,8 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
       </section>
 
       {/* ── Measured performance ─────────────────────────────────────── */}
-      <section className="border-y border-line bg-paper-2 px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="border-y border-line bg-paper-2 py-[72px] lg:py-[120px]">
+        <div className="section-shell">
           <Reveal>
             <p className="label-eyebrow flex items-center gap-2">
               <Gauge className="h-3.5 w-3.5" aria-hidden="true" />
@@ -166,8 +173,8 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
       </section>
 
       {/* ── What's inside ────────────────────────────────────────────── */}
-      <section className="px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="py-[72px] lg:py-[120px]">
+        <div className="section-shell">
           <Reveal>
             <p className="label-eyebrow">What&rsquo;s inside</p>
             <h2 className="mt-4 max-w-2xl text-h2 text-ink">
@@ -192,8 +199,8 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
       </section>
 
       {/* ── Gallery ──────────────────────────────────────────────────── */}
-      <section className="border-t border-line px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto max-w-[1400px]">
+      <section className="border-t border-line py-[72px] lg:py-[120px]">
+        <div className="section-shell">
           <Reveal>
             <p className="label-eyebrow">Inside the build</p>
             <h2 className="mt-4 max-w-2xl text-h2 text-ink">Screens from the live site.</h2>
@@ -224,8 +231,8 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
       </section>
 
       {/* ── Mobile ───────────────────────────────────────────────────── */}
-      <section className="border-t border-line px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-[1400px] items-center gap-14 lg:grid-cols-2">
+      <section className="border-t border-line py-[72px] lg:py-[120px]">
+        <div className="section-shell grid items-center gap-14 lg:grid-cols-2">
           <Reveal>
             <p className="label-eyebrow flex items-center gap-2">
               <Smartphone className="h-3.5 w-3.5" aria-hidden="true" />
@@ -268,8 +275,8 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
 
       {/* ── Admin panel ──────────────────────────────────────────────── */}
       {project.admin && (
-        <section className="panel-dark border-y border-line px-6 py-20 sm:px-8 lg:px-12">
-          <div className="mx-auto max-w-[1400px]">
+        <section className="panel-dark border-y border-line py-[72px] lg:py-[120px]">
+          <div className="section-shell">
             <Reveal>
               <p className="label-eyebrow flex items-center gap-2">
                 <KeyRound className="h-3.5 w-3.5" aria-hidden="true" />
@@ -327,8 +334,8 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
       )}
 
       {/* ── Build decisions + stack ──────────────────────────────────── */}
-      <section className="px-6 py-20 sm:px-8 lg:px-12">
-        <div className="mx-auto grid max-w-[1400px] gap-x-16 gap-y-14 lg:grid-cols-3">
+      <section className="py-[72px] lg:py-[120px]">
+        <div className="section-shell grid gap-x-16 gap-y-14 lg:grid-cols-3">
           <Reveal className="lg:col-span-1">
             <p className="label-eyebrow">How it was built</p>
             <h2 className="mt-4 text-h2 text-ink">The decisions that made the difference.</h2>

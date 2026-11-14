@@ -29,7 +29,8 @@ export const TIMELINE_OPTIONS = [
 export const PROJECT_TYPE_OPTIONS = [
   "New website",
   "Website redesign",
-  "Web app or software",
+  "Web app",
+  "Business software",
   "AI automation",
   "Branding & identity",
   "AI visuals & video",

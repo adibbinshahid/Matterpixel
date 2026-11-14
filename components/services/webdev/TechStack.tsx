@@ -14,8 +14,8 @@ export function TechStack({ service }: { service: Service }) {
   const deployment = service.deployment ?? [];
 
   return (
-    <section className="border-t border-line px-6 py-16 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-[1400px]">
+    <section className="border-t border-line py-[72px] lg:py-[120px]">
+      <div className="section-shell">
         <Reveal>
           <p className="label-eyebrow mb-3">the stack</p>
           <h2 className="max-w-2xl">

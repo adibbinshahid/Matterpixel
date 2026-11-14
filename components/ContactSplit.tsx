@@ -74,14 +74,14 @@ const BURST = Array.from({ length: 14 }, (_, i) => {
 const TABS = [
   {
     id: "inquiry",
-    label: "Start a Project",
+    label: "Get a fixed quote",
     blurb: "Best for new projects",
     icon: Send,
   },
   {
     id: "booking",
-    label: "Book A Free Audit Call",
-    blurb: "30-min strategy discussion",
+    label: "Book a free audit call",
+    blurb: "30 min · free, no obligation",
     icon: Calendar,
   },
   {
@@ -95,7 +95,7 @@ const TABS = [
 const TRUST_POINTS = [
   { label: "We reply within 12 hours", icon: Clock },
   { label: "NDA-friendly", icon: FileCheck },
-  { label: "Your data is 100% secure", icon: ShieldCheck },
+  { label: "Your details stay private", icon: ShieldCheck },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -651,11 +651,10 @@ function StartOverConfirm({ onCancel, onConfirm }: { onCancel: () => void; onCon
         exit={{ opacity: 0, y: 8, scale: 0.98 }}
         transition={{ duration: 0.22, ease: EASE }}
         onClick={(e) => e.stopPropagation()}
-        // Light panel on purpose: the portal lands on <body>, outside the
-        // form card's `.panel-dark` scope, so ink/paper resolve to their
-        // light-theme values here. A dark panel would need its own token
-        // override to stay legible.
-        className="w-full max-w-sm rounded-2xl border border-black/10 bg-paper p-5 text-center shadow-2xl"
+        // The portal lands on <body>, outside the form card's `.panel-dark`
+        // scope, so the dialog declares its own — that keeps it on the
+        // homepage's dark ground and lets it use the site's two buttons.
+        className="panel-dark w-full max-w-sm rounded-2xl border border-white/10 p-5 text-center shadow-2xl"
       >
         <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-magenta/10 text-magenta">
           <RotateCcw className="h-5 w-5" />
@@ -672,14 +671,14 @@ function StartOverConfirm({ onCancel, onConfirm }: { onCancel: () => void; onCon
             ref={confirmRef}
             type="button"
             onClick={onCancel}
-            className="focus-no-outline flex-1 rounded-full border border-ink/20 px-5 py-2.5 text-sm font-semibold text-ink transition-colors hover:border-ink/45 hover:bg-ink/[0.05] focus-visible:border-blue"
+            className="btn-outline btn-sm flex-1"
           >
             Keep my answers
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="focus-no-outline flex-1 rounded-full bg-magenta px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-magenta/50 focus-visible:ring-offset-2"
+            className="btn-brand btn-sm flex-1"
           >
             Yes, delete &amp; restart
           </button>
@@ -1009,8 +1008,9 @@ const LEGACY_PROJECT_TYPES: Record<string, string> = {
   "Brand Identity": "Branding & identity",
   "Content Creation": "AI visuals & video",
   "Growth Marketing": "SEO & marketing",
-  "Web & App Development": "Web app or software",
-  "Business Software": "Web app or software",
+  "Web & App Development": "Web app",
+  "Business Software": "Business software",
+  "Web app or software": "Web app",
   "Branding & Identity": "Branding & identity",
   "AI Product Visuals & Video": "AI visuals & video",
   "SEO & Digital Marketing": "SEO & marketing",
@@ -1340,13 +1340,14 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
     }, AUTO_ADVANCE_MS);
   };
 
-  /** "Change" on the selection card: the skipped steps rejoin the run, and
-   * the visitor is taken to the first of them — unless their name and
-   * email aren't in yet, in which case they meet them in order. */
+  /** "Change" on the selection card: the skipped steps rejoin the run and
+   * the visitor goes straight to the first of them. Name and email aren't
+   * lost if they were still blank — Previous leads back to them, and the
+   * review screen flags them before Send. */
   const changeSelection = () => {
     const reopened = WIZARD_STEPS.find((s) => skipped.includes(s.id))?.id ?? "projectTypes";
     setSkipped([]);
-    if (!stepIssue(WIZARD_STEPS[0], getValues())) goTo(reopened, -1);
+    goTo(reopened, stepId === "contact" ? 1 : -1);
   };
 
   /** Opens the inline editor on the review screen. The previous answer is

@@ -32,6 +32,7 @@ export function ConceptBuilds() {
       host: new URL(p.liveDemoUrl).host,
       score: p.lighthouse.performance,
       thumb: p.cover,
+      mobile: p.mobile,
       full: { src: `/projects/${p.slug}/full.webp`, width: 1000, height: FULL_CAPTURE_HEIGHT[p.slug] ?? 2400 },
     }));
 

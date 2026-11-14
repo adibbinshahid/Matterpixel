@@ -1,10 +1,10 @@
 import { Check, X } from "lucide-react";
 
 const ROWS = [
-  { label: "Who codes", us: "Senior devs", them: "Junior devs" },
+  { label: "Who codes", us: "Senior lead + vetted specialists", them: "Junior devs" },
   { label: "Pricing", us: "Fixed quote", them: "Hourly, open-ended" },
   { label: "Scope", us: "Locked upfront", them: "Creeps mid-build" },
-  { label: "Stack", us: "Next.js / React", them: "Legacy / templated" },
+  { label: "Stack", us: "Next.js / React (WordPress or Shopify on request)", them: "Whatever the template allows" },
   { label: "Web Vitals", us: "Built in", them: "If requested" },
   { label: "After launch", us: "One partner", them: "Vendor per task" },
 ] as const;

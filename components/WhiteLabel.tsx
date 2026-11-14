@@ -12,11 +12,11 @@ import { PartnerLink } from "@/components/CtaLink";
 export function WhiteLabel() {
   return (
     <PixelSection tone="magenta" id="white-label" className="home-section" labelledBy="white-label-title">
-      <div className="home-shell grid gap-10 lg:grid-cols-[1.2fr_1fr] lg:items-end lg:gap-16">
+      <div className="home-shell grid gap-8 md:gap-10 lg:grid-cols-[1.2fr_1fr] lg:items-end lg:gap-16">
         <div>
           <p
             data-reveal="eyebrow"
-            className="flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft"
+            className="flex items-center gap-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-ink-soft md:text-xs"
           >
             <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 bg-magenta" />
             {whiteLabel.eyebrow}
@@ -28,7 +28,10 @@ export function WhiteLabel() {
           >
             Your trusted <Hl tone="blue">white-label</Hl> development partner.
           </h2>
-          <p data-reveal="lede" className="mt-5 max-w-[52ch] text-base leading-relaxed text-ink-soft sm:text-lg">
+          <p
+            data-reveal="lede"
+            className="mt-5 max-w-[52ch] text-base leading-relaxed text-ink-soft max-md:text-[1.1875rem] max-md:font-semibold max-md:text-white md:text-lg"
+          >
             {whiteLabel.body}
           </p>
         </div>

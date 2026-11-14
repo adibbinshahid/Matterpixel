@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "motion/react";
 import { founderEditorial } from "@/content/servicesPage";
-import { founder, ctas } from "@/content/siteConfig";
+import { founder } from "@/content/siteConfig";
 import { CtaLink } from "@/components/CtaLink";
 import { EASE } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
@@ -41,11 +41,9 @@ export function FounderEditorial() {
       ref={sectionRef}
       className="relative overflow-hidden border-t border-line bg-paper"
     >
-      <div className="section-shell py-12">
-        <p className="label-eyebrow mb-4 inline-flex items-center gap-2">
+      <div className="section-shell py-[72px] lg:py-[120px]">
+        <p className="label-eyebrow mb-4">
           {founderEditorial.eyebrow}
-          <span className="h-px w-5 bg-blue" />
-          <span className="h-1 w-1 rounded-full bg-magenta" />
         </p>
 
         {/* Height-driven on desktop (`auto_1fr`): the portrait declares its
@@ -58,7 +56,7 @@ export function FounderEditorial() {
             style={reduced ? undefined : { y: portraitY }}
             className="relative"
           >
-            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[var(--mp-radius-md)] bg-ink lg:h-[34svh] lg:max-h-[350px] lg:w-auto">
+            <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[var(--mp-radius-md)] border border-line bg-paper-2 lg:h-[34svh] lg:max-h-[350px] lg:w-auto">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={founder.photo ?? "/founder.webp"}
@@ -129,7 +127,7 @@ export function FounderEditorial() {
               ))}
             </dl>
 
-            <CtaLink section="founder" cta="book" label={ctas.book.withAdib} className="mt-5 w-fit" />
+            <CtaLink section="founder" cta="book" className="mt-5 w-fit" />
           </motion.div>
         </div>
       </div>

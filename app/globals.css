@@ -960,25 +960,27 @@ html.lenis body {
 .section-py-standard {
   padding-block: 6rem; /* matches FinalCta's current py-24 */
 }
+/* The homepage's section rhythm (.home-section): 72px mobile, 120px desktop. */
 .section-py-spacious {
-  padding-block: 7rem; /* matches Process/Services/Work's current py-28 */
+  padding-block: 72px;
+}
+@media (min-width: 1024px) {
+  .section-py-spacious {
+    padding-block: 120px;
+  }
 }
 
-/* Section container — mirrors app/page.tsx's existing repeated wrapper
-   (mx-auto max-w-[1400px] px-6 sm:px-8 lg:px-12) as one reusable class. */
+/* Same box as the homepage's .home-shell (1200px content, 24/32px
+   gutters) so every page sits on one grid. */
 .section-shell {
   margin-inline: auto;
-  max-width: 1400px;
+  max-width: calc(1200px + 3rem);
   padding-inline: 1.5rem;
 }
 @media (min-width: 640px) {
   .section-shell {
+    max-width: calc(1200px + 4rem);
     padding-inline: 2rem;
-  }
-}
-@media (min-width: 1024px) {
-  .section-shell {
-    padding-inline: 3rem;
   }
 }
 
@@ -1053,21 +1055,19 @@ html.lenis body {
      primary      .btn-brand              .btn-brand  (+ .btn-on-brand)
      secondary    .btn-line               .btn-outline
 
-   Primary is always the animated blue->magenta gradient, so "Get a Free
-   Audit" is the same object in the nav, the hero, a service page, and the
-   closing band — one intent, one look. Secondary changes with the surface
-   because an ink outline is invisible on near-black and a glass fill is
-   invisible on paper; the shape, padding, type, and hover motion are
-   identical across all four, which is what makes them read as one family.
+   The homepage sets the look and every page follows it: primary is solid
+   magenta, secondary is translucent grey glass. Every page sits on the
+   homepage's dark ground (DarkPage / .panel-dark), so .btn-line and
+   .btn-outline are the same glass. Shape, padding, type and hover motion
+   are identical across all of them.
 
    Modifiers: .btn-sm (nav-height), .btn-block (full-width, forms),
-   .btn-on-brand (paper ring when primary sits on magenta/blue, where the
-   gradient's own magenta half would otherwise melt into the panel). */
+   .btn-on-brand / .btn-on-magenta (white pill when primary sits on a
+   magenta or blue panel, where solid magenta would melt into it). */
 .btn-brand,
 .btn-line,
 .btn-primary,
-.btn-outline,
-.btn-blue {
+.btn-outline {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -1093,22 +1093,19 @@ html.lenis body {
 .btn-brand:hover,
 .btn-line:hover,
 .btn-primary:hover,
-.btn-outline:hover,
-.btn-blue:hover {
+.btn-outline:hover {
   transform: translateY(-2px) scale(1.035);
 }
 .btn-brand:active,
 .btn-line:active,
 .btn-primary:active,
-.btn-outline:active,
-.btn-blue:active {
+.btn-outline:active {
   transform: translateY(0) scale(1.01);
 }
 .btn-brand:disabled,
 .btn-line:disabled,
 .btn-primary:disabled,
-.btn-outline:disabled,
-.btn-blue:disabled {
+.btn-outline:disabled {
   transform: none;
   box-shadow: none;
   opacity: 0.55;
@@ -1136,99 +1133,61 @@ html.lenis body {
   }
 }
 
-/* Primary — the one conversion style. Label is a literal white, not
-   var(--paper): inside .panel-dark / .panel-blue that token is reassigned
-   to the panel's own dark/blue value, which would paint the label the same
-   color as the surface it sits on. */
+/* Primary — the one conversion style: solid magenta, one step deeper than
+   the logo's #FF2E93 so the white label clears AA (4.6:1; logo magenta is
+   3.3:1). Literal colours on purpose: --paper/--magenta are reassigned per
+   panel, which would paint the pill the colour of the surface under it. */
 .btn-brand,
-.btn-primary {
+.btn-primary,
+.nav-menu-btn {
   color: #fff;
-  background-image: linear-gradient(90deg, var(--blue), var(--magenta), var(--blue));
-  background-size: 200% 100%;
-  animation: var(--animate-gradient-shift);
+  background-color: #e0157a;
 }
 .btn-brand:hover,
-.btn-primary:hover {
-  box-shadow: 0 14px 30px -12px rgba(255, 0, 128, 0.55);
+.btn-primary:hover,
+.nav-menu-btn:hover {
+  background-color: #c7106b;
+  box-shadow: 0 14px 30px -12px rgba(224, 21, 122, 0.55);
 }
-.btn-brand:disabled,
-.btn-primary:disabled {
-  background-image: none;
-  animation: none;
-}
-/* Primary sitting on a magenta or blue panel: the gradient has nowhere to
-   contrast against, so it inverts to a solid white pill with the panel's
-   own hue as the label color — same pill, same primary role, figure and
-   ground swapped. Panels declare their hue via .on-magenta / .on-blue.
-
-   Every value here is a literal, deliberately. Most of these panels live
-   inside .panel-dark or .panel-blue, which reassign --paper to a dark or
-   blue value — a token-based fill would render this pill near-black on
-   magenta, which is exactly the bug this replaces. */
-.btn-on-brand {
-  color: var(--btn-on-brand-fg, #16161c);
-  background-image: none;
+/* Primary sitting on a magenta or blue panel: white pill, the panel's own
+   hue as the label — same pill, figure and ground swapped. Panels declare
+   their hue via .on-magenta / .on-blue; magenta is the default. */
+.btn-on-brand,
+.btn-on-magenta {
+  color: var(--btn-on-brand-fg, #d4126f);
   background-color: #fff;
-  animation: none;
-  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.35);
 }
-.btn-on-brand:hover {
-  color: #fff;
-  background-color: #16161c;
-  box-shadow: 0 16px 34px -14px rgba(0, 0, 0, 0.55);
+.btn-on-brand:hover,
+.btn-on-magenta:hover {
+  color: var(--btn-on-brand-hover-fg, #b00e5c);
+  background-color: #fff;
+  box-shadow: 0 14px 30px -12px rgba(120, 0, 50, 0.45);
 }
 .on-magenta {
-  --btn-on-brand-fg: var(--magenta);
+  --btn-on-brand-fg: #d4126f;
+  --btn-on-brand-hover-fg: #b00e5c;
 }
 .on-blue {
   --btn-on-brand-fg: var(--blue);
+  --btn-on-brand-hover-fg: color-mix(in srgb, var(--blue) 78%, #000);
 }
 
-/* Secondary on paper — outlined, inverting to solid ink. Border is a firm
-   40% ink: at 25% it read as an unstyled ghost next to the solid primary
-   rather than a deliberate second tier. */
-.btn-line {
-  color: var(--ink);
-  background: transparent;
-  border-color: color-mix(in srgb, var(--ink) 40%, transparent);
-}
-.btn-line:hover {
-  color: var(--paper);
-  background: var(--ink);
-  border-color: var(--ink);
-}
-
-/* Secondary on dark/photo — translucent glass, brightening on hover.
-   `border-color: transparent` rather than no border so the box size
-   matches :hover's real border and nothing shifts by 2px. */
+/* Secondary — translucent grey glass, brightening on hover.
+   `border-color` stays set so :hover's border never shifts the box. */
+.btn-line,
 .btn-outline {
   color: #fff;
-  background: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
   border-color: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
 }
+.btn-line:hover,
 .btn-outline:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.5);
-}
-
-/* Solid brand blue — the third role, and deliberately not a fourth look:
-   same pill, same padding scale, same lift, only the fill is flat rather
-   than the primary's animated gradient. It exists for actions that must
-   read as a *button* while a .btn-brand is either absent or would outrank
-   them — the project cards' "Live site", where the gradient primary is
-   reserved for the page's real conversion CTA and a second gradient pill
-   per card would turn a four-card grid into eight competing primaries. */
-.btn-blue {
   color: #fff;
-  background-color: var(--blue);
-}
-.btn-blue:hover {
-  background-color: color-mix(in srgb, var(--blue) 88%, #000);
-  box-shadow: 0 12px 26px -12px color-mix(in srgb, var(--blue) 70%, transparent);
-}
-.btn-blue:disabled {
+  background-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.5);
   box-shadow: none;
 }
 
@@ -1340,7 +1299,7 @@ html.lenis body {
    border-line utility inside it renders for dark without per-component
    overrides. `.home-light` flips a section back for the two light beats
    (Build your stack, FAQ). `--blue-ink` is brand blue lifted for text on
-   dark: raw #2C4BFF is ~3.2:1 on #0A0B10, under AA for body sizes. */
+   dark: raw #2C4BFF is ~3.2:1 on #0B0C0E, under AA for body sizes. */
 .home {
   --paper: #0b0c0e;
   --paper-2: #141518;
@@ -1368,6 +1327,23 @@ html.lenis body {
 .home-light ::selection {
   background: var(--blue);
   color: #fff;
+}
+
+/* Inner pages share the homepage ground (DarkPage), so their eyebrows take
+   the homepage's one eyebrow style (SectionHeading): soft ink, wide
+   tracking, led by a magenta pixel. Inline colour overrides still win. */
+.home .label-eyebrow {
+  color: var(--ink-soft);
+  letter-spacing: 0.16em;
+}
+.home .label-eyebrow::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 10px;
+  vertical-align: 0.12em;
+  background: var(--magenta);
 }
 
 /* Single container and section rhythm for the homepage: 1200px, 120px
@@ -1604,41 +1580,6 @@ canvas[hidden] {
 }
 
 
-/* ── Homepage + nav buttons ──────────────────────────────────────────────
-   Primary is solid magenta; secondary is translucent grey glass. The magenta is one step deeper than the logo's #FF2E93 so
-   the white label clears AA contrast (4.6:1; the logo magenta is 3.3:1).
-   Literal colours on purpose: tokens are reassigned per section. */
-.home .btn-brand,
-header .btn-brand,
-.nav-menu-btn {
-  background-image: none;
-  animation: none;
-  background-color: #e0157a;
-  color: #fff;
-}
-.home .btn-brand:hover,
-header .btn-brand:hover,
-.nav-menu-btn:hover {
-  background-color: #c7106b;
-  box-shadow: 0 14px 30px -12px rgba(224, 21, 122, 0.55);
-}
-/* Secondary: translucent grey glass, on any homepage ground. */
-.home .btn-outline,
-.home .btn-line {
-  color: #fff;
-  background-color: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.22);
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  backdrop-filter: blur(14px) saturate(160%);
-}
-.home .btn-outline:hover,
-.home .btn-line:hover {
-  color: #fff;
-  background-color: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: none;
-}
-
 /* ── Brand sections ─────────────────────────────────────────────────────
    The homepage's coloured beats (PixelSection tone="blue" | "magenta").
    Same token reassignment as .home-light, so every text-ink / bg-paper-2 /
@@ -1740,17 +1681,6 @@ header .btn-brand:hover,
   border-radius: 0 0 3px 3px;
   background: var(--magenta);
   box-shadow: 0 0 14px rgba(255, 46, 147, 0.55);
-}
-
-/* Primary on a magenta section: white pill, magenta label. */
-.home .btn-brand.btn-on-magenta {
-  background-color: #fff;
-  color: #d4126f;
-}
-.home .btn-brand.btn-on-magenta:hover {
-  background-color: #fff;
-  color: #b00e5c;
-  box-shadow: 0 14px 30px -12px rgba(120, 0, 50, 0.45);
 }
 
 /* Industries bento (components/WhoWeWorkFor.tsx). At rest each tile
@@ -1877,4 +1807,115 @@ header .btn-brand:hover,
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     0 18px 40px -22px rgba(11, 12, 14, 0.3);
+}
+
+/* Insight cards (components/InsightCard.tsx). Hover: the seam draws in from
+   the left along the top edge, the corner meter lights pixel by pixel
+   (per-pixel transition-delay set inline), the border warms to blue. */
+.insight-card {
+  transition: border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.insight-card:hover,
+.insight-card:focus-visible {
+  border-color: color-mix(in srgb, var(--blue) 55%, var(--line));
+}
+.insight-card-seam {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--blue), #8f9dff 50%, var(--magenta));
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.insight-card:hover .insight-card-seam,
+.insight-card:focus-visible .insight-card-seam {
+  transform: scaleX(1);
+}
+.insight-card-meter {
+  position: absolute;
+  top: 1.75rem;
+  right: 1.75rem;
+  display: flex;
+  gap: 3px;
+}
+.insight-card-meter > span {
+  width: 6px;
+  height: 6px;
+  background: var(--line);
+  transition: background-color 0.25s ease;
+}
+.insight-card:hover .insight-card-meter > span:nth-child(odd),
+.insight-card:focus-visible .insight-card-meter > span:nth-child(odd) {
+  background: var(--blue);
+}
+.insight-card:hover .insight-card-meter > span:nth-child(even),
+.insight-card:focus-visible .insight-card-meter > span:nth-child(even) {
+  background: var(--magenta);
+}
+@media (prefers-reduced-motion: reduce) {
+  .insight-card-seam,
+  .insight-card-meter > span {
+    transition: none;
+  }
+}
+
+/* ── Phones (<768px) ──────────────────────────────────────────────────────
+   Mobile-only overrides. Nothing here applies from md (768px) up.
+
+   Above-the-fold content paints finished: no load mask, no page fade, no
+   hero rise/wipe, so the headline, subline and both actions are on screen
+   with the first frame. Below the fold, lib/useReveal runs its short
+   mobile recipe instead. */
+@media (max-width: 767px) {
+  #mp-load-mask {
+    display: none;
+  }
+  .page-reveal,
+  .hero-line,
+  .hero-rise {
+    animation: none;
+  }
+
+  /* Section rhythm: 64px (py-16) instead of 72px. */
+  .home-section {
+    padding-block: 4rem;
+  }
+
+  /* Every pill is at least a 44px tap target. */
+  .btn-brand,
+  .btn-line,
+  .btn-primary,
+  .btn-outline,
+  .btn-blue {
+    min-height: 44px;
+  }
+
+  /* Magenta sections: a blue keyword on magenta is ~1.7:1. Keywords go
+     white and carry an underline instead of a second colour. */
+  .home-magenta .hl {
+    color: #fff;
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+}
+
+/* Invisible 44px tap area around a link whose visible box is shorter (a
+   one-line text link set in running copy or a tile). The pseudo-element
+   only extends the hit area; the link's own box and layout don't move. */
+@media (max-width: 767px) {
+  .tap-area {
+    position: relative;
+  }
+  .tap-area::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    height: 44px;
+    min-width: 44px;
+    transform: translateY(-50%);
+  }
 }

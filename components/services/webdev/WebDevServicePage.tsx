@@ -4,7 +4,7 @@ import { FeatureList } from "./FeatureList";
 import { SelectedWork } from "./SelectedWork";
 import { TechStack } from "./TechStack";
 import { WebDevFAQ } from "./WebDevFAQ";
-import { FinalCTA } from "./FinalCTA";
+import { ClosingCta } from "@/components/home/ClosingCta";
 
 /**
  * The Web & App Development detail page: a compact, list-and-table
@@ -14,7 +14,8 @@ import { FinalCTA } from "./FinalCTA";
  * app/services/[slug]/page.tsx. Every other service keeps the original
  * generic template untouched.
  *
- * Section rhythm: paper → dark → paper → dark → paper → blue.
+ * Sits on the shared dark ground (DarkPage) and closes on the site-wide
+ * ClosingCta, like every other page.
  */
 export function WebDevServicePage({ service }: { service: Service }) {
   return (
@@ -24,7 +25,7 @@ export function WebDevServicePage({ service }: { service: Service }) {
       <TechStack service={service} />
       <SelectedWork />
       <WebDevFAQ service={service} />
-      <FinalCTA />
+      <ClosingCta eyebrow="Web & App Development" title="Got something worth building?" />
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
@@ -37,6 +37,8 @@ export function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const closeMenu = useCallback(() => setOpen(false), []);
   // Whether whatever currently sits behind the (translucent) nav is dark —
   // any section that needs the bar to switch to its light-text/dark-glass
   // theme marks itself with `data-nav-scrim="light"` (see Hero.tsx,
@@ -47,8 +49,10 @@ export function Nav() {
 
   useEffect(() => {
     document.documentElement.style.overflow = open ? "hidden" : "";
+    document.body.style.overflow = open ? "hidden" : "";
     return () => {
       document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
     };
   }, [open]);
 
@@ -73,6 +77,10 @@ export function Nav() {
   // directly behind the bar rather than the whole page's scroll position.
   useEffect(() => {
     const targets = document.querySelectorAll('[data-nav-scrim="light"]');
+    // Light sections nested inside a dark-marked page (DarkPage wraps whole
+    // pages in the dark scrim) mark themselves `data-nav-light`, and win:
+    // the bar goes light over them even though the page around is dark.
+    const lights = document.querySelectorAll("[data-nav-light]");
     if (targets.length === 0) {
       setOverDarkHero(false);
       return;
@@ -84,17 +92,20 @@ export function Nav() {
     // target's own intersecting state and ORs them together, so the bar
     // stays dark-themed if *any* marked section is behind it.
     const intersecting = new Set<Element>();
+    const lightHits = new Set<Element>();
     const io = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting) intersecting.add(entry.target);
-          else intersecting.delete(entry.target);
+          const set = entry.target.hasAttribute("data-nav-light") ? lightHits : intersecting;
+          if (entry.isIntersecting) set.add(entry.target);
+          else set.delete(entry.target);
         }
-        setOverDarkHero(intersecting.size > 0);
+        setOverDarkHero(intersecting.size > 0 && lightHits.size === 0);
       },
       { rootMargin: "0px 0px -90% 0px", threshold: 0 },
     );
     targets.forEach((target) => io.observe(target));
+    lights.forEach((target) => io.observe(target));
     return () => io.disconnect();
   }, [pathname]);
 
@@ -104,7 +115,9 @@ export function Nav() {
     <header className="fixed inset-x-0 top-0 z-50">
       <nav
         data-nav-theme={navTheme}
-        className="nav-bar relative flex h-16 w-full items-center justify-between px-4 transition-colors duration-500 sm:h-[4.992rem] sm:px-8"
+        // Phones: above the menu's backdrop, so the bar and its close button
+        // stay sharp while the page behind is dimmed.
+        className="nav-bar relative flex h-16 w-full items-center justify-between px-4 transition-colors duration-500 max-md:z-[95] sm:h-[4.992rem] sm:px-8"
       >
         {/* Apple-glass bar — genuinely translucent (real backdrop-filter,
            not the opaque --glass-bg-strong material used elsewhere): blur +
@@ -181,18 +194,20 @@ export function Nav() {
           </div>
 
           <button
+            ref={toggleRef}
             type="button"
             onClick={() => setOpen((v) => !v)}
             className="nav-menu-btn hover-lift flex h-11 w-11 items-center justify-center rounded-full lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
+            aria-controls="mobile-menu"
           >
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </nav>
 
-      <MobileMenu open={open} onClose={() => setOpen(false)} />
+      <MobileMenu open={open} onClose={closeMenu} toggleRef={toggleRef} />
     </header>
   );
 }
@@ -204,14 +219,64 @@ export function Nav() {
  * saturate, layered top-sheen + ambient shadow) rather than the nav
  * pill's own opaque --glass-bg tokens, since the ask here is specifically
  * "super glassmorphism" — content behind should actually show through.
+ *
+ * A modal while open: Escape and a tap on the backdrop close it, Tab stays
+ * inside it (the toggle, which reads "Close menu", counts as inside), and
+ * focus goes back to the toggle when it closes. Below 768px the backdrop is
+ * the page's dark ground at 70% with a blur, so the panel reads on its own.
  */
-function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
+function MobileMenu({
+  open,
+  onClose,
+  toggleRef,
+}: {
+  open: boolean;
+  onClose: () => void;
+  toggleRef: RefObject<HTMLButtonElement | null>;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  const wasOpen = useRef(false);
+
+  useEffect(() => {
+    if (!open) {
+      if (wasOpen.current) toggleRef.current?.focus({ preventScroll: true });
+      wasOpen.current = false;
+      return;
+    }
+    wasOpen.current = true;
+    const focusables = () => [
+      ...(toggleRef.current ? [toggleRef.current] : []),
+      ...(panelRef.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? []),
+    ];
+    const first = requestAnimationFrame(() => focusables()[1]?.focus({ preventScroll: true }));
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const els = focusables();
+      if (!els.length) return;
+      const i = els.indexOf(document.activeElement as HTMLElement);
+      const last = els.length - 1;
+      const next = e.shiftKey ? (i <= 0 ? last : i - 1) : i === -1 || i === last ? 0 : i + 1;
+      e.preventDefault();
+      els[next].focus();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      cancelAnimationFrame(first);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose, toggleRef]);
+
   return (
     <AnimatePresence>
       {open && (
         <>
           <motion.div
-            className="fixed inset-0 z-[85] bg-ink/20 lg:hidden"
+            className="fixed inset-0 z-[85] bg-ink/20 max-md:bg-[#0b0c0e]/70 max-md:backdrop-blur-md lg:hidden"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -223,6 +288,8 @@ function MobileMenu({ open, onClose }: { open: boolean; onClose: () => void }) {
             // Anchored just under the bar, which is h-16 (4rem) below `sm`
             // and h-[4.992rem] above it — the panel is `lg:hidden`, so it
             // has to track both of those, not just the desktop height.
+            ref={panelRef}
+            id="mobile-menu"
             className="fixed inset-x-4 top-[5.25rem] z-[90] overflow-hidden rounded-[2rem] border border-white/50 sm:top-[6.25rem] lg:hidden"
             style={{
               background: "linear-gradient(165deg, rgba(255,255,255,0.75), rgba(255,255,255,0.45))",

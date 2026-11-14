@@ -131,7 +131,7 @@ export function ProofBoard() {
         ))}
       </motion.div>
 
-      <div className="section-shell py-14 lg:py-16">
+      <div className="section-shell py-[72px] lg:py-[120px]">
         {/* ── Single row, all six figures on one baseline ────────────── */}
         <div className="flex flex-wrap items-start gap-x-10 gap-y-10 lg:flex-nowrap lg:gap-x-8">
           {proofBoard.metrics.map((m, i) => (

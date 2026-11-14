@@ -16,6 +16,7 @@ import { Aurora } from "@/components/home/Aurora";
 export function getPackageProofs(): Record<string, ResolvedProof> {
   const proofs: Record<string, ResolvedProof> = {};
   for (const pkg of problemPackages) {
+    if (!pkg.proof) continue;
     const project = getProjectBySlug(pkg.proof.projectSlug);
     if (!project) continue;
     proofs[pkg.slug] = {
@@ -45,7 +46,7 @@ export function ServiceFinder({ firstSection = false }: { firstSection?: boolean
         <ProblemPicker packages={problemPackages} proofs={getPackageProofs()} firstSection={firstSection} />
       </div>
 
-      <div className="home-light home-section relative isolate overflow-hidden">
+      <div data-nav-light="" className="home-light home-section relative isolate overflow-hidden">
         <Aurora />
         <div className="home-shell">
           <StackBuilder />
