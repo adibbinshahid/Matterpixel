@@ -22,10 +22,25 @@ const SCOPE = "https://www.googleapis.com/auth/calendar";
 
 export type BusyRange = { start: string; end: string };
 
+/**
+ * Rebuilds a clean PEM from however the key was pasted into the dashboard:
+ * the bare value, the value with its JSON quotes or `"private_key": `
+ * prefix still attached, literal `\n` sequences, real newlines, or the
+ * whole JSON file. Only the base64 between the BEGIN/END markers matters.
+ */
+function normalizePrivateKey(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const match = raw.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/);
+  if (!match) return undefined;
+  const body = match[1].replace(/\\n/g, "").replace(/[^A-Za-z0-9+/=]/g, "");
+  const lines = body.match(/.{1,64}/g) ?? [];
+  return `-----BEGIN PRIVATE KEY-----\n${lines.join("\n")}\n-----END PRIVATE KEY-----\n`;
+}
+
 function config() {
-  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-  const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, "\n");
-  const calendarId = process.env.GOOGLE_CALENDAR_ID;
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim();
+  const key = normalizePrivateKey(process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY);
+  const calendarId = process.env.GOOGLE_CALENDAR_ID?.trim();
   return email && key && calendarId ? { email, key, calendarId } : null;
 }
 
