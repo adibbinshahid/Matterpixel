@@ -1,31 +1,106 @@
 ---
-title: "Why PageSpeed Sells"
-excerpt: "A 90+ Lighthouse score isn't a vanity metric — it's a conversion lever most agencies quietly ignore. Here's the actual mechanism."
+title: "Why Page Speed Sells: What the Research Says About Load Time and Conversions"
+excerpt: "A faster website converts more visitors into customers. Here is what Deloitte, Google and Portent measured, why it happens, and how to fix a slow site."
 date: "2026-01-12"
+updated: "2026-11-21"
 tag: "Performance"
 ---
 
-Most agencies treat performance as a checkbox: run Lighthouse once before launch, screenshot the score for the deck, move on. That's backwards. Performance isn't a report card — it's a conversion lever, and it compounds every single day the site is live.
+Most businesses treat website speed as a technical detail: something the developer checks once before launch, screenshots for the handover deck, and never looks at again. That is a costly mistake. Page speed is one of the few levers on a website that moves revenue directly, and the research behind that claim is unusually consistent.
 
-## The mechanism, not the metric
+This article walks through what the major studies actually measured, explains the mechanism behind the numbers, and gives you a practical way to check and fix your own site.
 
-A 100ms delay in load time can measurably drop conversion. This isn't folklore — it's been measured repeatedly by companies with enough traffic to isolate the variable. The mechanism is simple: every extra second between a click and a usable page is a second where the visitor's intent decays. Mobile makes this worse — flaky connections turn a "fast enough on my office wifi" site into a multi-second wait on a real device in the field.
+## The short answer
 
-Google's Core Web Vitals (LCP, INP, CLS) aren't arbitrary either. They're proxies for three real user complaints:
+A faster site converts more of the visitors you already pay to attract. Three independent bodies of research point the same way:
 
-- **LCP (Largest Contentful Paint)** — "why is this taking so long to show me anything?"
-- **INP (Interaction to Next Paint)** — "why does tapping this button feel broken?"
-- **CLS (Cumulative Layout Shift)** — "why did the button move right as I tapped it?"
+- **Deloitte and Google (2020)** found that a 0.1-second improvement in mobile site speed increased retail conversions by 8.4% and average order value by 9.2%. Travel sites saw conversions rise 10.1%.
+- **Portent (2022)** analysed just over 100 million page views and found that a B2B site loading in 1 second converts **3x** better than one loading in 5 seconds, and **5x** better than one loading in 10 seconds. For ecommerce, a 1-second site converted **2.5x** better than a 5-second one.
+- **Vodafone** ran a controlled A/B test in which a 31% improvement in Largest Contentful Paint led to **8% more sales**.
 
-Fix the metric, and you've fixed the actual complaint. That's why we treat 90+ mobile PageSpeed as a floor, not a stretch goal.
+None of these are vanity metrics. They are conversions, order values and sales, measured on real traffic.
 
-## Where the score actually comes from
+## What the studies actually measured
 
-A high score isn't a plugin you install after the fact — it's a sequence of decisions made throughout the build:
+It is worth being precise about each source, because "speed" means different things in different studies.
 
-1. **Image strategy first.** Every raster image ships as AVIF/WebP through `next/image`, sized for its actual container, with explicit dimensions so nothing shifts on load.
-2. **Ship less JavaScript.** Heavy interactive pieces (canvases, complex animation) are code-split and lazy-loaded, only paying their cost when they're actually needed — and paused when they're off-screen.
-3. **Respect the font.** Self-hosted or `next/font`-loaded type, preloaded, with `font-display: swap` so text never sits invisible waiting on a webfont.
-4. **Measure on a mid-tier device, not your laptop.** A site that feels instant on a 2024 MacBook can be unusable on the actual mid-range Android phone most of the world browses on.
+### Deloitte: "Milliseconds Make Millions"
 
-None of this is exotic. It's just discipline applied consistently, from the first commit — which is exactly the point: performance is cheap to build in and expensive to retrofit.
+Commissioned by Google and published by Deloitte Digital in 2020, this study analysed four weeks of mobile site data from retail, travel, luxury and lead-generation brands in Europe and the US. Rather than slowing sites down artificially, it tracked natural variations in mobile speed and measured how the conversion funnel responded.
+
+The headline finding is the 0.1-second figure above. That sounds absurdly small, but it is the point: users respond to speed differences far below the threshold at which they would consciously describe a site as "slow".
+
+### Portent: site speed and conversion rate
+
+Portent's research looked at just over 100 million page views across 20 B2B and B2C sites, comparing page load time with conversion rate. It is useful because it describes the whole curve rather than a single intervention. The steepest losses happen in the first few seconds: the gap between a 1-second and a 5-second site is far bigger than the gap between a 5-second and a 10-second site, because most of the people who were going to leave have already left.
+
+### Google: bounce probability
+
+Google's own analysis of mobile landing pages found that as load time goes from one second to three seconds, the probability of a visitor bouncing increases by 32%. At five seconds it rises by 90%. Bounce is not revenue, but it is the top of every funnel. A visitor who leaves before the page renders never sees your offer.
+
+### Vodafone: a controlled test
+
+The Vodafone case study, published on Google's web.dev, is the cleanest evidence of cause and effect. Vodafone built two versions of the same landing page, identical except for performance optimisations, and split traffic between them. The faster version, with a 31% better Largest Contentful Paint, produced 8% more sales, 15% more leads-to-visits and 11% more cart-to-visits.
+
+## Why speed changes buying behaviour
+
+The mechanism is not mysterious. Every moment between a click and a usable page is a moment in which the visitor's intent decays.
+
+The usability research firm Nielsen Norman Group has described three response-time limits for decades: about 0.1 seconds for something to feel instant, about 1 second for a user's train of thought to stay uninterrupted, and about 10 seconds before attention is lost entirely. A page that takes four seconds to show its main content breaks the flow that brought the visitor there.
+
+Mobile makes this worse. Office Wi-Fi and a new laptop hide problems that a mid-range Android phone on a patchy 4G connection exposes immediately. Most small-business traffic now arrives on phones, which means the experience your customers get is often much slower than the one you see at your desk.
+
+There is also a trust effect. A page that jumps around while it loads, or a button that does nothing for half a second after it is tapped, feels broken. People are reluctant to hand over card details or contact information to a site that feels broken.
+
+## Speed and Google rankings
+
+Speed also affects how many people reach your site in the first place. Google uses **Core Web Vitals** as part of its page experience signals. The three metrics, and the thresholds Google publishes for a "good" experience, are:
+
+| Metric | What it measures | Good |
+| --- | --- | --- |
+| Largest Contentful Paint (LCP) | How fast the main content appears | 2.5 seconds or less |
+| Interaction to Next Paint (INP) | How fast the page responds to taps and clicks | 200 milliseconds or less |
+| Cumulative Layout Shift (CLS) | How much the layout jumps while loading | 0.1 or less |
+
+Google is clear that relevance still matters most: a fast page with the wrong answer will not outrank a slower page with the right one. But when several pages are similarly relevant, page experience helps decide between them. For a small business competing in a crowded local or niche market, that tiebreaker matters. We cover the three metrics in detail in [Core Web Vitals explained for business owners](/insights/core-web-vitals-explained).
+
+## How to check your own site in five minutes
+
+1. Open [PageSpeed Insights](https://pagespeed.web.dev/) and enter your homepage URL.
+2. Look at the top section first. If Google has enough real visitor data, it shows a **field data** assessment that says whether your site passes Core Web Vitals. This is what real users experienced over the last 28 days.
+3. Then look at the **lab** score underneath for the mobile tab. A score below 50 is poor; 90 or above is good.
+4. Repeat for your most important landing page and a product or service page. Homepages are often the fastest page on a site and the least representative.
+
+If the field data and the lab score disagree, trust the field data. It is measured on your real visitors' devices.
+
+## Where the slowness usually comes from
+
+In our audits the same causes come up again and again:
+
+- **Oversized images.** A 4 MB photo straight from a camera, served to a phone that will display it 400 pixels wide. Modern formats like WebP and AVIF, sized to the screen, typically cut image weight by more than half.
+- **Too much JavaScript.** Page builders, sliders, chat widgets, tracking pixels and plugins each add script the browser must download and run before the page responds. This is the main cause of poor INP.
+- **Render-blocking fonts and styles.** Fonts loaded from third-party servers without the right settings can leave text invisible until they arrive.
+- **Layout that is not reserved.** Images and embeds without fixed dimensions push content down as they load, which produces a bad CLS score and the infuriating "I tapped the wrong button" experience.
+- **Slow hosting and no CDN.** A server on another continent adds delay before a single byte arrives.
+
+## What it takes to fix it
+
+Some of these issues can be patched on an existing site: compressing images, removing unused plugins, deferring non-essential scripts. Patches usually move a score from poor to acceptable.
+
+Getting to consistently fast, especially on mobile, usually needs speed to be a constraint from the first line of code rather than a clean-up job at the end. That is why we build on Next.js with images, fonts and scripts handled by the framework, and why every site we ship has a minimum 90+ PageSpeed target written into the quote. Our [ShopSphere concept build](/projects/shopsphere), for example, loads its largest content in about half a second on desktop and scores 100 for performance, measured against the live site.
+
+## The bottom line
+
+Speed is not a technical vanity metric. It decides how many of your visitors stay long enough to become customers, and it influences how many visitors you get from Google in the first place. The research is consistent across industries and years: small improvements in load time produce measurable gains in conversions and revenue.
+
+If you would like to know where your own site stands, [book a free audit call](/contact?tab=booking). We will run the numbers on your real pages and show you which fixes are worth paying for.
+
+## Sources
+
+- Deloitte Digital and Google, [Milliseconds Make Millions](https://www.deloitte.com/ie/en/services/consulting/research/milliseconds-make-millions.html) (2020)
+- Portent, [Site Speed is (Still) Impacting Your Conversion Rate](https://www.portent.com/blog/analytics/research-site-speed-hurting-everyones-revenue.htm) (2022)
+- web.dev, [Vodafone: A 31% improvement in LCP increased sales by 8%](https://web.dev/case-studies/vodafone)
+- Think with Google, [Find out how you stack up to new industry benchmarks for mobile page speed](https://www.thinkwithgoogle.com/marketing-strategies/app-and-mobile/page-load-time-statistics/)
+- Nielsen Norman Group, [Response Times: The 3 Important Limits](https://www.nngroup.com/articles/response-times-3-important-limits/)
+- web.dev, [Web Vitals](https://web.dev/articles/vitals)
+- Google Search Central, [Understanding Core Web Vitals and Google search results](https://developers.google.com/search/docs/appearance/core-web-vitals)

@@ -260,7 +260,7 @@ export function StackBuilder() {
           estimate.bundle ? "bg-magenta/15 text-magenta" : "bg-white/[0.06] text-ink-soft"
         }`}
       >
-        {estimate.bundle ? `${BUNDLE_NOTE} — applied in your quote.` : `${BUNDLE_NOTE}.`}
+        {estimate.bundle ? `${BUNDLE_NOTE} — already applied above.` : `${BUNDLE_NOTE}.`}
       </p>
     </>
   );

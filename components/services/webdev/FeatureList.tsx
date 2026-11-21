@@ -24,10 +24,10 @@ export function FeatureList({ service }: { service: Service }) {
   const groups = buildGroups(service);
 
   return (
-    <section className="panel-dark relative border-t border-line">
+    <section className="relative border-t border-line bg-paper-2">
       <div className="section-shell py-[72px] lg:py-[120px]">
         <Reveal>
-          <p className="label-eyebrow mb-3" style={{ color: "#fff" }}>
+          <p className="label-eyebrow mb-3">
             what&rsquo;s included
           </p>
           <h2 className="max-w-2xl">
@@ -38,10 +38,10 @@ export function FeatureList({ service }: { service: Service }) {
         <RevealGroup className="mt-12 grid grid-cols-1 gap-x-10 gap-y-10 sm:grid-cols-2">
           {groups.map((group) => (
             <RevealItem key={group.label}>
-              <h3 id={group.id} className="scroll-mt-28 text-sm font-bold uppercase tracking-[0.08em] text-white/50">{group.label}</h3>
+              <h3 id={group.id} className="scroll-mt-28 text-sm font-bold uppercase tracking-[0.08em] text-ink-soft">{group.label}</h3>
               <ul className="mt-4 flex flex-col gap-2.5">
                 {group.items.map((item) => (
-                  <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-white/80">
+                  <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-ink-soft">
                     <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-blue" />
                     <span>{item}</span>
                   </li>

@@ -62,6 +62,18 @@ export function NotFoundScene() {
           <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
           Back home
         </Link>
+        <nav aria-label="Popular pages" className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-medium">
+          {[
+            { href: "/projects", label: "Projects" },
+            { href: "/services", label: "Services" },
+            { href: "/insights", label: "Insights" },
+            { href: "/contact", label: "Contact" },
+          ].map((l) => (
+            <Link key={l.href} href={l.href} className="text-ink-soft underline-offset-4 transition-colors hover:text-blue hover:underline">
+              {l.label}
+            </Link>
+          ))}
+        </nav>
       </motion.div>
     </section>
   );

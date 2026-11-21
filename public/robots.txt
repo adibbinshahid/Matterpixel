@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Allow: /api/og
+Disallow: /api/
 
-Sitemap: https://matterpixel.com/sitemap.xml
+Sitemap: https://www.matterpixel.com/sitemap.xml

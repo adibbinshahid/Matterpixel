@@ -2,13 +2,15 @@ import type { Metadata } from "next";
 import { ContactSplit } from "@/components/ContactSplit";
 import { buildInquiryPrefill } from "@/content/packages";
 import { cleanSrc } from "@/lib/analytics";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Contact",
   description:
-    "Get a fixed quote or book a free audit call (30 min). NDA-friendly, fixed quotes, founder-led. We reply within 12 hours.",
-  alternates: { canonical: "/contact" },
-};
+    "Get a fixed quote or book a free 30-minute audit call. NDA-friendly, founder-led, and we reply within 12 hours.",
+  path: "/contact",
+  eyebrow: "Start a project",
+});
 
 export default async function ContactPage({
   searchParams,

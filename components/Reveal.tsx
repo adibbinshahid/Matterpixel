@@ -4,6 +4,12 @@ import { motion, type Variants } from "motion/react";
 import type { ReactNode } from "react";
 import { DURATIONS, EASE } from "@/lib/utils";
 
+/** Play once the element's top edge is a little inside the viewport. A
+ * fraction-of-element threshold (the old `amount: 0.3`) never fires for
+ * an element taller than ~3x the viewport, and fires late for a hero
+ * image that starts just above the fold — leaving it invisible on load. */
+export const REVEAL_VIEWPORT = { amount: "some", margin: "0px 0px -12% 0px" } as const;
+
 /**
  * Site-wide scroll reveal: staggered fade + upward translate + blur-to-sharp.
  * Wraps `whileInView` so every section gets the same reveal language.
@@ -45,7 +51,7 @@ export function Reveal({
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once, amount: 0.3 }}
+      viewport={{ once, ...REVEAL_VIEWPORT }}
       variants={variants}
     >
       {children}
@@ -68,7 +74,7 @@ export function RevealGroup({
       className={className}
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.2 }}
+      viewport={{ once: true, ...REVEAL_VIEWPORT }}
       variants={{
         visible: { transition: { staggerChildren: stagger } },
       }}

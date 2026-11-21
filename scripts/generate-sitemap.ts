@@ -34,6 +34,8 @@ function buildUrls(): UrlEntry[] {
     // land on it from the footer, not as a ranking target, and a crawler
     // reaches everything on it from this file anyway.
     { loc: "/sitemap", changefreq: "weekly", priority: "0.3" },
+    { loc: "/privacy", changefreq: "yearly", priority: "0.2" },
+    { loc: "/terms", changefreq: "yearly", priority: "0.2" },
   ];
 
   const projectRoutes: UrlEntry[] = projects.map((p) => ({
@@ -52,7 +54,7 @@ function buildUrls(): UrlEntry[] {
     loc: `/insights/${p.slug}`,
     changefreq: "yearly",
     priority: "0.5",
-    lastmod: p.date,
+    lastmod: p.updated ?? p.date,
   }));
 
   return [...staticRoutes, ...projectRoutes, ...serviceRoutes, ...postRoutes];
@@ -75,7 +77,9 @@ const urls = buildUrls();
 fs.writeFileSync(path.join(PUBLIC_DIR, "sitemap.xml"), toXml(urls));
 fs.writeFileSync(
   path.join(PUBLIC_DIR, "robots.txt"),
-  `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`,
+  // The form endpoints are POST-only and have nothing to index; the share
+  // card stays open because X's crawler honours robots.txt for og:image.
+  `User-agent: *\nAllow: /\nAllow: /api/og\nDisallow: /api/\n\nSitemap: ${siteUrl}/sitemap.xml\n`,
 );
 
 console.log(`Generated sitemap.xml with ${urls.length} URLs and robots.txt`);

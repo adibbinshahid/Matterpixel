@@ -26,6 +26,7 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
   return (
     <>
       <PageHero
+        tone="light"
         eyebrow={`${project.category} · Concept build`}
         lines={[project.name]}
         lede={project.oneLiner}
@@ -275,7 +276,7 @@ export function WebsiteCaseStudy({ project }: { project: WebsiteProject }) {
 
       {/* ── Admin panel ──────────────────────────────────────────────── */}
       {project.admin && (
-        <section className="panel-dark border-y border-line py-[72px] lg:py-[120px]">
+        <section className="border-y border-line bg-paper-2 py-[72px] lg:py-[120px]">
           <div className="section-shell">
             <Reveal>
               <p className="label-eyebrow flex items-center gap-2">

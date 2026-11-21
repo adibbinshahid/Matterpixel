@@ -44,11 +44,31 @@ function Score({ value, play }: { value: number; play: boolean }) {
     return () => cancelAnimationFrame(id);
   }, [play, value]);
   return (
-    <span className="flex items-center gap-2">
-      <span className="h-1.5 w-1.5 rounded-full bg-[#0a9150]" aria-hidden="true" />
+    <span className="flex items-center">
       <span ref={ref} className="font-avenir text-2xl font-extrabold leading-none text-[#0a9150] tabular-nums">
         {value}
       </span>
+    </span>
+  );
+}
+
+/** Ten-pixel meter under the score, one pixel per ten points; the last
+ * pixel holds the remainder as partial strength. Pixels light in sequence
+ * as the list scrolls in (per-pixel delay inline); static under reduced
+ * motion (globals.css). */
+function ScoreMeter({ value, play }: { value: number; play: boolean }) {
+  return (
+    <span className="mt-2 flex gap-[3px]" aria-hidden="true">
+      {Array.from({ length: 10 }, (_, i) => {
+        const fill = Math.min(1, Math.max(0, value / 10 - i));
+        return (
+          <span
+            key={i}
+            className="concept-meter-pixel"
+            style={{ opacity: play ? 0.18 + 0.82 * fill : 0.18, transitionDelay: play ? `${i * 70}ms` : "0ms" }}
+          />
+        );
+      })}
     </span>
   );
 }
@@ -257,15 +277,20 @@ export function ConceptShowcase({ builds }: { builds: ConceptBuild[] }) {
                 }}
                 onPointerLeave={() => window.clearTimeout(intent.current)}
                 className={`group relative flex items-center gap-4 rounded-2xl px-3 py-3.5 text-left transition-colors duration-300 lg:min-h-0 lg:flex-1 ${
-                  active ? "concept-glass" : "border border-transparent hover:bg-white/40"
+                  active ? "concept-glass concept-edge" : "border border-transparent hover:bg-white/40"
                 }`}
               >
-                <span
-                  className={`relative h-12 w-[4.5rem] shrink-0 overflow-hidden rounded-md border transition-[border-color,opacity] duration-300 lg:h-14 lg:w-[5.5rem] ${
-                    active ? "border-white/25 opacity-100" : "border-line opacity-60 group-hover:opacity-90"
-                  }`}
-                >
-                  <Image src={b.thumb} alt="" fill loading="lazy" sizes="72px" className="object-cover object-top" />
+                <span className="relative shrink-0" data-locked={active || undefined}>
+                  <span
+                    className={`relative block h-12 w-[4.5rem] overflow-hidden rounded-md border transition-[border-color,opacity] duration-300 lg:h-14 lg:w-[5.5rem] ${
+                      active ? "border-white/25 opacity-100" : "border-line opacity-60 group-hover:opacity-90"
+                    }`}
+                  >
+                    <Image src={b.thumb} alt="" fill loading="lazy" sizes="72px" className="object-cover object-top" />
+                  </span>
+                  {(["tl", "tr", "bl", "br"] as const).map((c) => (
+                    <span key={c} aria-hidden="true" className={`concept-corner concept-corner-${c}`} />
+                  ))}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span
@@ -280,7 +305,10 @@ export function ConceptShowcase({ builds }: { builds: ConceptBuild[] }) {
                 </span>
                 <span className="flex shrink-0 flex-col items-end">
                   <Score value={b.score} play={listSeen} />
-                  <span className="mt-1 text-xs font-medium text-ink-soft">Lighthouse</span>
+                  <ScoreMeter value={b.score} play={listSeen} />
+                  <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
+                    Lighthouse
+                  </span>
                 </span>
               </button>
             );

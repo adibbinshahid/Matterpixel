@@ -118,7 +118,7 @@ export const services: Service[] = [
     title: "AI Automation",
     shortDesc:
       "Custom AI agents and workflow automation that cut manual work and connect your tools together.",
-    startingPrice: 500,
+    startingPrice: 300,
     heroClaim: "AI automation that removes the busywork, not the judgment.",
     intro:
       "We build AI agents and automated workflows that take repetitive, manual work off your team's plate. From lead handling to internal ops, every automation is scoped around a real bottleneck and wired into the tools you already use, not a generic bot bolted on top.",

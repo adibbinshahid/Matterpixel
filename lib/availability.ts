@@ -27,11 +27,11 @@ export const HORIZON_DAYS = 90;
 /** Human-readable statements of the rule above. Copy anywhere on the site
  * should come from here so the hours can never drift between pages. */
 export const AVAILABILITY = {
-  callsShort: "Sun–Thu 7:00–11:30 PM (GMT+6) · Fri–Sat 24h",
+  callsShort: "Sun–Thu 7:00–11:30 PM (GMT+6) · Fri–Sat any time",
   /** Tightest form — for places that must hold one line. */
-  callsCompact: "Sun–Thu 7–11:30 PM GMT+6 · Fri–Sat 24h",
+  callsCompact: "Sun–Thu 7–11:30 PM GMT+6 · Fri–Sat any time",
   callsLong:
-    "Audit calls: Sunday–Thursday, 7:00 PM–11:30 PM (GMT+6). Friday–Saturday, 24 hours.",
+    "Audit calls: Sunday–Thursday, 7:00 PM–11:30 PM (GMT+6). Friday–Saturday, any time.",
   messaging: "WhatsApp & email: replies within 12 hours, 7 days a week",
 } as const;
 
@@ -174,7 +174,14 @@ export function detectTimeZone(): string {
  * Walking UTC once and bucketing is deliberate: asking "is this local day
  * open?" per cell would re-format the same instants six times over.
  */
-export function slotMapForRange(from: Date, to: Date, timeZone: string, now: Date = new Date()): Map<string, Date[]> {
+export function slotMapForRange(
+  from: Date,
+  to: Date,
+  timeZone: string,
+  now: Date = new Date(),
+  /** Calendar busy ranges as epoch-ms pairs; overlapping slots are dropped. */
+  busy: [number, number][] = [],
+): Map<string, Date[]> {
   const map = new Map<string, Date[]>();
   const earliest = now.getTime() + LEAD_TIME_MINUTES * 60_000;
   const latest = now.getTime() + HORIZON_DAYS * 24 * 60 * 60_000;
@@ -188,6 +195,8 @@ export function slotMapForRange(from: Date, to: Date, timeZone: string, now: Dat
     if (cursor < earliest || cursor > latest) continue;
     const instant = new Date(cursor);
     if (!isWithinCallWindow(instant)) continue;
+    const slotEnd = cursor + CALL_MINUTES * 60_000;
+    if (busy.some(([b0, b1]) => b0 < slotEnd && b1 > cursor)) continue;
     const key = zonedDateKey(instant, timeZone);
     const bucket = map.get(key);
     if (bucket) bucket.push(instant);

@@ -9,6 +9,8 @@ export type PostMeta = {
   title: string;
   excerpt: string;
   date: string;
+  /** Last substantive revision, when there has been one (ISO date). */
+  updated?: string;
   tag: string;
   readingTime: string;
 };
@@ -45,6 +47,7 @@ export function getAllPosts(): PostMeta[] {
       title: data.title as string,
       excerpt: data.excerpt as string,
       date: data.date as string,
+      updated: (data.updated as string | undefined) ?? undefined,
       tag: data.tag as string,
       readingTime: estimateReadingTime(content),
     };
@@ -62,6 +65,7 @@ export function getPostBySlug(slug: string) {
     title: data.title as string,
     excerpt: data.excerpt as string,
     date: data.date as string,
+    updated: (data.updated as string | undefined) ?? undefined,
     tag: data.tag as string,
     readingTime: estimateReadingTime(content),
     content,

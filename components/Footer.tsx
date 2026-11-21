@@ -167,25 +167,20 @@ export function Footer() {
                 className={`h-3 w-3 shrink-0 -translate-x-1 text-[var(--magenta)] opacity-0 transition-[opacity,transform] duration-700 ${EASE} group-hover:translate-x-0 group-hover:opacity-100`}
               />
             </Link>
-          </div>
 
-          {/* Pixel lattice, fading out toward the corner — the motif from the
-             hero, rendered as one masked background instead of nodes. */}
-          <div
-            aria-hidden
-            className="hidden h-16 w-64 shrink-0 sm:block"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle, rgba(255,255,255,0.22) 1px, transparent 1px)",
-              backgroundSize: "16px 16px",
-              maskImage:
-                "linear-gradient(115deg, transparent 20%, black 75%), radial-gradient(ellipse at 75% 50%, black 30%, transparent 75%)",
-              maskComposite: "intersect",
-              WebkitMaskImage:
-                "linear-gradient(115deg, transparent 20%, black 75%), radial-gradient(ellipse at 75% 50%, black 30%, transparent 75%)",
-              WebkitMaskComposite: "source-in",
-            }}
-          />
+            {[
+              { href: "/privacy", label: "Privacy" },
+              { href: "/terms", label: "Terms" },
+            ].map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`flex min-h-11 items-center px-1 text-[12px] font-semibold text-white/60 transition-colors duration-700 md:min-h-9 md:text-[11px] ${EASE} hover:text-white`}
+              >
+                {l.label}
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </footer>

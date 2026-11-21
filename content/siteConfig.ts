@@ -4,7 +4,10 @@
  * content/ files). Edit here to change copy across the whole site.
  */
 
-export const siteUrl = "https://matterpixel.com";
+/** The canonical origin. Production serves www (the apex 308-redirects to
+ * it), so canonicals, the sitemap and share URLs must all name www —
+ * pointing them at the apex would canonicalise every page to a redirect. */
+export const siteUrl = "https://www.matterpixel.com";
 
 /** The one WhatsApp number every WhatsApp link on the site dials. */
 export const WHATSAPP_NUMBER = "+8801707555755";
@@ -16,6 +19,7 @@ export const brand = {
   location: "Dhaka — working globally",
   year: 2026,
   replyPromise: "We reply within 12 hours.",
+  founder: "Adib Bin Shahid",
 };
 
 /** wa.me link, optionally with a pre-typed first message. */
@@ -151,13 +155,13 @@ export const workIntro = {
   eyebrow: "selected builds",
   conceptLine: "Concept builds made to show our standard, not client work.",
   honestLine:
-    "A collection of extraordinary, production-quality builds showcasing our approach to design, development, and performance. Every project is crafted with the same attention to detail, usability, and technical excellence that we bring to real-world digital products.",
+    "Every build below is live. Open the site, sign in to the admin panel, run Lighthouse yourself. The same standard of design, code and performance goes into every client project.",
 };
 
 export const founder = {
   eyebrow: "who's leading this",
   heading: "One senior lead. Everything handled.",
-  name: "Md. Adib Bin Shahid",
+  name: "Adib Bin Shahid",
   role: "Founder & Lead",
   /** Discipline line under the role — the four things he personally covers,
    * set apart from the title so the plate reads title-then-scope. */
@@ -170,7 +174,7 @@ export const founder = {
   /** Two declarative lines about what he does on your project. The proof
    * row and credentials below carry the evidence — the copy doesn't argue. */
   bio: [
-    "Adib leads strategy, creative direction, development, and delivery from the first conversation to launch. You work directly with him throughout the project. Founder-led, built with vetted specialists where deeper expertise is needed.",
+    "Adib leads strategy, creative direction, development, and delivery from the first conversation to launch. You work directly with him throughout the project, with vetted specialists brought in where deeper expertise is needed.",
     "No layers of account managers. No disappearing into a large agency. One person owns the direction, keeps the work moving, and stays accountable for the result.",
   ],
   /** Label over the credential cards — the tenure claim is stated once here
@@ -208,7 +212,7 @@ export const team = {
   /** Two lines, kept separate so the diagram's headline can break exactly
    * where the argument does rather than wherever the box ends. */
   heading: ["You don’t manage specialists.", "Adib does."],
-  body: "Founder-led, built with vetted specialists. Adib owns the brief, directs the work, and keeps every moving part aligned from first conversation to final delivery.",
+  body: "Adib owns the brief, directs the work, and keeps every moving part aligned from first conversation to final delivery.",
   /** Entry node — the client's side of the thread. */
   brief: {
     label: "Your brief",
@@ -331,7 +335,9 @@ export const footer = {
   contact: {
     email: "hello@matterpixel.com",
     whatsapp: WHATSAPP_NUMBER,
-    telegram: "+8801707555755",
+    // Username, not phone: t.me/+<number> only opens for people your
+    // Telegram privacy settings let find you by number.
+    telegram: "adibbinshahid",
     location: "Working globally, HQ based on Dhaka",
   },
 };

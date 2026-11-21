@@ -8,12 +8,23 @@ import { MediaCaseStudy } from "./MediaCaseStudy";
 import { projects, getProjectBySlug } from "@/content/projects";
 import { getServiceBySlug } from "@/content/services";
 import { siteUrl } from "@/content/siteConfig";
-import { DarkPage } from "@/components/DarkPage";
+import { LightPage } from "@/components/LightPage";
 import { ClosingCta } from "@/components/home/ClosingCta";
 import { Hl } from "@/components/home/Hl";
+import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
   return projects.map((p) => ({ slug: p.slug }));
+}
+
+/** A meta description that fits Google's ~160-character snippet: the full
+ * two-sentence summary when it fits, else its first sentence, else the
+ * one-liner. */
+function projectDescription(summary: string, oneLiner: string): string {
+  if (summary.length <= 160) return summary;
+  const first = summary.match(/^.+?[.!?](?=\s|$)/)?.[0];
+  if (first && first.length >= 70 && first.length <= 160) return first;
+  return oneLiner;
 }
 
 export async function generateMetadata({
@@ -24,18 +35,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const project = getProjectBySlug(slug);
   if (!project) return {};
-  return {
+  return pageMetadata({
     title: project.name,
-    description: project.summary,
-    alternates: { canonical: `/projects/${project.slug}` },
-    openGraph: {
-      title: `${project.name} — Matterpixel`,
-      description: project.summary,
-      url: `${siteUrl}/projects/${project.slug}`,
-      type: "article",
-      images: [{ url: project.cover }],
-    },
-  };
+    description: projectDescription(project.summary, project.oneLiner),
+    path: `/projects/${project.slug}`,
+    image: project.cover,
+    type: "article",
+  });
 }
 
 /**
@@ -68,20 +74,40 @@ export default async function CaseStudyPage({
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "CreativeWork",
-    name: project.name,
-    description: project.summary,
-    url: `${siteUrl}/projects/${project.slug}`,
-    image: `${siteUrl}${project.cover}`,
-    creator: { "@type": "Organization", name: "Matterpixel" },
-    genre: project.category,
+    "@graph": [
+      {
+        "@type": "CreativeWork",
+        name: project.name,
+        description: project.summary,
+        url: `${siteUrl}/projects/${project.slug}`,
+        image: `${siteUrl}${project.cover}`,
+        creator: { "@id": `${siteUrl}/#organization` },
+        genre: project.category,
+      },
+      breadcrumbJsonLd([
+        { name: "Projects", path: "/projects" },
+        { name: project.name, path: `/projects/${project.slug}` },
+      ]),
+    ],
   };
 
   return (
     /* Published here rather than per-section: the media tiles, the spec
        boxes and the gallery all paint in the project's accent, and this is
        the one node every one of them is under. */
-    <DarkPage>
+    <LightPage
+      closing={
+        <ClosingCta
+          eyebrow="Your brief next"
+          title={
+            <>
+              Want something like this? Let&rsquo;s <Hl tone="blue">build</Hl> it.
+            </>
+          }
+          lede="Same standard, your name on it, scoped against your problem instead of ours."
+        />
+      }
+    >
       <div
         style={
           {
@@ -146,16 +172,7 @@ export default async function CaseStudyPage({
           </div>
         </section>
 
-        <ClosingCta
-          eyebrow="Your brief next"
-          title={
-            <>
-              Want something like this? Let&rsquo;s <Hl tone="blue">build</Hl> it.
-            </>
-          }
-          lede="Same standard, your name on it, scoped against your problem instead of ours."
-        />
       </div>
-    </DarkPage>
+    </LightPage>
   );
 }

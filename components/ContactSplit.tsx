@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import { Turnstile } from "@/components/Turnstile";
 import { usePathname, useRouter } from "next/navigation";
 import { useForm, type FieldErrors, type UseFormRegisterReturn } from "react-hook-form";
 import { cleanSrc, trackEvent } from "@/lib/analytics";
@@ -95,8 +96,8 @@ const TABS = [
 const TRUST_POINTS = [
   { label: "We reply within 12 hours", icon: Clock },
   { label: "NDA-friendly", icon: FileCheck },
-  { label: "Your details stay private", icon: ShieldCheck },
-] as const;
+  { label: "Your details stay private", icon: ShieldCheck, href: "/privacy" },
+] as const satisfies readonly { label: string; icon: unknown; href?: string }[];
 
 type TabId = (typeof TABS)[number]["id"];
 
@@ -217,6 +218,7 @@ export function ContactSplit({
         ref={videoRef}
         className="absolute inset-x-0 top-0 h-[100svh] w-full object-cover"
         src="/videos/globe-loop.mp4"
+        poster="/videos/globe-loop-poster.webp"
         autoPlay
         loop
         muted
@@ -266,7 +268,10 @@ export function ContactSplit({
           </motion.div>
 
           <motion.ul variants={item} className="flex flex-row flex-wrap items-center gap-x-5 gap-y-2">
-            {TRUST_POINTS.map(({ icon: Icon, label }) => (
+            {TRUST_POINTS.map((point) => {
+              const { icon: Icon, label } = point;
+              const href = "href" in point ? point.href : undefined;
+              return (
               <li
                 key={label}
                 className="flex items-center gap-2.5 text-sm font-semibold text-paper/90"
@@ -278,9 +283,16 @@ export function ContactSplit({
                   aria-hidden="true"
                   style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.7))" }}
                 />
-                {label}
+                {href ? (
+                  <Link href={href} className="underline decoration-white/30 underline-offset-4 hover:decoration-white">
+                    {label}
+                  </Link>
+                ) : (
+                  label
+                )}
               </li>
-            ))}
+              );
+            })}
           </motion.ul>
         </div>
 
@@ -292,7 +304,8 @@ export function ContactSplit({
            tabbed wizard/booking/chat content itself is unchanged. */}
         <motion.div
           variants={item}
-          className="panel-dark relative h-full overflow-y-auto rounded-[2.25rem] border p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.4),inset_0_0_0_1px_rgba(255,255,255,0.06),inset_0_-1px_12px_0_rgba(255,255,255,0.05),0_45px_100px_-25px_rgba(0,0,0,0.7),0_15px_40px_-15px_rgba(0,0,0,0.5)] sm:p-7 lg:p-8 lg:h-[calc(100svh-13rem)] lg:max-h-[40rem] lg:min-h-[30rem]"
+          data-lenis-prevent
+          className="panel-dark relative h-full overflow-y-auto rounded-[2.25rem] border p-6 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.4),inset_0_0_0_1px_rgba(255,255,255,0.06),inset_0_-1px_12px_0_rgba(255,255,255,0.05),0_45px_100px_-25px_rgba(0,0,0,0.7),0_15px_40px_-15px_rgba(0,0,0,0.5)] sm:p-7 lg:p-8 lg:h-[46rem]"
           style={{
             borderColor: "rgba(255,255,255,0.22)",
             background: "rgba(10,10,14,0.03)",
@@ -508,6 +521,7 @@ function FloatingInput({
           onKeyDown={onKeyDown}
           aria-label={label}
           aria-invalid={!!error}
+          aria-describedby={error ? `${registration.name}-wiz-error` : undefined}
           className={cn(
             // `focus-no-outline` (globals.css) + no focus shadow: nothing
             // is painted outside this element's own box. Both were being
@@ -520,7 +534,11 @@ function FloatingInput({
           )}
         />
       </div>
-      {error && <span className="mt-1.5 block text-xs font-semibold text-magenta">{error}</span>}
+      {error && (
+        <span id={`${registration.name}-wiz-error`} role="alert" className="mt-1.5 block text-xs font-semibold text-magenta">
+          {error}
+        </span>
+      )}
     </div>
   );
 }
@@ -548,7 +566,9 @@ function FloatingTextarea({
           placeholder={placeholder}
           autoFocus={autoFocus}
           autoComplete={autoComplete}
+          aria-label={placeholder}
           aria-invalid={!!error}
+          aria-describedby={error ? `${registration.name}-wiz-error` : undefined}
           className={cn(
             // Same as FloatingInput — nothing drawn outside the box.
             "focus-no-outline w-full resize-none rounded-2xl border bg-white/10 px-6 py-5 text-lg font-medium leading-relaxed text-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] outline-none backdrop-blur-md backdrop-saturate-150 transition-all duration-300 placeholder:font-normal placeholder:text-ink-soft/40",
@@ -556,7 +576,11 @@ function FloatingTextarea({
           )}
         />
       </div>
-      {error && <span className="mt-1.5 block text-xs font-semibold text-magenta">{error}</span>}
+      {error && (
+        <span id={`${registration.name}-wiz-error`} role="alert" className="mt-1.5 block text-xs font-semibold text-magenta">
+          {error}
+        </span>
+      )}
     </div>
   );
 }
@@ -694,12 +718,15 @@ function SubmitRow({
   status,
   label,
   successMsg,
+  errorMsg,
   onStartOver,
 }: {
   isSubmitting: boolean;
   status: "idle" | "success" | "error";
   label: string;
   successMsg: string;
+  /** The server's own reason (slot taken, bot check), when it gave one. */
+  errorMsg?: string | null;
   /** When given, a Start over escape hatch sits under Send, behind a confirm. */
   onStartOver?: () => void;
 }) {
@@ -753,7 +780,7 @@ function SubmitRow({
             className="text-xs font-semibold text-magenta"
             role="alert"
           >
-            Something went wrong — try again.
+            {errorMsg ?? "Something went wrong — try again."}
           </motion.span>
         )}
       </AnimatePresence>
@@ -897,21 +924,28 @@ function capitalizeNameToken(word: string): string {
   return base.replace(/(^|[-'’])(\p{L})/gu, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
 }
 
-/** The visitor's *full* name as entered, title-cased for use inside a
- * headline — "adib bin shahid" → "Adib Bin Shahid". Returns null
- * (→ neutral copy) for anything that would read badly: empty, an email
- * pasted into the name field, digits, or a name so long it would wrap
- * the headline on its own. */
+/** Name prefixes skipped when picking the name to greet someone by —
+ * "Md. Adib Bin Shahid" is greeted as "Adib", never "Md". */
+const NAME_PREFIXES = new Set([
+  "md", "mohammad", "mohammed", "muhammad", "mohd", "muhammed", "mr", "mrs", "ms", "miss",
+  "dr", "prof", "sir", "sheikh", "shaikh", "syed", "sayed", "engr", "eng",
+]);
+
+/** The visitor's first name, title-cased for use inside a headline —
+ * "md. adib bin shahid" → "Adib". Returns null (→ neutral copy) for
+ * anything that would read badly: empty, an email pasted into the name
+ * field, digits, or nothing left after the prefixes. */
 function displayNameOf(fullName: string | undefined): string | null {
   const raw = (fullName ?? "").trim();
   if (!raw || /[@\d]/.test(raw)) return null;
-  const clean = raw
+  const words = raw
     .split(/\s+/)
     .map((w) => w.replace(/[^\p{L}\p{M}'’-]/gu, ""))
-    .filter(Boolean)
-    .map(capitalizeNameToken)
-    .join(" ");
-  if (clean.length < 2 || clean.length > 32) return null;
+    .filter(Boolean);
+  const first = words.find((w) => !NAME_PREFIXES.has(w.toLowerCase()));
+  if (!first) return null;
+  const clean = capitalizeNameToken(first);
+  if (clean.length < 2 || clean.length > 20) return null;
   return clean;
 }
 
@@ -1108,18 +1142,11 @@ function SelectionCard({
   );
 }
 
-/** Ambient decoration only — two slow-drifting blurred blobs plus a
- * handful of near-invisible floating dots, so the panel never reads as
- * empty behind the wizard copy. Frozen (no animate loop) under reduced
+/** Ambient decoration only — two slow-drifting blurred blobs, so the
+ * panel never reads as empty behind the wizard copy. Frozen (no animate loop) under reduced
  * motion since it's purely cosmetic. */
 function WizardAmbience() {
   const reduced = useReducedMotion();
-  const particles = Array.from({ length: 8 }, (_, i) => ({
-    left: `${8 + ((i * 37) % 90)}%`,
-    top: `${10 + ((i * 53) % 80)}%`,
-    delay: i * 0.6,
-    duration: 10 + (i % 4) * 3,
-  }));
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -1135,21 +1162,14 @@ function WizardAmbience() {
         animate={reduced ? undefined : { x: ["-33%", "-38%", "-33%"], y: ["33%", "28%", "33%"] }}
         transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
       />
-      {!reduced &&
-        particles.map((p, i) => (
-          <motion.span
-            key={i}
-            className="absolute h-1 w-1 rounded-full bg-ink/40"
-            style={{ left: p.left, top: p.top, opacity: 0.05 }}
-            animate={{ y: [0, -14, 0], opacity: [0.05, 0.12, 0.05] }}
-            transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: "easeInOut" }}
-          />
-        ))}
     </div>
   );
 }
 
 function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string }) {
+  const botToken = useRef<string | null>(null);
+  const [botReset, setBotReset] = useState(0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [stepId, setStepId] = useState<InquiryStepId | "review">("contact");
   const [direction, setDirection] = useState(1);
@@ -1407,9 +1427,12 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify({ ...values, turnstileToken: botToken.current }),
       });
-      if (!res.ok) throw new Error("Request failed");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error ?? "");
+      }
       setStatus("success");
       trackEvent("contact_submit", { tab: "inquiry", src: values.src ?? null });
       // Sent — the draft has served its purpose, and leaving it behind would
@@ -1418,8 +1441,12 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
       setRestored(false);
       setEditingId(null);
       reset();
-    } catch {
+    } catch (error) {
+      setErrorMsg(error instanceof Error && error.message ? error.message : null);
       setStatus("error");
+    } finally {
+      // Turnstile tokens are single-use: fetch a fresh one for a retry.
+      setBotReset((n) => n + 1);
     }
   };
 
@@ -1503,7 +1530,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
           {/* overflow-x-hidden is load-bearing: the step entrance slides in
              from x:+28, and `overflow-y: auto` alone would compute x to auto
              and flash a horizontal scrollbar. */}
-          <div className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden">
+          <div data-lenis-prevent className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={stepId}
@@ -1632,7 +1659,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
           {/* Two/three-column grid of short labels, not a stack of full
              question sentences — every answer has to be checkable in one
              look. Scroll stays as a fallback for very short viewports only. */}
-          <div className="my-4 max-h-full min-h-0 overflow-y-auto rounded-2xl border border-white/15 bg-white/10 p-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] backdrop-blur-md backdrop-saturate-150">
+          <div data-lenis-prevent className="my-4 max-h-full min-h-0 overflow-y-auto rounded-2xl border border-white/15 bg-white/10 p-1.5 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.14)] backdrop-blur-md backdrop-saturate-150">
             <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
               {REVIEW_FIELDS.map((id) => {
                 const f = INQUIRY_FIELDS[id];
@@ -1769,11 +1796,13 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
           </div>
 
           <div className="shrink-0">
+            <Turnstile onToken={(t) => (botToken.current = t)} resetSignal={botReset} />
             <SubmitRow
               isSubmitting={isSubmitting}
               status={status}
               label="Send Inquiry"
               successMsg="Inquiry sent — we reply within 12 hours."
+              errorMsg={errorMsg}
               onStartOver={startOver}
             />
             <button
@@ -1873,6 +1902,9 @@ function firstOpenBookingStep(values: BookingValues): number {
 }
 
 function BookingPanel({ src }: { src?: string }) {
+  const botToken = useRef<string | null>(null);
+  const [botReset, setBotReset] = useState(0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [draftLoaded, setDraftLoaded] = useState(false);
   const [restored, setRestored] = useState(false);
@@ -2013,16 +2045,27 @@ function BookingPanel({ src }: { src?: string }) {
       const res = await fetch("/api/book", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, website: values.website ? normalizeWebsite(values.website) : "" }),
+        body: JSON.stringify({
+          ...values,
+          website: values.website ? normalizeWebsite(values.website) : "",
+          turnstileToken: botToken.current,
+        }),
       });
-      if (!res.ok) throw new Error("Request failed");
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(data?.error ?? "");
+      }
       setStatus("success");
       trackEvent("contact_submit", { tab: "booking", src: values.src ?? null });
       clearDraft(BOOKING_DRAFT_KEY);
       setRestored(false);
       reset({ auditFocus: [] });
-    } catch {
+    } catch (error) {
+      setErrorMsg(error instanceof Error && error.message ? error.message : null);
       setStatus("error");
+    } finally {
+      // Turnstile tokens are single-use: fetch a fresh one for a retry.
+      setBotReset((n) => n + 1);
     }
   };
 
@@ -2134,7 +2177,7 @@ function BookingPanel({ src }: { src?: string }) {
              step entrance slides in from x:+28 — so a horizontal scrollbar
              flashed across the panel on every question change (and on first
              paint, which is where it was most visible). */}
-          <div className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden">
+          <div data-lenis-prevent className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden">
             <AnimatePresence mode="wait" custom={direction}>
               <motion.div
                 key={step}
@@ -2265,11 +2308,13 @@ function BookingPanel({ src }: { src?: string }) {
 
           {isLast ? (
             <div className="relative z-10 flex shrink-0 flex-col gap-1 pt-2">
+              <Turnstile onToken={(t) => (botToken.current = t)} resetSignal={botReset} />
               <SubmitRow
                 isSubmitting={isSubmitting}
                 status={status}
                 label="Book call"
                 successMsg="Request sent — we'll confirm your slot shortly."
+                errorMsg={errorMsg}
               />
               <div className="flex items-center justify-between gap-3">
                 <button

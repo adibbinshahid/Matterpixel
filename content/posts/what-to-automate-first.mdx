@@ -1,38 +1,111 @@
 ---
-title: "What to Automate First"
-excerpt: "Most small businesses start automating in the wrong place. Here's how to find the work that actually pays back, and what should stay with a person."
+title: "What to Automate First: A Practical Guide to Business Automation for Small Teams"
+excerpt: "Most small businesses start automating in the wrong place. How to find the work that pays back first, what should stay with a person, and how to measure ROI."
 date: "2026-11-15"
+updated: "2026-11-21"
 tag: "AI Automation"
 ---
 
-"Add AI" is not a plan. Every automation we scope starts with a simpler question: where does your team's time go every week, and which of those hours don't need a human judgment call?
+"We should use AI" is not a plan. Every automation project we scope starts with a simpler question: where does your team's time actually go each week, and which of those hours do not need a human judgement call?
 
-## Start with the slow reply, not the clever feature
+This guide gives you a practical order for automating a small business, with examples, a simple way to calculate whether something is worth building, and a clear line on what should stay with a person.
 
-The most expensive gap in a small business is rarely a missing feature. It's the time between a customer asking something and someone answering. A lead that waits four hours for a reply has often already asked someone else.
+## Why most automation projects disappoint
 
-That makes first contact the best place to start: an assistant that answers common questions on WhatsApp or your site, collects the details you'd ask for anyway, and books the call straight into your calendar. It doesn't replace the conversation. It makes sure the conversation happens while the customer still cares.
+The usual failure is not the technology. It is starting in the wrong place. Teams pick the most impressive idea (a chatbot that "knows everything", an AI that writes all the marketing) instead of the most expensive problem. The project looks good in a demo and saves almost nothing in practice.
 
-## Then remove the copy-paste
+The opposite approach works better: find the repetitive, rule-based work that happens many times a week, and automate that first. It is less exciting and it pays back far faster.
 
-The second place to look is any task where someone moves the same information between two tools. Typical examples:
+The potential is real. McKinsey's research on generative AI estimates that current technology, combined with earlier automation tools, could in principle automate work activities that take up 60 to 70 percent of employees' time today. For a small team, even a fraction of that is significant. The question is which fraction to go after first.
 
-- An order arrives by email and gets retyped into a spreadsheet.
-- A booking is confirmed, then a reminder is sent by hand the day before.
-- A new lead is added to a CRM, then a follow-up is set by memory.
+## Step 1: Fix the slow reply
 
-Each of these is a fixed path with no decision in the middle. That's what workflows are good at, and it's where the hours come back first.
+The most expensive gap in many small businesses is not a missing feature. It is the time between a customer asking a question and someone answering it.
+
+This has been measured. A widely cited study published in Harvard Business Review analysed responses to more than a million online leads and found that companies that contacted a lead within an hour were nearly **seven times** more likely to have a meaningful conversation with a decision-maker than those that waited longer, and more than **60 times** more likely than companies that waited a day or more. Yet many of the companies studied took far longer than an hour to respond.
+
+Speed of reply is therefore the first place to look. Typical automations:
+
+- **An assistant on WhatsApp or your website** that answers common questions (prices, hours, availability, delivery areas) instantly, around the clock
+- **Automatic qualification:** asking the three or four questions you would ask anyway, so the lead arrives with a budget, timeline and need already captured
+- **Self-booking:** letting a qualified lead pick a time in your calendar instead of playing email tennis
+
+None of these replace the conversation. They make sure it happens while the customer still cares. We go deeper on the WhatsApp side in [WhatsApp automation for small businesses](/insights/whatsapp-automation-for-small-business).
+
+## Step 2: Remove the copy-paste
+
+The second place to look is any task where someone moves the same information between two tools. These are fixed paths with no decision in the middle, which is exactly what workflow automation is good at.
+
+Common examples:
+
+- An order arrives by email and gets retyped into a spreadsheet or accounting tool
+- A booking is confirmed, then someone sends a reminder by hand the day before
+- A new lead is added to the CRM, then a follow-up is set from memory
+- An invoice is created in one system and its status is updated by hand in another
+- Weekly figures are exported from three tools and pasted into one report
+
+Each of these takes a few minutes. Multiplied across a week and a team, they quietly consume whole days. Tools such as Zapier, Make and n8n, or a small custom integration, can connect most popular business software without replacing anything you already use.
+
+## Step 3: Handle documents and data entry
+
+Once replies and copy-paste are covered, look at documents: invoices, receipts, application forms, delivery notes, CVs. Modern AI models are good at reading these and pulling out structured fields such as names, amounts, dates and line items.
+
+This is where AI adds something that older rule-based automation could not. The key is to keep a person in the loop for anything with financial or legal consequences: the system extracts and fills in, a human checks and approves.
+
+## Step 4: Internal reporting and knowledge
+
+Finally, consider the questions your team asks each other every day. "Where is the latest price list?" "What did we quote this client last year?" "How many orders came in yesterday?"
+
+A simple internal dashboard, or an assistant that can search your own documents, can save a surprising amount of interruption. This is usually the last step, not the first, because it depends on your data already being in order.
 
 ## What should stay with a person
 
-Automation works when the rule is clear. It breaks where judgment is the point:
+Automation works when the rule is clear. It breaks where judgement is the point:
 
-1. **Pricing and exceptions.** A bot can collect the brief. A person should set the number.
-2. **Complaints.** Route them fast, but answer them yourself.
-3. **Anything you can't explain as a rule.** If you can't write down how you decide, the system can't either.
+1. **Pricing and exceptions.** A system can collect the brief. A person should set the number.
+2. **Complaints and sensitive conversations.** Route them fast, but answer them yourself.
+3. **Anything you cannot explain as a rule.** If you cannot write down how you decide, a system cannot either.
+4. **Final approval on money and contracts.** Let automation prepare; let people sign off.
 
-## How to tell if it's worth building
+A good automation makes your team faster at the human parts of their job. It should never make a customer feel they have been handed to a machine when they needed a person.
 
-Before anything gets built, three numbers should be on the table: how often the task happens, how long it takes each time, and what a mistake costs. A task that happens twice a month isn't worth a system. A task that eats an hour every day usually is.
+## How to tell if it is worth building
 
-That's the order we scope in: reply speed first, copy-paste second, and judgment left where it belongs. The result is fewer tools, not more, and a team that spends its time on the work only it can do.
+Before anything is built, put three numbers on the table for each candidate task:
+
+- **Frequency:** how many times a week does it happen?
+- **Time:** how many minutes does it take each time?
+- **Cost of a mistake:** what happens when it is done late or wrong?
+
+Then a simple calculation:
+
+| Task | Times per week | Minutes each | Hours saved per year |
+| --- | --- | --- | --- |
+| Replying to price enquiries | 40 | 6 | about 200 |
+| Booking reminders | 25 | 4 | about 85 |
+| Retyping orders into a sheet | 30 | 5 | about 130 |
+| Monthly report | 1 per month | 120 | about 24 |
+
+Multiply the hours by what that time costs you, and compare it with the build price. A task that happens twice a month is rarely worth a system. A task that eats an hour every day almost always is. In this example, the monthly report, which often gets automated first because it is annoying, saves the least.
+
+## A sensible first project
+
+For most small businesses, a strong first automation project looks like this:
+
+1. Instant replies to common questions on WhatsApp or the website
+2. Lead details captured automatically into one place
+3. Booking straight into a calendar, with automatic reminders
+4. A notification to the right person when a human is needed
+
+That combination tends to pay back quickly because it touches revenue directly: fewer lost leads and fewer no-shows. It is also small enough to build in one to two weeks.
+
+## Getting started
+
+Write down every repetitive task your team does in a normal week, with the three numbers above. You will usually find two or three obvious candidates.
+
+If you would like help sorting the list, [book a free audit call](/contact?tab=booking). We will map where the time goes and recommend the first thing worth automating, with a fixed price. You can also see what we build on our [AI automation service page](/services/ai-automation).
+
+## Sources
+
+- James B. Oldroyd, Kristina McElheran and David Elkington, [The Short Life of Online Sales Leads](https://hbr.org/2011/03/the-short-life-of-online-sales-leads), Harvard Business Review (March 2011)
+- McKinsey & Company, [The economic potential of generative AI: The next productivity frontier](https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/the-economic-potential-of-generative-ai-the-next-productivity-frontier) (June 2023)

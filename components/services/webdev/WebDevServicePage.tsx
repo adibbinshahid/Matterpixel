@@ -4,7 +4,6 @@ import { FeatureList } from "./FeatureList";
 import { SelectedWork } from "./SelectedWork";
 import { TechStack } from "./TechStack";
 import { WebDevFAQ } from "./WebDevFAQ";
-import { ClosingCta } from "@/components/home/ClosingCta";
 
 /**
  * The Web & App Development detail page: a compact, list-and-table
@@ -14,8 +13,8 @@ import { ClosingCta } from "@/components/home/ClosingCta";
  * app/services/[slug]/page.tsx. Every other service keeps the original
  * generic template untouched.
  *
- * Sits on the shared dark ground (DarkPage) and closes on the site-wide
- * ClosingCta, like every other page.
+ * Sits on the light detail-page ground (LightPage), which closes it on the
+ * site-wide ClosingCta.
  */
 export function WebDevServicePage({ service }: { service: Service }) {
   return (
@@ -25,7 +24,6 @@ export function WebDevServicePage({ service }: { service: Service }) {
       <TechStack service={service} />
       <SelectedWork />
       <WebDevFAQ service={service} />
-      <ClosingCta eyebrow="Web & App Development" title="Got something worth building?" />
     </>
   );
 }

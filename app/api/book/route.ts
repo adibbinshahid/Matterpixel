@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { bookingSchema } from "@/lib/schema";
 import { renderConfirmationEmail, toTitleCase } from "@/lib/email";
+import { buildCallInvite } from "@/lib/ics";
+import { createBookingEvent, isSlotBusy } from "@/lib/googleCalendar";
 import {
-  AVAILABILITY,
+  CALL_MINUTES,
   HORIZON_DAYS,
   LEAD_TIME_MINUTES,
   formatSlotDate,
@@ -14,11 +16,15 @@ import {
   zoneOffsetLabel,
 } from "@/lib/availability";
 import { logger } from "@/lib/logger";
-import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+import { guardFormRequest, isEmailRateLimited } from "@/lib/apiGuard";
+import { tokenFrom, verifyTurnstile } from "@/lib/turnstile";
 
 const FROM_ADDRESS = process.env.CONTACT_FROM_ADDRESS || "hello@matterpixel.com";
-const CONFIRMATION_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || `Matterpixel <${FROM_ADDRESS}>`;
-const CONFIRMATION_CC_EMAIL = process.env.CONTACT_CC_EMAIL || "adib@matterpixel.com";
+const FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || `Matterpixel <${FROM_ADDRESS}>`;
+/** Where new bookings land (CONTACT_CC_EMAIL is the older name). */
+const NOTIFY_EMAIL =
+  process.env.CONTACT_NOTIFY_EMAIL || process.env.CONTACT_CC_EMAIL || "adib@matterpixel.com";
+const GENERIC_ERROR = "Something went wrong. Please try again shortly.";
 
 let resendClient: Resend | null = null;
 function getResendClient(): Resend {
@@ -27,17 +33,18 @@ function getResendClient(): Resend {
 }
 
 export async function POST(request: Request) {
-  const ip = getClientIp(request);
+  const guard = await guardFormRequest(request, "book");
+  if (!guard.ok) return guard.response;
+  const { ip, body } = guard;
 
-  if (isRateLimited(ip)) {
-    logger.warn("book.rate_limited", { ip });
+  if (!(await verifyTurnstile(tokenFrom(body), ip))) {
+    logger.warn("book.bot_check_failed", { ip });
     return NextResponse.json(
-      { ok: false, error: "Too many requests. Please try again in a few minutes." },
-      { status: 429 },
+      { ok: false, error: "We couldn't confirm you're not a bot. Please refresh the page and try again." },
+      { status: 403 },
     );
   }
 
-  const body = await request.json().catch(() => null);
   const parsed = bookingSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -93,23 +100,45 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  // The calendar may have filled since the visitor loaded the page (or
+  // another visitor just took this slot). A calendar outage doesn't block
+  // the booking — Adib still confirms every request by hand.
+  try {
+    if (await isSlotBusy(slot, CALL_MINUTES)) {
+      logger.warn("book.slot_taken", { ip, slot: data.slotUtc });
+      return NextResponse.json(
+        { ok: false, error: "That time was just taken. Please pick another slot." },
+        { status: 409 },
+      );
+    }
+  } catch (error) {
+    logger.error("book.calendar_check_failed", { ip, error: error instanceof Error ? error.message : String(error) });
+  }
+
+  if (isEmailRateLimited("book", data.email)) {
+    logger.warn("book.email_rate_limited", { ip });
+    return NextResponse.json(
+      { ok: false, error: "Too many requests. Please try again in a few minutes." },
+      { status: 429 },
+    );
+  }
+
   if (!process.env.RESEND_API_KEY) {
     logger.error("book.missing_api_key", { ip });
-    return NextResponse.json(
-      { ok: false, error: "Something went wrong. Please try again shortly." },
-      { status: 500 },
-    );
+    return NextResponse.json({ ok: false, error: GENERIC_ERROR }, { status: 500 });
   }
 
   try {
     const resend = getResendClient();
 
-    const { html, text } = renderConfirmationEmail({
-      heading: "We've got your free audit call (30 min) request.",
-      intro:
-        "Thanks for reaching us — your query is very important to us. We'll be reverting to you in a very short time.",
+    // 1. The request, to Adib, with a calendar invite attached so it lands
+    //    in the calendar in one click. Sent first and on its own so a
+    //    visitor's bouncing address can never cost us the booking.
+    const lead = renderConfirmationEmail({
+      heading: `Audit call request from ${toTitleCase(data.fullName)}`,
+      intro: `Requested slot: ${slotLocal}. Confirm it and send a Google Meet link.`,
       rows: [
-        ["Call", "Free audit call (30 min)"],
+        ["Call", `Free audit call (${CALL_MINUTES} min)`],
         ["Name", data.fullName],
         ["Email", data.email],
         ["WhatsApp", data.whatsapp],
@@ -125,28 +154,75 @@ export async function POST(request: Request) {
         ["Notes", data.notes],
         ["Source", data.src],
       ],
-      closing: `${AVAILABILITY.callsLong} We'll confirm your free audit call (30 min) shortly and send over a Google Meet link.`,
+      closing: "Reply to this email to answer the visitor directly.",
+      signoff: false,
+    });
+
+    const notification = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: NOTIFY_EMAIL,
+      replyTo: data.email,
+      subject: `Audit call request: ${toTitleCase(data.fullName).slice(0, 60)}, ${slotUtcLabel}`,
+      html: lead.html,
+      text: lead.text,
+      attachments: [
+        {
+          filename: "audit-call.ics",
+          content: Buffer.from(
+            buildCallInvite({
+              start: slot,
+              minutes: CALL_MINUTES,
+              summary: `Matterpixel audit call: ${toTitleCase(data.fullName).slice(0, 60)}`,
+              description: `Free audit call requested on matterpixel.com.\nVisitor: ${data.email}`,
+            }),
+          ).toString("base64"),
+        },
+      ],
+    });
+
+    if (notification.error) {
+      logger.error("book.notify_failed", { ip, error: notification.error.message });
+      return NextResponse.json({ ok: false, error: GENERIC_ERROR }, { status: 502 });
+    }
+
+    // Hold the slot on the calendar so it reads busy for the next visitor.
+    await createBookingEvent({
+      start: slot,
+      minutes: CALL_MINUTES,
+      summary: `Audit call (requested): ${toTitleCase(data.fullName).slice(0, 60)}`,
+      description: `Requested on matterpixel.com. Confirm and send a Meet link.\nVisitor: ${data.email}`,
+    }).catch((error) =>
+      logger.error("book.calendar_insert_failed", { ip, error: error instanceof Error ? error.message : String(error) }),
+    );
+
+    // 2. A receipt to the visitor. Only server-formatted values (the slot
+    //    we validated above) — nothing the visitor typed, so this can't be
+    //    used to send arbitrary text from our domain.
+    const receipt = renderConfirmationEmail({
+      heading: "Your audit call request is in.",
+      intro:
+        "Adib will confirm the time within 12 hours and send a Google Meet link. If the slot no longer works, he'll suggest the nearest one.",
+      rows: [
+        ["Call", `Free audit call (${CALL_MINUTES} min)`],
+        ["Requested time", slotLocal],
+      ],
+      closing: "Anything you'd like covered on the call? Just reply to this email.",
     });
 
     const confirmation = await resend.emails.send({
-      from: CONFIRMATION_FROM_EMAIL,
+      from: FROM_EMAIL,
       to: data.email,
-      cc: CONFIRMATION_CC_EMAIL,
       replyTo: FROM_ADDRESS,
-      subject: `Your free audit call (30 min), ${toTitleCase(data.fullName)} | Matterpixel`,
-      html,
-      text,
+      subject: "Your audit call request | Matterpixel",
+      html: receipt.html,
+      text: receipt.text,
     });
 
     if (confirmation.error) {
-      logger.error("book.send_failed", { ip, error: confirmation.error.message });
-      return NextResponse.json(
-        { ok: false, error: "Something went wrong. Please try again shortly." },
-        { status: 502 },
-      );
+      logger.warn("book.receipt_failed", { ip, error: confirmation.error.message });
     }
 
-    logger.info("book.received", { ip, email: data.email, src: data.src, messageId: confirmation.data?.id });
+    logger.info("book.received", { ip, src: data.src, messageId: notification.data?.id });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
@@ -154,9 +230,6 @@ export async function POST(request: Request) {
       ip,
       error: error instanceof Error ? error.message : String(error),
     });
-    return NextResponse.json(
-      { ok: false, error: "Something went wrong. Please try again shortly." },
-      { status: 500 },
-    );
+    return NextResponse.json({ ok: false, error: GENERIC_ERROR }, { status: 500 });
   }
 }

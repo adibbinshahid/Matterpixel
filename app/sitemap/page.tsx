@@ -8,13 +8,14 @@ import { nav } from "@/content/siteConfig";
 import { mediums, projectsByMedium } from "@/content/projects";
 import { services } from "@/content/services";
 import { getAllPosts } from "@/lib/posts";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Sitemap",
   description:
-    "Every page on Matterpixel in one place — services, project case studies, insights, and the pages in between.",
-  alternates: { canonical: "/sitemap" },
-};
+    "Every page on Matterpixel in one place: services, project case studies, insights and the pages in between.",
+  path: "/sitemap",
+});
 
 type Entry = { href: string; label: string; note?: string };
 type Group = { title: string; entries: Entry[] };
@@ -65,6 +66,13 @@ function buildGroups(): Group[] {
         note: p.tag,
       })),
     },
+    {
+      title: "Legal",
+      entries: [
+        { href: "/privacy", label: "Privacy Policy" },
+        { href: "/terms", label: "Terms of Use" },
+      ],
+    },
   ].filter((g) => g.entries.length > 0);
 }
 
@@ -75,6 +83,8 @@ export default function SitemapPage() {
   return (
     <DarkPage>
       <PageHero
+        tone="light"
+        seam
         eyebrow="sitemap"
         lines={["Every page, in one place."]}
         lede={
@@ -92,7 +102,7 @@ export default function SitemapPage() {
         }
       />
 
-      <section className="pb-[72px] lg:pb-[120px]">
+      <section className="py-[72px] lg:py-[120px]">
         <div className="section-shell">
           <RevealGroup className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {groups.map((group) => (

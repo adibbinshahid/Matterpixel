@@ -205,8 +205,8 @@ export function FounderStrip() {
             className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(0deg,rgba(11,12,14,0.85),transparent)]"
           />
           <p className="absolute bottom-6 left-6 text-white sm:bottom-8 sm:left-10">
-            <span className="block text-xl font-bold tracking-tight">{founder.name}</span>
-            <span className="mt-1 block text-sm font-medium text-white/80">
+            <span className="block text-2xl font-bold tracking-tight sm:text-[1.75rem]">{founder.name}</span>
+            <span className="mt-1.5 block text-base font-medium text-white/80 sm:text-[1.0625rem]">
               {founder.role} · {founder.roleScope}
             </span>
           </p>
@@ -242,7 +242,7 @@ export function FounderStrip() {
                 // dt before dd in the markup (valid <dl>), shown under it.
                 <div key={p.label} className="flex flex-col-reverse justify-end">
                   <dt className="mt-2 text-sm font-medium text-ink-soft">{p.label}</dt>
-                  <dd className="font-avenir text-[clamp(2rem,1.4rem+2vw,3rem)] font-extrabold leading-none tracking-tight text-ink tabular-nums">
+                  <dd className="text-[clamp(2rem,1.4rem+2vw,3rem)] font-bold leading-none tracking-[-0.025em] text-ink tabular-nums">
                     <span
                       ref={(el) => {
                         numRefs.current[i] = el;

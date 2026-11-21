@@ -157,6 +157,8 @@ A near-black ground lit by two saturated brand colours, plus a warm paper for it
 
 **The Two Beats Rule.** The page is dark by default. A section flips to Warm Paper only where the page turns from showing to reading or deciding: on the homepage the Founder strip, Engagement models and FAQ; on /services, Build your stack. Never strict alternation. Light sections are plain Warm Paper with no grid: the grid belongs to the dark ground. Light sections re-scope the same tokens, so components never carry a light/dark variant of their own.
 
+**The Mixed Ground Rule (inner pages).** Inner pages mix the four grounds (dark grid, Warm Paper light, brand blue, magenta) so no two openings read the same and no page is one long dark scroll. `PageHero` takes `tone` (dark | light | blue). Index pages each pick their own sequence: About opens light, then a blue founder beat, then the dark crew diagram; Projects opens blue over the dark grid; Insights opens dark with the article list on light; Sitemap opens light. Detail pages (project case studies, service details, insight articles) are light throughout via `LightPage`, closing on the site-wide dark ClosingCta. Where light meets the dark grid, the brand light edge (`PageSeam`) draws across the join. The homepage and Contact keep their own sequences.
+
 **The Lifted Blue Rule.** Blue text on dark uses Periwinkle Ink, never raw Electric Blue, except at display size.
 
 ## Typography

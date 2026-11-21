@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
 import { RevealGroup, RevealItem } from "@/components/Reveal";
 import { DarkPage } from "@/components/DarkPage";
+import { Aurora } from "@/components/home/Aurora";
+import { PageSeam } from "@/components/PageSeam";
 import { PageHero } from "@/components/PageHero";
 import { InsightCard } from "@/components/InsightCard";
 import { ClosingCta } from "@/components/home/ClosingCta";
 import { Hl } from "@/components/home/Hl";
 import { formatPostMeta, getAllPosts } from "@/lib/posts";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Insights",
   description:
-    "Notes on performance, engineering, AI automation and AI-assisted brand production from the founder building Matterpixel.",
-  alternates: { canonical: "/insights" },
-};
+    "Notes on web performance, engineering, AI automation and AI-assisted brand production from the founder of Matterpixel.",
+  path: "/insights",
+  eyebrow: "Insights",
+});
 
 export default function InsightsPage() {
   const posts = getAllPosts();
@@ -32,7 +36,10 @@ export default function InsightsPage() {
         lede="Performance, engineering, AI automation and AI visuals: what we've learned building them, written plainly."
       />
 
-      <section className="pb-[72px] lg:pb-[120px]">
+      <section data-nav-light="" className="home-light relative isolate overflow-hidden py-[72px] lg:py-[120px]">
+        <Aurora />
+        <PageSeam edge="top" />
+        <PageSeam edge="bottom" />
         <div className="home-shell">
           <RevealGroup className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
             {posts.map((post) => (

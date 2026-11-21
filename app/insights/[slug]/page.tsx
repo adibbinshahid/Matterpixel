@@ -2,15 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import remarkGfm from "remark-gfm";
 import { ArrowLeft } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { formatPostMeta, getAllPosts, getPostBySlug, slugifyHeading } from "@/lib/posts";
-import { siteUrl } from "@/content/siteConfig";
-import { DarkPage } from "@/components/DarkPage";
+import { brand, siteUrl } from "@/content/siteConfig";
+import { LightPage } from "@/components/LightPage";
 import { PageHero } from "@/components/PageHero";
 import { InsightCard } from "@/components/InsightCard";
 import { ClosingCta } from "@/components/home/ClosingCta";
 import { Hl } from "@/components/home/Hl";
+import { absoluteUrl, breadcrumbJsonLd, ogImageUrl, pageMetadata } from "@/lib/seo";
 
 const mdxComponents = {
   h2: ({ children, ...props }: React.ComponentProps<"h2">) => (
@@ -35,9 +37,27 @@ const mdxComponents = {
     <ol className="mt-5 flex flex-col gap-3 pl-5 text-ink-soft [&>li]:list-decimal" {...props} />
   ),
   li: (props: React.ComponentProps<"li">) => <li className="leading-relaxed" {...props} />,
-  a: (props: React.ComponentProps<"a">) => (
-    <a className="font-semibold text-blue underline-offset-4 hover:underline" {...props} />
+  // Sources open in a new tab; internal links stay in place.
+  a: ({ href = "", ...props }: React.ComponentProps<"a">) => {
+    const external = /^https?:\/\//.test(href);
+    return (
+      <a
+        href={href}
+        className="font-semibold text-blue underline-offset-4 hover:underline"
+        {...(external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+        {...props}
+      />
+    );
+  },
+  table: (props: React.ComponentProps<"table">) => (
+    <div className="mt-6 overflow-x-auto rounded-[16px] border border-line">
+      <table className="w-full border-collapse text-left text-sm text-ink-soft" {...props} />
+    </div>
   ),
+  th: (props: React.ComponentProps<"th">) => (
+    <th className="border-b border-line bg-paper-2 px-4 py-3 font-bold text-ink" {...props} />
+  ),
+  td: (props: React.ComponentProps<"td">) => <td className="border-b border-line px-4 py-3 align-top" {...props} />,
   strong: (props: React.ComponentProps<"strong">) => (
     <strong className="font-bold text-ink" {...props} />
   ),
@@ -61,18 +81,15 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return {};
-  return {
+  return pageMetadata({
     title: post.title,
     description: post.excerpt,
-    alternates: { canonical: `/insights/${post.slug}` },
-    openGraph: {
-      title: post.title,
-      description: post.excerpt,
-      url: `${siteUrl}/insights/${post.slug}`,
-      type: "article",
-      publishedTime: post.date,
-    },
-  };
+    path: `/insights/${post.slug}`,
+    eyebrow: post.tag,
+    type: "article",
+    publishedTime: post.date,
+    modifiedTime: post.updated,
+  });
 }
 
 export default async function PostPage({
@@ -87,24 +104,54 @@ export default async function PostPage({
   const related = getAllPosts().filter((p) => p.slug !== slug).slice(0, 2);
   const postUrl = `${siteUrl}/insights/${post.slug}`;
 
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    ...breadcrumbJsonLd([
+      { name: "Insights", path: "/insights" },
+      { name: post.title, path: `/insights/${post.slug}` },
+    ]),
+  };
+
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: post.title,
     description: post.excerpt,
     datePublished: post.date,
+    dateModified: post.updated ?? post.date,
     url: postUrl,
-    author: { "@type": "Organization", name: "Matterpixel" },
+    mainEntityOfPage: postUrl,
+    image: absoluteUrl(ogImageUrl(post.title, post.tag)),
+    articleSection: post.tag,
+    inLanguage: "en",
+    author: { "@id": `${siteUrl}/#founder`, "@type": "Person", name: brand.founder, url: `${siteUrl}/about` },
+    publisher: { "@id": `${siteUrl}/#organization` },
   };
 
   return (
-    <DarkPage>
+    <LightPage
+      closing={
+        <ClosingCta
+          eyebrow="Free audit"
+          title={
+            <>
+              Got something that <Hl tone="magenta">matters</Hl>? Let&rsquo;s build it.
+            </>
+          }
+        />
+      }
+    >
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+      />
 
       <PageHero
+        tone="light"
         eyebrow={post.tag}
         lines={[post.title]}
         lede={formatPostMeta(post.date, post.readingTime)}
@@ -140,7 +187,11 @@ export default async function PostPage({
             )}
 
             <Reveal delay={0.1} className="mt-12">
-              <MDXRemote source={post.content} components={mdxComponents} />
+              <MDXRemote
+                source={post.content}
+                components={mdxComponents}
+                options={{ mdxOptions: { remarkPlugins: [remarkGfm] } }}
+              />
             </Reveal>
 
             <Reveal delay={0.15} className="mt-14 flex flex-wrap items-center gap-4 border-t border-line pt-8">
@@ -189,14 +240,6 @@ export default async function PostPage({
         </section>
       )}
 
-      <ClosingCta
-        eyebrow="Free audit"
-        title={
-          <>
-            Got something that <Hl tone="magenta">matters</Hl>? Let&rsquo;s build it.
-          </>
-        }
-      />
-    </DarkPage>
+    </LightPage>
   );
 }

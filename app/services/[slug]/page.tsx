@@ -8,10 +8,11 @@ import { services, getServiceBySlug } from "@/content/services";
 import { siteUrl } from "@/content/siteConfig";
 import { CtaLink } from "@/components/CtaLink";
 import { WebDevServicePage } from "@/components/services/webdev/WebDevServicePage";
-import { DarkPage } from "@/components/DarkPage";
+import { LightPage } from "@/components/LightPage";
 import { PageHero } from "@/components/PageHero";
 import { ClosingCta } from "@/components/home/ClosingCta";
 import { Hl } from "@/components/home/Hl";
+import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
 const WHY_MATTERPIXEL = [
   "Founder-led from strategy to final delivery",
@@ -34,16 +35,13 @@ export async function generateMetadata({
   const service = getServiceBySlug(slug);
   if (!service) return {};
   return {
-    title: service.title,
-    description: service.intro,
-    alternates: { canonical: `/services/${service.slug}` },
+    ...pageMetadata({
+      title: service.title,
+      description: `${service.shortDesc} Fixed quote from $${service.startingPrice.toLocaleString("en-US")}.`,
+      path: `/services/${service.slug}`,
+      eyebrow: "Service",
+    }),
     keywords: [service.metaKeyword],
-    openGraph: {
-      title: `${service.title} — Matterpixel`,
-      description: service.intro,
-      url: `${siteUrl}/services/${service.slug}`,
-      type: "website",
-    },
   };
 }
 
@@ -56,24 +54,46 @@ export default async function ServiceDetailPage({
   const service = getServiceBySlug(slug);
   if (!service) notFound();
 
+  const serviceUrl = `${siteUrl}/services/${service.slug}`;
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "Service",
-    name: service.title,
-    description: service.intro,
-    provider: { "@type": "Organization", name: "Matterpixel" },
-    url: `${siteUrl}/services/${service.slug}`,
+    "@graph": [
+      {
+        "@type": "Service",
+        name: service.title,
+        serviceType: service.title,
+        description: service.intro,
+        provider: { "@id": `${siteUrl}/#organization` },
+        areaServed: "Worldwide",
+        url: serviceUrl,
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "USD",
+          price: service.startingPrice,
+          priceSpecification: {
+            "@type": "PriceSpecification",
+            priceCurrency: "USD",
+            minPrice: service.startingPrice,
+          },
+          url: serviceUrl,
+        },
+      },
+      breadcrumbJsonLd([
+        { name: "Services", path: "/services" },
+        { name: service.title, path: `/services/${service.slug}` },
+      ]),
+    ],
   };
 
   if (service.slug === "web-app-development") {
     return (
-      <DarkPage>
+      <LightPage closing={<ClosingCta eyebrow="Web & App Development" title="Got something worth building?" />}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <WebDevServicePage service={service} />
-      </DarkPage>
+      </LightPage>
     );
   }
 
@@ -91,20 +111,33 @@ export default async function ServiceDetailPage({
   ].filter((s): s is { title: string; items: string[] } => !!s.items?.length);
 
   return (
-    <DarkPage>
+    <LightPage
+      closing={
+        <ClosingCta
+          eyebrow={service.title}
+          title={
+            <>
+              Ready to talk <Hl tone="blue">{service.title.toLowerCase()}</Hl>?
+            </>
+          }
+          lede="Book a free audit call and we'll show you what's worth building first, with a fixed quote to follow."
+        />
+      }
+    >
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
       <PageHero
+        tone="light"
         eyebrow={`${service.id} · ${service.title}`}
         lines={[service.heroClaim]}
         lede={service.intro}
       >
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <CtaLink section="hero" cta="book" />
-          <CtaLink section="hero" cta="quote" variant="text" className="text-white" />
+          <CtaLink section="hero" cta="quote" variant="text" className="text-ink" />
         </div>
         <Link
           href="/services"
@@ -173,7 +206,7 @@ export default async function ServiceDetailPage({
 
       <section className="border-t border-line bg-paper-2 py-10">
         <Reveal className="section-shell flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
-          <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
+          <h2 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
             {service.projectsNote ?? "See the work behind the promise — visit our projects."}
           </h2>
           <Link
@@ -200,15 +233,6 @@ export default async function ServiceDetailPage({
         </div>
       </section>
 
-      <ClosingCta
-        eyebrow={service.title}
-        title={
-          <>
-            Ready to talk <Hl tone="blue">{service.title.toLowerCase()}</Hl>?
-          </>
-        }
-        lede="Book a free audit call and we'll show you what's worth building first, with a fixed quote to follow."
-      />
-    </DarkPage>
+    </LightPage>
   );
 }

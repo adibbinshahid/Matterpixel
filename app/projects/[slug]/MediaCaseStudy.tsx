@@ -35,7 +35,7 @@ export function MediaCaseStudy({ project }: { project: MediaProject }) {
   return (
     <>
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <PageHero eyebrow={project.category} lines={[project.name]} lede={project.oneLiner}>
+      <PageHero tone="light" eyebrow={project.category} lines={[project.name]} lede={project.oneLiner}>
             {/* The only outbound link a media piece has. A generated set has
                 no URL of its own to open, so where it was made for one of
                 our own builds, that build is the nearest thing to a "go and

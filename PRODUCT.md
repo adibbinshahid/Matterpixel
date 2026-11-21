@@ -18,7 +18,7 @@ matterpixel.com is the studio's lead-generation site. It turns a visitor's probl
 
 ## Positioning
 
-Founder-led, fixed price. The buyer deals with Md. Adib Bin Shahid directly from first call to launch, and the work is built with vetted specialists under his direction — no account managers, no bench. Every engagement has a fixed quote upfront, fast delivery, and the client owns everything that's built. Web and AI (sites, apps, business software, automation, AI visuals) under one accountable person.
+Founder-led, fixed price. The buyer deals with Adib Bin Shahid directly from first call to launch, and the work is built with vetted specialists under his direction — no account managers, no bench. Every engagement has a fixed quote upfront, fast delivery, and the client owns everything that's built. Web and AI (sites, apps, business software, automation, AI visuals) under one accountable person.
 
 ## Operating Context
 

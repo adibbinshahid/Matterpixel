@@ -20,15 +20,17 @@ export function toTitleCase(name: string): string {
 
 /** Renders a client-facing confirmation as a clean, table-based HTML email
  * (inline styles only — most mail clients strip <style> blocks) alongside a
- * plain-text fallback, so the visitor gets a professional-looking copy of
- * exactly what they submitted. */
+ * plain-text fallback. Used for both the internal lead notification and
+ * the visitor's receipt. */
 export function renderConfirmationEmail(options: {
   heading: string;
   intro: string;
   rows: EmailDetailRow[];
   closing: string;
+  /** "Talk soon, Adib" — off for internal notifications. */
+  signoff?: boolean;
 }): { html: string; text: string } {
-  const { heading, intro, rows, closing } = options;
+  const { heading, intro, rows, closing, signoff = true } = options;
   const visibleRows = rows.filter(([, value]) => !!value?.trim());
 
   const html = `
@@ -38,7 +40,7 @@ export function renderConfirmationEmail(options: {
   </div>
   <h1 style="font-size: 22px; margin: 0 0 16px; color: #111;">${escapeHtml(heading)}</h1>
   <p style="font-size: 15px; line-height: 1.6; margin: 0 0 24px; color: #333;">${escapeHtml(intro)}</p>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden;">
+  ${visibleRows.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; border: 1px solid #e5e5e5; border-radius: 8px; overflow: hidden;">
     <tbody>
       ${visibleRows
         .map(
@@ -50,9 +52,9 @@ export function renderConfirmationEmail(options: {
         )
         .join("")}
     </tbody>
-  </table>
+  </table>` : ""}
   <p style="font-size: 15px; line-height: 1.6; margin: 24px 0 0; color: #333;">${escapeHtml(closing)}</p>
-  <p style="font-size: 15px; line-height: 1.6; margin: 24px 0 0; color: #333;">Talk soon,<br />Adib, Matterpixel</p>
+  ${signoff ? `<p style="font-size: 15px; line-height: 1.6; margin: 24px 0 0; color: #333;">Talk soon,<br />Adib, Matterpixel</p>` : ""}
 </div>`.trim();
 
   const text = [
@@ -61,11 +63,9 @@ export function renderConfirmationEmail(options: {
     intro,
     "",
     ...visibleRows.map(([label, value]) => `${label}: ${value}`),
-    "",
+    ...(visibleRows.length ? [""] : []),
     closing,
-    "",
-    "Talk soon,",
-    "Adib, Matterpixel",
+    ...(signoff ? ["", "Talk soon,", "Adib, Matterpixel"] : []),
   ].join("\n");
 
   return { html, text };

@@ -14,10 +14,10 @@ const work = websiteProjects.filter((p) => p.relatedServiceSlugs.includes("web-a
  * rows with something that scans in seconds. */
 export function SelectedWork() {
   return (
-    <section className="panel-dark relative border-t border-line">
+    <section className="relative border-t border-line bg-paper-2">
       <div className="section-shell py-[72px] lg:py-[120px]">
         <Reveal>
-          <p className="label-eyebrow mb-3" style={{ color: "#fff" }}>
+          <p className="label-eyebrow mb-3">
             proof, not promise
           </p>
           <h2 className="max-w-2xl">
@@ -28,33 +28,33 @@ export function SelectedWork() {
         <Reveal delay={0.1} className="mt-10 overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-white/15">
-                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-[0.08em] text-white/50">Project</th>
-                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-[0.08em] text-white/50">What it is</th>
-                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-[0.08em] text-white/50">Result</th>
-                <th className="py-3 text-xs font-bold uppercase tracking-[0.08em] text-white/50">
+              <tr className="border-b border-line">
+                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-[0.08em] text-ink-soft">Project</th>
+                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-[0.08em] text-ink-soft">What it is</th>
+                <th className="py-3 pr-4 text-xs font-bold uppercase tracking-[0.08em] text-ink-soft">Result</th>
+                <th className="py-3 text-xs font-bold uppercase tracking-[0.08em] text-ink-soft">
                   <span className="sr-only">Link</span>
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/10">
+            <tbody className="divide-y divide-line">
               {work.map((project) => (
                 <tr key={project.slug}>
                   <td className="py-4 pr-4 align-top">
-                    <p className="text-sm font-bold text-white">{project.name}</p>
-                    <p className="mt-0.5 text-xs text-white/40">{project.category} · Concept build</p>
+                    <p className="text-sm font-bold text-ink">{project.name}</p>
+                    <p className="mt-0.5 text-xs text-ink-soft">{project.category} · Concept build</p>
                   </td>
-                  <td className="py-4 pr-4 align-top text-sm text-white/70">{project.oneLiner}</td>
+                  <td className="py-4 pr-4 align-top text-sm text-ink-soft">{project.oneLiner}</td>
                   <td className="py-4 pr-4 align-top">
-                    <span className="rounded-full border border-white/15 px-3 py-1 text-xs text-white/70">
-                      <span className="font-semibold text-white">{project.lighthouse.performance}</span>{" "}
+                    <span className="rounded-full border border-line px-3 py-1 text-xs text-ink-soft">
+                      <span className="font-semibold text-ink">{project.lighthouse.performance}</span>{" "}
                       performance
                     </span>
                   </td>
                   <td className="py-4 align-top">
                     <Link
                       href={`/projects/${project.slug}`}
-                      className="group inline-flex items-center gap-1 text-sm font-semibold text-white transition-colors duration-300 hover:text-magenta"
+                      className="group inline-flex items-center gap-1 text-sm font-semibold text-ink transition-colors duration-300 hover:text-magenta"
                     >
                       View
                       <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />

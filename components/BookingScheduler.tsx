@@ -115,6 +115,18 @@ export interface SlotSelection {
   timeKey: string;
 }
 
+/** "2026-11-21" → "Saturday, November 21, 2026" for screen readers. */
+function spokenDay(key: string): string {
+  const [y, m, d] = key.split("-").map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export function SchedulePicker({
   timeZone,
   onTimeZoneChange,
@@ -133,6 +145,23 @@ export function SchedulePicker({
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
+  }, []);
+
+  /** Busy ranges from Adib's calendar (empty until it's connected, or if
+   * the lookup fails — the booking route re-checks the slot anyway). */
+  const [busy, setBusy] = useState<[number, number][]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/availability")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { busy?: { start: string; end: string }[] } | null) => {
+        if (cancelled || !data?.busy) return;
+        setBusy(data.busy.map((b) => [Date.parse(b.start), Date.parse(b.end)]));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const selectedInstant = useMemo(() => {
@@ -174,8 +203,8 @@ export function SchedulePicker({
   const slotMap = useMemo(() => {
     const from = new Date(Date.UTC(cursor.year, cursor.month, 1) - 24 * 60 * 60_000);
     const to = new Date(Date.UTC(cursor.year, cursor.month + 1, 1) + 24 * 60 * 60_000);
-    return slotMapForRange(from, to, timeZone, now);
-  }, [cursor, timeZone, now]);
+    return slotMapForRange(from, to, timeZone, now, busy);
+  }, [cursor, timeZone, now, busy]);
 
   const daySlots = activeDay ? (slotMap.get(activeDay) ?? []) : [];
 
@@ -322,7 +351,7 @@ export function SchedulePicker({
                       type="button"
                       disabled={!open}
                       onClick={() => setActiveDay(key)}
-                      aria-label={`${key}${open ? "" : " — no slots"}`}
+                      aria-label={`${spokenDay(key)}${open ? "" : ", no slots"}`}
                       aria-pressed={isActive}
                       className={cn(
                         // Fixed circles rather than `aspect-square` cells: the
@@ -449,7 +478,7 @@ export function SchedulePicker({
              own box rather than growing the step past the card. overflow-x is
              pinned because `overflow-y: auto` alone would let the x axis
              compute to auto and flash a scrollbar under the entering grid. */}
-          <div className="min-h-[13rem] flex-1 overflow-y-auto overflow-x-hidden px-4 py-3">
+          <div data-lenis-prevent className="min-h-[13rem] flex-1 overflow-y-auto overflow-x-hidden px-4 py-3">
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${activeDay}-${group}`}

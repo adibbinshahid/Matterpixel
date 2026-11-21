@@ -12,10 +12,11 @@ export function Hero({ service }: { service: Service }) {
       lines={[service.heroClaim]}
       lede={service.intro}
       aside={<ComparisonCard />}
+      tone="light"
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <CtaLink section="hero" cta="book" />
-        <CtaLink section="hero" cta="quote" variant="text" className="text-white" />
+        <CtaLink section="hero" cta="quote" variant="text" className="text-ink" />
       </div>
       <p className="mt-4 text-sm text-ink-soft">{service.processNote}</p>
       <Link

@@ -278,6 +278,10 @@ export const stackItems: StackItem[] = [
  * the timeline buffer. */
 export const BUNDLE_THRESHOLD = 3;
 export const BUNDLE_NOTE = "Bundles of 3+ get 10% off";
+/** The bundle discount, applied to the estimate itself so the range a
+ * visitor sees is the range they will be quoted. */
+const BUNDLE_DISCOUNT = 0.1;
+const roundTo10 = (n: number) => Math.round(n / 10) * 10;
 /** Parallel work still needs integration time once a stack gets wide. */
 const BUNDLE_TIMELINE_BUFFER = 1.2;
 
@@ -315,8 +319,8 @@ export function estimateStack(ids: string[]): StackEstimate {
   }
   return {
     items,
-    min: oneOff.reduce((sum, i) => sum + (i.price?.min ?? 0), 0),
-    max: oneOff.reduce((sum, i) => sum + (i.price?.max ?? 0), 0),
+    min: roundTo10(oneOff.reduce((sum, i) => sum + (i.price?.min ?? 0), 0) * (bundle ? 1 - BUNDLE_DISCOUNT : 1)),
+    max: roundTo10(oneOff.reduce((sum, i) => sum + (i.price?.max ?? 0), 0) * (bundle ? 1 - BUNDLE_DISCOUNT : 1)),
     custom: oneOff.some((i) => i.custom),
     monthly: items.filter((i) => i.monthly),
     days,

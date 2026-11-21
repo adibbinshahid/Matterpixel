@@ -15,13 +15,15 @@ import { EngagementModels } from "@/components/EngagementModels";
 import { WhoWeWorkFor } from "@/components/WhoWeWorkFor";
 import { WhiteLabel } from "@/components/WhiteLabel";
 import { problemPackages } from "@/content/packages";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Matterpixel — We build what matters. Down to the pixel.",
+export const metadata: Metadata = pageMetadata({
+  title: "Matterpixel — Web Development & AI Automation Studio",
+  absoluteTitle: true,
   description:
-    "We build websites and AI systems that win customers and save hours. Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
-  alternates: { canonical: "/" },
-};
+    "Founder-led studio building fast websites, web apps and AI automation for growing brands. Fixed quotes, fast delivery, and you own everything we build.",
+  path: "/",
+});
 
 export default function Home() {
   return (

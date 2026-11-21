@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 import { motion } from "motion/react";
 import { cn, EASE } from "@/lib/utils";
+import { REVEAL_VIEWPORT } from "@/components/Reveal";
 
 type Trigger = "view" | "hover" | "both";
 
@@ -36,7 +37,7 @@ export function PixelResolve({
       onMouseEnter={() => hoverEnabled && setResolved(true)}
       onMouseLeave={() => trigger === "hover" && setResolved(false)}
       onViewportEnter={() => viewEnabled && setResolved(true)}
-      viewport={{ once: true, amount: 0.4 }}
+      viewport={{ once: true, ...REVEAL_VIEWPORT }}
     >
       <motion.div
         className="h-full w-full"

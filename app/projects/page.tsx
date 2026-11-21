@@ -6,13 +6,15 @@ import { ClosingCta } from "@/components/home/ClosingCta";
 import { Hl } from "@/components/home/Hl";
 import { projects, mediums, websiteProjects, mediaProjects, toWorkCards } from "@/content/projects";
 import { workIntro, siteUrl } from "@/content/siteConfig";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Projects",
   description:
-    "Production-quality concept work you can check for yourself — four live sites with their admin panels open, plus AI product photography, campaign sets, personas, interiors, cover art, print design and short-form film. Nothing here is a mockup.",
-  alternates: { canonical: "/projects" },
-};
+    "Live concept builds with open admin panels, plus AI product photography, campaign sets and short-form film. Production-quality work you can check yourself.",
+  path: "/projects",
+  eyebrow: "Selected work",
+});
 
 /** Restates, in one line each, exactly what a prospect can verify for
  * themselves — the section's whole credibility argument. Nothing here is a
@@ -72,6 +74,7 @@ export default function WorkPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <PageHero
+        tone="blue"
         eyebrow={workIntro.eyebrow}
         lines={[
           <>
@@ -100,7 +103,7 @@ export default function WorkPage() {
         </dl>
       </PageHero>
 
-      <section className="relative pb-[72px] lg:pb-[120px]">
+      <section className="relative pb-[72px] pt-14 lg:pb-[120px] lg:pt-20">
         <div className="home-shell">
           {/* Projected on the server — see toWorkCards for why the grid
               never imports the project content itself. */}

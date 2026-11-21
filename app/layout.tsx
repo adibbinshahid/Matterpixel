@@ -10,7 +10,7 @@ import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
 import { PageReveal } from "@/components/PageReveal";
 import { RouteTransition } from "@/components/RouteTransition";
-import { siteUrl, brand } from "@/content/siteConfig";
+import { siteUrl, brand, WHATSAPP_NUMBER } from "@/content/siteConfig";
 
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
@@ -30,46 +30,60 @@ const avenir = localFont({
   display: "swap",
 });
 
+const DEFAULT_TITLE = "Matterpixel — Web Development & AI Automation Studio";
+const DEFAULT_DESCRIPTION =
+  "Founder-led studio building fast websites, web apps and AI automation for growing brands. Fixed quotes, fast delivery, and you own everything we build.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Matterpixel — We build what matters. Down to the pixel.",
+    default: DEFAULT_TITLE,
     template: "%s — Matterpixel",
   },
-  description:
-    "We build websites and AI systems that win customers and save hours. Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
-  keywords: [
-    "digital agency",
-    "web development",
-    "AI automation",
-    "branding",
-    "Next.js agency",
-  ],
-  authors: [{ name: "Matterpixel" }],
+  description: DEFAULT_DESCRIPTION,
+  applicationName: "Matterpixel",
+  authors: [{ name: brand.founder, url: `${siteUrl}/about` }],
+  creator: brand.founder,
+  publisher: "Matterpixel",
+  formatDetection: { telephone: false, email: false, address: false },
   openGraph: {
-    title: "Matterpixel — We build what matters. Down to the pixel.",
-    description:
-      "We build websites and AI systems that win customers and save hours. Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
     url: siteUrl,
     siteName: "Matterpixel",
-    images: [{ url: "/api/og", width: 1200, height: 630 }],
+    images: [{ url: "/api/og", width: 1200, height: 630, alt: "Matterpixel" }],
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Matterpixel — We build what matters. Down to the pixel.",
-    description:
-      "We build websites and AI systems that win customers and save hours. Founder-led digital studio. Fixed prices. Fast delivery. You own everything we build.",
+    title: DEFAULT_TITLE,
+    description: DEFAULT_DESCRIPTION,
     images: ["/api/og"],
   },
   icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
+    icon: [
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
+  manifest: "/site.webmanifest",
+  // Google Search Console ownership check (HTML-tag method). Set the token
+  // as GOOGLE_SITE_VERIFICATION in Vercel; absent, no tag is rendered.
+  ...(process.env.GOOGLE_SITE_VERIFICATION
+    ? { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }
+    : {}),
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
 };
 
@@ -81,13 +95,54 @@ export const viewport: Viewport = {
 
 const organizationJsonLd = {
   "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Matterpixel",
-  url: siteUrl,
-  logo: `${siteUrl}/logo.png`,
-  email: brand.email,
-  description:
-    "Matterpixel is a founder-led digital studio building websites and AI systems, built with vetted specialists.",
+  "@graph": [
+    {
+      "@type": "ProfessionalService",
+      "@id": `${siteUrl}/#organization`,
+      name: "Matterpixel",
+      url: siteUrl,
+      logo: `${siteUrl}/logo.png`,
+      image: `${siteUrl}/api/og`,
+      email: brand.email,
+      telephone: WHATSAPP_NUMBER,
+      description:
+        "Matterpixel is a founder-led digital studio building websites, web apps and AI automation, built with vetted specialists.",
+      slogan: brand.tagline,
+      priceRange: "$$",
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Dhaka",
+        addressCountry: "BD",
+      },
+      areaServed: "Worldwide",
+      knowsLanguage: ["en", "bn"],
+      founder: { "@id": `${siteUrl}/#founder` },
+      contactPoint: {
+        "@type": "ContactPoint",
+        contactType: "sales",
+        email: brand.email,
+        availableLanguage: ["English", "Bengali"],
+        url: `${siteUrl}/contact`,
+      },
+    },
+    {
+      "@type": "Person",
+      "@id": `${siteUrl}/#founder`,
+      name: brand.founder,
+      jobTitle: "Founder & Lead",
+      url: `${siteUrl}/about`,
+      image: `${siteUrl}/founder.webp`,
+      worksFor: { "@id": `${siteUrl}/#organization` },
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${siteUrl}/#website`,
+      name: "Matterpixel",
+      url: siteUrl,
+      inLanguage: "en",
+      publisher: { "@id": `${siteUrl}/#organization` },
+    },
+  ],
 };
 
 export default function RootLayout({

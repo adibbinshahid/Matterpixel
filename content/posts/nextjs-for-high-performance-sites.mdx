@@ -1,30 +1,102 @@
 ---
-title: "Next.js for High-Performance Sites"
-excerpt: "Why we build almost everything on Next.js App Router — and the specific features that make the performance budget achievable."
+title: "Is Next.js Good for Business Websites? Speed, SEO and Cost Explained"
+excerpt: "Why we build fast business websites on Next.js: the features that make 90+ PageSpeed achievable, how it helps SEO, and when WordPress is the better choice."
 date: "2026-02-03"
+updated: "2026-11-21"
 tag: "Engineering"
 ---
 
-We build almost everything on Next.js App Router. Not because it's trendy — because the specific set of features it ships map directly onto the performance budget every project has to hit.
+When a client asks why we build on Next.js rather than WordPress, Wix or a page builder, the honest answer is not "because it is modern". It is because Next.js makes the things that sell a website, speed and search visibility, the default rather than an afterthought.
 
-## Server Components change the default
+This article explains what Next.js is in plain terms, the specific features that matter for a business site, how it helps with SEO, what it costs, and when it is the wrong choice.
 
-App Router's default is a Server Component: it renders on the server, ships zero JavaScript to the client unless you explicitly opt into `"use client"`. That's a meaningful default-flip from the previous era of React, where everything shipped client-side JS whether it needed interactivity or not.
+## What is Next.js?
 
-In practice, this means a marketing page built mostly of static content — headings, copy, images — costs almost nothing on the wire. The interactive pieces (a form, a canvas, a cursor effect) are the *exception* you opt into, not the baseline.
+Next.js is an open-source framework for building websites and web applications, maintained by Vercel and built on React, the interface library created at Meta. It is used by large companies and small studios alike for everything from marketing sites to full software products.
 
-## Streaming and partial rendering
+For a business owner, the important part is what it does differently from a typical website builder: most of the work of preparing a page happens **before** a visitor arrives, on the server or at build time, rather than in the visitor's browser. That single design choice is why Next.js sites can be very fast on ordinary phones.
 
-`loading.tsx` and `<Suspense>` boundaries let slow data fetches stream in without blocking the rest of the page. A dashboard that needs a slow database query for one widget doesn't have to hold the entire page hostage — the shell paints immediately, the widget fills in when it's ready.
+## The features that make it fast
 
-## Static generation where it counts
+### 1. Pages are prepared ahead of time
 
-Content that doesn't change per-request — case studies, service pages, blog posts — gets fully statically generated at build time via `generateStaticParams`. That means the response for those pages is a pre-built HTML file served from the edge, not a server computing a response on every request. It's the fastest possible response short of a static file, because it *is* a static file.
+Next.js can generate pages as finished HTML when the site is built, and refresh them in the background when content changes (a feature called Incremental Static Regeneration). A visitor gets a complete page immediately from a server close to them, instead of waiting for a database query and a theme to assemble it.
 
-## The image and font primitives aren't optional extras
+### 2. Less JavaScript sent to the phone
 
-`next/image` handles responsive sizing, format negotiation (AVIF/WebP), and lazy-loading out of the box — the kind of thing that used to require a manual pipeline. `next/font` self-hosts and preloads fonts, eliminating the render-blocking font request to a third party. Both are "on by default" wins that show up directly in Lighthouse.
+Since version 13, Next.js uses **React Server Components** by default. Components that only display content run on the server and send HTML, not code. Only the genuinely interactive parts, like a booking calendar or an image carousel, ship JavaScript to the browser.
 
-## Where we still reach for something else
+Less JavaScript is the most reliable way to improve Interaction to Next Paint, the Core Web Vital that measures how quickly a page responds to taps. Heavy page builders struggle here because every widget ships its own scripts.
 
-Next.js isn't the answer to everything. Complex, deeply interactive canvas work (our own pixel-field and pixel-resolve effects included) still needs careful, hand-tuned client-side code — Next.js just gets out of the way and lets you code-split it so it only loads when needed. The framework's job is to make the *default* path fast; your job is to not undo that with the interactive 10% of the page.
+### 3. Images handled automatically
+
+The built-in Image component resizes each image for the screen it is shown on, converts it to modern formats like WebP or AVIF where the browser supports them, lazy-loads images below the fold, and reserves their space so the layout does not jump. Those four things fix the most common causes of poor Largest Contentful Paint and Cumulative Layout Shift in one place.
+
+### 4. Fonts without the flash
+
+The `next/font` module downloads web fonts at build time and serves them from your own domain, with size-matched fallbacks. Text appears immediately and does not jump when the brand font arrives. It also removes the request to Google's font servers, which helps with privacy rules in the EU.
+
+### 5. Code split by page
+
+Each page only loads the code it needs. A heavy feature on one page, such as an interactive pricing calculator, does not slow down the homepage.
+
+## How Next.js helps SEO
+
+Search engines can index JavaScript-heavy sites, but it is slower and less reliable than reading plain HTML. Because Next.js sends complete HTML for every page, Google sees the same content a visitor sees, immediately.
+
+It also gives developers precise control over the technical SEO details that matter:
+
+- **Metadata per page:** unique titles, descriptions and canonical URLs, generated from your content
+- **Social previews:** Open Graph images can be generated automatically for every page, so shared links look right on LinkedIn, WhatsApp and X
+- **Structured data:** JSON-LD for services, articles, breadcrumbs and your business, so Google understands what each page is about
+- **Clean URLs and fast navigation:** no plugin conflicts rewriting your links
+
+None of this guarantees rankings. Content quality and relevance come first. But it removes the technical obstacles that hold back many small-business sites.
+
+## What it costs, and what it does not
+
+Next.js itself is free and open source. The costs of a Next.js site are the build and the hosting.
+
+**Hosting** for a typical business site on a platform like Vercel or Netlify is a modest monthly fee with a global CDN included. (Vercel's free Hobby plan is for non-commercial use, so business sites belong on a paid plan.) There are no per-plugin licence fees.
+
+**The build** usually costs more upfront than a template site, because it is custom code. The trade-off is lower running costs, fewer security updates to babysit and no slow plugin stack to fight later. We quote every build as a fixed price before work starts; see [how much a website costs in 2026](/insights/how-much-does-a-website-cost) for typical ranges.
+
+**Editing content** is the most common concern. A Next.js site can be connected to a content management system, so your team edits text, images and blog posts in a simple dashboard, or, for smaller sites, content can live in files that we update for you. Each of our concept builds ships with a working admin panel you can try, like the one in our [L'Cinco Pizza build](/projects/lcinco-pizza).
+
+## When Next.js is not the right choice
+
+We do not recommend Next.js for every project:
+
+- **You need to launch this week with no budget.** A good template on Squarespace or Shopify will get you online faster.
+- **Your team wants to rebuild layouts themselves every week.** Drag-and-drop builders give non-technical teams more layout freedom, at a cost in speed.
+- **You are running a large online shop with complex inventory.** Shopify's checkout and back office are hard to beat. Next.js can still power a fast custom storefront on top of Shopify, but that is a bigger build.
+- **Your site depends on a specific WordPress plugin ecosystem**, such as a membership or learning platform you do not want to replace.
+
+## Next.js versus WordPress at a glance
+
+| | Next.js (custom build) | WordPress (theme and plugins) |
+| --- | --- | --- |
+| Speed on mobile | Fast by default when built well | Varies widely with theme and plugins |
+| Security upkeep | Small surface, few dependencies | Frequent plugin and core updates |
+| Editing content | Through a CMS or admin panel | Built-in editor |
+| Design freedom | Anything you can design | Within the theme, or custom theme work |
+| Upfront cost | Higher | Lower for a template |
+| Running cost | Low hosting, little maintenance | Hosting, premium plugins, updates |
+
+## What this looks like in practice
+
+Every website we ship has a 90+ mobile PageSpeed target written into the quote, and we publish the Lighthouse results for our concept builds so you can check them yourself. Our [ShopSphere storefront](/projects/shopsphere), built on Next.js, lands its main content in about half a second on desktop and scores 100 for performance, measured against the live demo.
+
+## Summary
+
+Next.js is a strong choice for business websites where speed, search visibility and long-term maintainability matter. It is not the cheapest way to get a page online, and it is not the right tool for every project. If you are weighing a rebuild, [book a free audit call](/contact?tab=booking) and we will tell you honestly whether it is worth it for your site.
+
+## Sources
+
+- Next.js documentation, [Server and Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
+- Next.js documentation, [Image component](https://nextjs.org/docs/app/api-reference/components/image)
+- Next.js documentation, [Font module](https://nextjs.org/docs/app/api-reference/components/font)
+- Next.js documentation, [Incremental Static Regeneration](https://nextjs.org/docs/app/guides/incremental-static-regeneration)
+- Next.js documentation, [Metadata and OG images](https://nextjs.org/docs/app/getting-started/metadata-and-og-images)
+- web.dev, [Interaction to Next Paint (INP)](https://web.dev/articles/inp)
+- Google Search Central, [Creating helpful, reliable, people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content)

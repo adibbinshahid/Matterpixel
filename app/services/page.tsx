@@ -7,13 +7,15 @@ import { ProcessSystem } from "@/components/services/ProcessSystem";
 import { ClosingCta } from "@/components/home/ClosingCta";
 import { DarkPage } from "@/components/DarkPage";
 import { Hl } from "@/components/home/Hl";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Services",
   description:
-    "Web & app development, AI automation, business software, branding, AI product visuals & video, and SEO & digital marketing — founder-led, fixed quotes, built with vetted specialists.",
-  alternates: { canonical: "/services" },
-};
+    "Web and app development, AI automation, business software, branding, AI product visuals and SEO. Founder-led, with fixed quotes before work starts.",
+  path: "/services",
+  eyebrow: "Services",
+});
 
 /**
  * Section rhythm. Each beat deliberately runs on a different visual

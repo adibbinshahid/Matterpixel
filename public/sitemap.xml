@@ -1,156 +1,184 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://matterpixel.com</loc>
+    <loc>https://www.matterpixel.com</loc>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects</loc>
+    <loc>https://www.matterpixel.com/projects</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/services</loc>
+    <loc>https://www.matterpixel.com/services</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/about</loc>
+    <loc>https://www.matterpixel.com/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/insights</loc>
+    <loc>https://www.matterpixel.com/insights</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/contact</loc>
+    <loc>https://www.matterpixel.com/contact</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/sitemap</loc>
+    <loc>https://www.matterpixel.com/sitemap</loc>
     <changefreq>weekly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/shopsphere</loc>
+    <loc>https://www.matterpixel.com/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://www.matterpixel.com/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://www.matterpixel.com/projects/shopsphere</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/mindwell</loc>
+    <loc>https://www.matterpixel.com/projects/mindwell</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/lcinco-pizza</loc>
+    <loc>https://www.matterpixel.com/projects/lcinco-pizza</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/scentora</loc>
+    <loc>https://www.matterpixel.com/projects/scentora</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/ai-product-photography</loc>
+    <loc>https://www.matterpixel.com/projects/ai-product-photography</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/ai-social-posts</loc>
+    <loc>https://www.matterpixel.com/projects/ai-social-posts</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/ai-product-films</loc>
+    <loc>https://www.matterpixel.com/projects/ai-product-films</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/ai-pov-reels</loc>
+    <loc>https://www.matterpixel.com/projects/ai-pov-reels</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/ai-food-photography</loc>
+    <loc>https://www.matterpixel.com/projects/ai-food-photography</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/ai-influencer-personas</loc>
+    <loc>https://www.matterpixel.com/projects/ai-influencer-personas</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/ai-interior-design</loc>
+    <loc>https://www.matterpixel.com/projects/ai-interior-design</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/ai-album-art</loc>
+    <loc>https://www.matterpixel.com/projects/ai-album-art</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/projects/ai-tshirt-design</loc>
+    <loc>https://www.matterpixel.com/projects/ai-tshirt-design</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/services/web-app-development</loc>
+    <loc>https://www.matterpixel.com/services/web-app-development</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/services/ai-automation</loc>
+    <loc>https://www.matterpixel.com/services/ai-automation</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/services/branding-identity</loc>
+    <loc>https://www.matterpixel.com/services/branding-identity</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/services/ai-product-photography</loc>
+    <loc>https://www.matterpixel.com/services/ai-product-photography</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/services/ai-video</loc>
+    <loc>https://www.matterpixel.com/services/ai-video</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/services/seo-growth</loc>
+    <loc>https://www.matterpixel.com/services/seo-growth</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/insights/what-to-automate-first</loc>
-    <lastmod>2026-11-15</lastmod>
+    <loc>https://www.matterpixel.com/insights/whatsapp-automation-for-small-business</loc>
+    <lastmod>2026-11-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/insights/ai-product-photography-for-brands</loc>
-    <lastmod>2026-02-24</lastmod>
+    <loc>https://www.matterpixel.com/insights/how-much-does-a-website-cost</loc>
+    <lastmod>2026-11-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/insights/nextjs-for-high-performance-sites</loc>
-    <lastmod>2026-02-03</lastmod>
+    <loc>https://www.matterpixel.com/insights/core-web-vitals-explained</loc>
+    <lastmod>2026-11-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://matterpixel.com/insights/why-pagespeed-sells</loc>
-    <lastmod>2026-01-12</lastmod>
+    <loc>https://www.matterpixel.com/insights/what-to-automate-first</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.matterpixel.com/insights/ai-product-photography-for-brands</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.matterpixel.com/insights/nextjs-for-high-performance-sites</loc>
+    <lastmod>2026-11-21</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.matterpixel.com/insights/why-pagespeed-sells</loc>
+    <lastmod>2026-11-21</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>

@@ -41,7 +41,7 @@ export function ServiceFinder({ firstSection = false }: { firstSection?: boolean
     <section id="service-finder" aria-label="Find the right service" className="home">
       <div
         data-nav-scrim="light"
-        className={`pixel-texture relative ${firstSection ? "pt-32 sm:pt-36" : "pt-[72px] lg:pt-[120px]"} pb-[72px] lg:pb-[120px]`}
+        className={`relative ${firstSection ? "pt-32 sm:pt-36" : "pt-[72px] lg:pt-[120px]"} pb-[72px] lg:pb-[120px]`}
       >
         <ProblemPicker packages={problemPackages} proofs={getPackageProofs()} firstSection={firstSection} />
       </div>

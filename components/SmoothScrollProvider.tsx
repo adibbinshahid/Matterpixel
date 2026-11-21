@@ -38,6 +38,40 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     return () => mq.removeEventListener("change", onChange);
   }, []);
 
+  // A deep link (/#white-label, /services#capabilities) arriving on a fresh
+  // load: the layout's scroll-restoration script pins every load to the
+  // top, and the pinned sections only reach their final height once fonts
+  // and ScrollTrigger settle — so the browser's own jump to the anchor
+  // either never happens or lands short. Scroll there ourselves once the
+  // page has settled, through Lenis when it's running.
+  useEffect(() => {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (!id) return;
+    let cancelled = false;
+    const go = () => {
+      if (cancelled) return;
+      const el = document.getElementById(id);
+      if (!el) return;
+      const lenis = activeLenis;
+      if (lenis) lenis.scrollTo(el, { offset: -80, immediate: true });
+      else el.scrollIntoView({ block: "start" });
+    };
+    // Two passes: the first gets the visitor there quickly, the second
+    // corrects for any pinned section that re-measured in between.
+    const first = window.setTimeout(() => {
+      void (document.fonts?.ready ?? Promise.resolve()).then(() => {
+        refreshScrollTrigger();
+        requestAnimationFrame(go);
+      });
+    }, 600);
+    const second = window.setTimeout(go, 1600);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(first);
+      window.clearTimeout(second);
+    };
+  }, []);
+
   useEffect(() => {
     if (reduced || !wide) return;
 

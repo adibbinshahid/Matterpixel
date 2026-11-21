@@ -186,7 +186,7 @@ export function ClosingCta({
       Let&rsquo;s <Hl tone="blue">build</Hl> your next <Hl tone="magenta">win</Hl>.
     </>
   ),
-  lede = <>Claim your free audit and allow us to see exactly what&rsquo;s holding your growth back.</>,
+  lede = <>Book a free audit and we&rsquo;ll show you exactly what&rsquo;s holding your growth back.</>,
   note,
   lead = "book",
 }: {
