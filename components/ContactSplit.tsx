@@ -44,6 +44,7 @@ import { SchedulePicker } from "@/components/BookingScheduler";
 import {
   AVAILABILITY,
   detectTimeZone,
+  OFFICE_TIME_ZONE,
   formatDateKeyLong,
   formatTimeKey,
   zonedDateKey,
@@ -2210,7 +2211,12 @@ function BookingPanel({ src }: { src?: string }) {
 
                 {current.id === "schedule" && (
                   <SchedulePicker
-                    timeZone={values.timeZone || detectTimeZone()}
+                    // A fixed fallback, never detectTimeZone() during render:
+                    // the server runs in UTC, so detecting here made the
+                    // server and browser disagree on first paint (React
+                    // #418). The effect above swaps in the visitor's own
+                    // zone right after mount.
+                    timeZone={values.timeZone || OFFICE_TIME_ZONE}
                     onTimeZoneChange={(tz) => {
                       setValue("timeZone", tz, { shouldValidate: true });
                       // Same instant, new zone — so what the visitor "sees"
