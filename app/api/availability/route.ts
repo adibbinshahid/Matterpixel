@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { HORIZON_DAYS } from "@/lib/availability";
-import { getBusy, isCalendarConnected } from "@/lib/googleCalendar";
+import { calendarConfigIssues, getBusy, isCalendarConnected } from "@/lib/googleCalendar";
 import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
@@ -13,6 +13,10 @@ export const runtime = "nodejs";
  */
 export async function GET() {
   if (!isCalendarConnected()) {
+    const issues = calendarConfigIssues();
+    // All three unset means the feature is simply off; a partial setup is
+    // a mistake worth surfacing in the logs.
+    if (issues.length < 3) logger.warn("availability.calendar_not_configured", { issues });
     return NextResponse.json({ connected: false, busy: [] });
   }
   const from = new Date();

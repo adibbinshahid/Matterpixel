@@ -31,8 +31,12 @@ export type BusyRange = { start: string; end: string };
 function normalizePrivateKey(raw: string | undefined): string | undefined {
   if (!raw) return undefined;
   const match = raw.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/);
-  if (!match) return undefined;
-  const body = match[1].replace(/\\n/g, "").replace(/[^A-Za-z0-9+/=]/g, "");
+  // No markers: the base64 body was pasted on its own.
+  const inner = match ? match[1] : raw;
+  const body = inner.replace(/\\n/g, "").replace(/[^A-Za-z0-9+/=]/g, "");
+  // An RSA-2048 PKCS#8 key is ~1,600 base64 characters; anything far
+  // shorter is not a key.
+  if (body.length < 1000) return undefined;
   const lines = body.match(/.{1,64}/g) ?? [];
   return `-----BEGIN PRIVATE KEY-----\n${lines.join("\n")}\n-----END PRIVATE KEY-----\n`;
 }
@@ -46,6 +50,17 @@ function config() {
 
 export function isCalendarConnected(): boolean {
   return config() !== null;
+}
+
+/** Which settings are missing or unusable — names only, never values. */
+export function calendarConfigIssues(): string[] {
+  const issues: string[] = [];
+  if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim()) issues.push("GOOGLE_SERVICE_ACCOUNT_EMAIL missing");
+  if (!process.env.GOOGLE_CALENDAR_ID?.trim()) issues.push("GOOGLE_CALENDAR_ID missing");
+  const rawKey = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY;
+  if (!rawKey) issues.push("GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY missing");
+  else if (!normalizePrivateKey(rawKey)) issues.push(`GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY unreadable (length ${rawKey.length})`);
+  return issues;
 }
 
 const b64url = (input: string | Buffer) =>
