@@ -1,13 +1,19 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+// Node, not edge: the two bundled font weights put the function over the
+// edge runtime's 1 MB size cap. next.config's outputFileTracingIncludes
+// ships the .ttf files with it.
+export const runtime = "nodejs";
 
 // The site's heading face (Inter Tight, per DESIGN.md's Two Voices Rule —
 // the card sets sentences, so never Avenir), bundled beside the route as
 // static weights: the built-in fallback has no bold, and the renderer
 // can't read the variable or WOFF2 builds next/font serves.
-const heavy = fetch(new URL("./InterTight-800.ttf", import.meta.url)).then((r) => r.arrayBuffer());
-const bold = fetch(new URL("./InterTight-700.ttf", import.meta.url)).then((r) => r.arrayBuffer());
+const fontDir = path.join(process.cwd(), "app", "api", "og");
+const heavy = readFile(path.join(fontDir, "InterTight-800.ttf"));
+const bold = readFile(path.join(fontDir, "InterTight-700.ttf"));
 
 /** Share card. Bare `/api/og` is the brand card; `?title=…&eyebrow=…`
  * titles it for one page, so a shared link previews the page it opens.
