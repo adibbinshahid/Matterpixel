@@ -53,7 +53,7 @@ export function ConceptBuilds() {
           <Link
             href="/projects"
             data-reveal="lede"
-            className="group inline-flex min-h-11 shrink-0 items-center gap-1.5 text-base font-semibold text-ink-soft transition-colors hover:text-ink"
+            className="group inline-flex min-h-11 shrink-0 items-center gap-1.5 text-base font-semibold text-ink-soft transition-colors hover:text-ink max-sm:hidden"
           >
             All projects
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />

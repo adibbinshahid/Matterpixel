@@ -94,7 +94,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
   // Phones: the model crossing the middle of the screen is the active one —
   // or, below 768px where they're swipe cards, the card in view.
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
+    const mq = window.matchMedia("(min-width: 768px)");
     if (mq.matches) return;
     if (window.matchMedia("(max-width: 767px)").matches) {
       const swipe = new IntersectionObserver(
@@ -127,26 +127,35 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
   return (
     <PixelSection
       seam
-      className={`${firstSection ? "pb-[72px] pt-32 lg:pb-[120px] lg:pt-40" : "py-16 lg:py-20"}`}
+      className={`${firstSection ? "pb-[72px] pt-32 lg:pb-[120px] lg:pt-40" : "home-section"}`}
       labelledBy="engagement-title"
     >
       <div className="home-shell">
-        <SectionHeading
-          id="engagement-title"
-          eyebrow={engagementModelsIntro.eyebrow}
-          title={
-            <>
-              Choose the way we <Hl tone="magenta">build together</Hl>.
-            </>
-          }
-          lede={engagementModelsIntro.body}
-          wideLede
-        />
+        {/* The CTA sits beside the heading (from md) rather than in a row
+            under the plans, so the whole section fits one screen. Phones
+            drop it: the sticky bar carries the same call. */}
+        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between md:gap-10">
+          <SectionHeading
+            id="engagement-title"
+            eyebrow={engagementModelsIntro.eyebrow}
+            title={
+              <>
+                Choose the way we <Hl tone="magenta">build together</Hl>.
+              </>
+            }
+            lede={engagementModelsIntro.body}
+            className="md:max-w-none"
+          />
+          <div data-reveal="lede" className="flex shrink-0 flex-col items-start gap-2 max-sm:hidden md:items-end">
+            <CtaLink section="engagement" cta="book" />
+            <p className="text-sm text-ink-soft">Not sure which fits? We&rsquo;ll recommend one.</p>
+          </div>
+        </div>
 
         <div
           data-reveal="block"
           ref={wrapRef}
-          className="relative mt-10 lg:mt-12"
+          className="relative mt-6 md:mt-8 lg:mt-10 short:lg:mt-6"
           onMouseLeave={() => setHovered(null)}
           onBlur={(e) => {
             if (!e.currentTarget.contains(e.relatedTarget as Node)) setHovered(null);
@@ -184,7 +193,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
           <div
             ref={rowRef}
             data-hscroll
-            className="no-scrollbar grid gap-8 pl-6 max-md:-mx-6 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:scroll-px-6 max-md:gap-3 max-md:overflow-x-auto max-md:px-6 max-md:pb-2 lg:grid-cols-3 lg:grid-rows-[repeat(6,auto)] lg:gap-x-16 lg:gap-y-0 lg:pl-0"
+            className="no-scrollbar grid gap-8 pl-6 max-md:-mx-6 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:scroll-px-6 max-md:gap-3 max-md:overflow-x-auto max-md:px-6 max-md:pb-2 md:grid-cols-3 md:grid-rows-[repeat(6,auto)] md:gap-x-8 md:gap-y-0 md:pl-0 lg:gap-x-16"
           >
             {engagementModels.map((m, i) => {
               const isActive = i === active;
@@ -205,20 +214,20 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                   }}
                   tabIndex={0}
                   aria-label={`${m.title}: ${m.anchor}`}
-                  className={`group relative z-10 transition-opacity duration-200 focus-visible:outline-none motion-reduce:transition-none max-md:w-[85vw] max-md:max-w-[340px] max-md:shrink-0 max-md:snap-start max-md:rounded-[22px] max-md:border max-md:bg-paper-2 max-md:p-5 max-md:focus-visible:border-[var(--blue-ink)] ${
+                  className={`group relative z-10 transition-opacity duration-200 focus-visible:outline-none motion-reduce:transition-none max-md:w-[85vw] max-md:max-w-[340px] max-md:shrink-0 max-md:snap-start max-md:rounded-[22px] max-md:border max-md:bg-paper-2 max-md:p-4 max-md:focus-visible:border-[var(--blue-ink)] ${
                     isActive ? "max-md:border-magenta" : "max-md:border-line"
-                  } lg:row-span-6 lg:grid lg:grid-rows-subgrid ${
+                  } md:row-span-6 md:grid md:grid-rows-subgrid ${
                     dimOthers && !isActive ? "opacity-45" : "opacity-100"
                   }`}
                 >
                   {/* Node + stage label */}
-                  <div className="flex items-center gap-3 lg:flex-col lg:items-start lg:gap-4">
+                  <div className="flex items-center gap-3 md:flex-col md:items-start md:gap-4 short:lg:flex-row short:lg:items-center short:lg:gap-3">
                     <span
                       ref={(el) => {
                         nodes.current[i] = el;
                       }}
                       aria-hidden="true"
-                      className={`relative z-10 -ml-[calc(1.5rem+6px)] block h-3 w-3 max-md:ml-0 shrink-0 transition-[background-color,box-shadow,border-color] duration-200 motion-reduce:transition-none lg:ml-0 ${
+                      className={`relative z-10 -ml-[calc(1.5rem+6px)] block h-3 w-3 max-md:ml-0 shrink-0 transition-[background-color,box-shadow,border-color] duration-200 motion-reduce:transition-none md:ml-0 ${
                         isActive
                           ? "border border-magenta bg-magenta shadow-[0_0_0_4px_rgba(255,46,147,0.25),0_0_18px_rgba(255,46,147,0.7)]"
                           : reached
@@ -226,12 +235,19 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                             : "border border-white/30 bg-paper"
                       }`}
                     />
+                    <span className="flex items-center gap-2.5 md:mt-1 short:lg:mt-0">
                     <span
-                      className={`text-[0.8125rem] font-semibold uppercase tracking-[0.16em] transition-colors duration-200 md:text-xs lg:mt-1 ${
+                      className={`text-[0.8125rem] font-semibold uppercase tracking-[0.16em] transition-colors duration-200 md:text-xs ${
                         isActive ? "text-ink" : "text-ink-soft"
                       }`}
                     >
                       {m.stage}
+                    </span>
+                    {m.featured && (
+                      <span className="whitespace-nowrap rounded-full bg-magenta px-2.5 py-1 text-[0.6875rem] font-extrabold uppercase leading-none tracking-[0.12em] text-white max-lg:hidden">
+                        {m.tag}
+                      </span>
+                    )}
                     </span>
                   </div>
 
@@ -242,30 +258,30 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                     ref={(el) => {
                       bodies.current[i] = el;
                     }}
-                    className="-mx-5 mt-2 p-5 max-md:mx-0 max-md:mt-3 max-md:p-0 lg:row-span-5 lg:-mx-6 lg:mt-3 lg:grid lg:grid-rows-subgrid lg:p-6"
+                    className="max-md:mt-2 md:row-span-5 md:-mx-4 md:mt-3 md:grid md:grid-rows-subgrid md:p-4 lg:-mx-6 lg:p-6 short:lg:mt-2 short:lg:p-4"
                   >
-                    <h3 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xl font-bold tracking-tight text-ink">
+                    <h3 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-lg font-bold tracking-tight text-ink lg:text-xl">
                       {m.title}
                       {m.featured && (
-                        <span className="rounded-full bg-magenta px-2.5 py-1 text-[0.8125rem] font-extrabold uppercase tracking-[0.12em] text-white md:text-[0.6875rem]">
+                        <span className="whitespace-nowrap rounded-full bg-magenta px-2.5 py-1 text-[0.6875rem] font-extrabold uppercase leading-none tracking-[0.12em] text-white lg:hidden">
                           {m.tag}
                         </span>
                       )}
                     </h3>
                     <p
-                      className={`mt-3 font-avenir text-[2rem] font-extrabold leading-none tracking-tight transition-colors duration-200 ${
+                      className={`mt-2 font-avenir text-[1.75rem] font-extrabold leading-none tracking-tight lg:mt-3 lg:text-[2rem] transition-colors duration-200 ${
                         isActive ? "text-magenta" : "text-ink/85"
                       }`}
                     >
                       {m.anchor}
                     </p>
-                    <p className="mt-2 text-sm font-medium text-ink-soft">{m.anchorNote}</p>
-                    <p className="mt-4 text-base leading-relaxed text-ink-soft">{m.desc}</p>
-                    <ul className="mt-4 flex flex-col gap-2 self-start border-t border-line pt-4">
+                    <p className="mt-1.5 text-sm font-medium text-ink-soft lg:mt-2">{m.anchorNote}</p>
+                    <p className="mt-3 text-sm leading-relaxed text-ink-soft max-md:line-clamp-3 lg:mt-4 lg:text-base short:lg:mt-3 short:lg:line-clamp-2 short:lg:text-sm">{m.desc}</p>
+                    <ul className="mt-3 flex flex-col gap-1.5 self-start border-t border-line pt-3 lg:mt-4 lg:gap-2 lg:pt-4 short:lg:mt-3 short:lg:gap-1.5 short:lg:pt-3">
                       {m.features.map((f, k) => (
                         <li
                           key={f}
-                          className={`flex items-start gap-2.5 text-base leading-snug text-ink max-md:leading-normal ${
+                          className={`flex items-start gap-2.5 text-sm leading-snug text-ink lg:text-base short:lg:text-sm ${
                             k >= PHONE_FEATURES && !expanded[i] ? "max-md:hidden" : ""
                           }`}
                         >
@@ -285,7 +301,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                         type="button"
                         aria-expanded={!!expanded[i]}
                         onClick={() => setExpanded((x) => ({ ...x, [i]: !x[i] }))}
-                        className="mt-2 inline-flex min-h-11 items-center text-base font-semibold text-ink underline underline-offset-4 md:hidden"
+                        className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-ink underline underline-offset-4 md:hidden"
                       >
                         {expanded[i] ? "Show less" : `See all ${m.features.length}`}
                       </button>
@@ -297,10 +313,6 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
           </div>
         </div>
 
-        <div data-reveal="block" className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-4 border-t border-line pt-6">
-          <CtaLink section="engagement" cta="book" />
-          <p className="text-base text-ink-soft">Not sure which fits? We&rsquo;ll recommend one on the call.</p>
-        </div>
       </div>
     </PixelSection>
   );

@@ -39,7 +39,7 @@ export function SectionHeading({
       <Tag
         id={id}
         data-reveal="title"
-        className="mt-4 text-balance text-[clamp(2rem,1.35rem+2.6vw,3.25rem)] font-bold leading-[1.06] tracking-[-0.025em] text-ink"
+        className="mt-3 text-balance text-[clamp(2rem,1.35rem+2.6vw,3.25rem)] font-bold leading-[1.06] tracking-[-0.025em] text-ink sm:mt-4 short:text-[clamp(1.875rem,1.3rem+2vw,2.75rem)]"
       >
         {title}
       </Tag>
@@ -47,7 +47,7 @@ export function SectionHeading({
         <p
           data-reveal="lede"
           className={cn(
-            "mt-5 max-w-[62ch] text-base leading-relaxed text-ink-soft sm:text-lg",
+            "mt-3 max-w-[62ch] text-base leading-relaxed text-ink-soft sm:mt-5 sm:text-lg short:mt-3",
             wideLede && "lg:max-w-none lg:whitespace-nowrap",
           )}
         >

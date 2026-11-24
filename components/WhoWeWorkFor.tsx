@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
   Briefcase,
-  ChevronDown,
   Calculator,
   Coffee,
   Dumbbell,
@@ -129,13 +130,29 @@ const INDUSTRIES: Industry[] = [
  * magenta rim lights, and the business types rise from the bottom. Touch
  * screens and reduced motion show the types from the start.
  *
- * Phones (<768px) show the first three tiles and a "View all" button that
- * opens the rest; the other three stay in the markup, hidden.
+ * Sized so the section fits one screen view at every size: phones swipe
+ * a row of cards; tablets show a compact 2×3 grid and laptops 3×2, with
+ * the number inline beside the name; from xl the mixed-width bento, its
+ * rows scaled to the screen height, with the business types rising in on
+ * hover.
  */
-const PHONE_VISIBLE = 3;
 
 export function WhoWeWorkFor() {
-  const [all, setAll] = useState(false);
+  // Phones: the swipe row's position, for the prev/next buttons (touch
+  // users swipe; mouse users in a narrow window need the buttons).
+  const rowRef = useRef<HTMLUListElement>(null);
+  const [edge, setEdge] = useState({ start: true, end: false });
+  const onRowScroll = () => {
+    const row = rowRef.current;
+    if (!row) return;
+    setEdge({ start: row.scrollLeft < 8, end: row.scrollLeft + row.clientWidth > row.scrollWidth - 8 });
+  };
+  const step = (dir: 1 | -1) => {
+    const row = rowRef.current;
+    const card = row?.firstElementChild as HTMLElement | null;
+    if (!row || !card) return;
+    row.scrollBy({ left: dir * (card.offsetWidth + 12), behavior: "smooth" });
+  };
   return (
     <PixelSection seam labelledBy="industries-title">
       <div className="home-shell home-section">
@@ -152,22 +169,23 @@ export function WhoWeWorkFor() {
 
         <ul
           id="industries-list"
-          className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:mt-12 lg:mt-14 xl:auto-rows-[320px] xl:grid-cols-4"
+          ref={rowRef}
+          onScroll={onRowScroll}
+          data-hscroll
+          className="no-scrollbar -mx-6 mt-6 flex snap-x snap-mandatory scroll-px-6 gap-3 overflow-x-auto px-6 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 md:mt-8 lg:grid-cols-3 xl:mt-10 xl:auto-rows-[clamp(210px,26svh,300px)] xl:grid-cols-4 xl:gap-4"
         >
           {INDUSTRIES.map((ind, i) => (
             <li
               key={ind.label}
               data-reveal="block"
-              className={`bento-tile group relative isolate flex flex-col justify-start overflow-hidden rounded-[22px] border border-white/10 p-6 sm:p-7 md:min-h-[300px] md:pt-[5.5rem] ${ind.span} ${
-                i >= PHONE_VISIBLE && !all ? "max-md:hidden" : ""
-              }`}
+              className={`bento-tile group relative isolate flex flex-col overflow-hidden rounded-[20px] border border-white/10 p-5 max-sm:min-h-[240px] max-sm:w-[80vw] max-sm:max-w-[320px] max-sm:shrink-0 max-sm:snap-start max-sm:pt-[4.75rem] sm:p-5 xl:justify-start xl:rounded-[22px] xl:p-7 xl:pt-[4.5rem] ${ind.span}`}
             >
               <Image
                 src={ind.image}
                 alt=""
                 fill
                 loading="lazy"
-                sizes="(min-width: 640px) 50vw, 100vw"
+                sizes="(min-width: 1280px) 50vw, (min-width: 640px) 33vw, 80vw"
                 className="bento-img -z-20 object-cover"
               />
               <div
@@ -175,23 +193,24 @@ export function WhoWeWorkFor() {
                 className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(11,12,14,0.55)_0%,rgba(11,12,14,0.85)_55%,rgba(11,12,14,0.95)_100%)]"
               />
 
-              <span className="absolute right-6 top-6 flex h-9 w-9 items-center justify-center rounded-full bg-magenta font-avenir text-sm font-extrabold tabular-nums text-white shadow-[0_6px_16px_-6px_rgba(255,46,147,0.7)] sm:right-7 sm:top-7 md:left-7 md:right-auto">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-
-              <h3 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pr-12 text-2xl font-bold leading-tight tracking-tight text-white md:pr-0">
+              <h3 className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-lg font-bold leading-tight tracking-tight text-white sm:text-xl xl:gap-x-3 xl:text-2xl">
+                {/* Inline beside the name below xl; pinned top-left on the
+                    bento tiles. */}
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-magenta font-avenir text-xs font-extrabold tabular-nums text-white shadow-[0_6px_16px_-6px_rgba(255,46,147,0.7)] max-sm:absolute max-sm:left-5 max-sm:top-5 max-sm:h-9 max-sm:w-9 max-sm:text-sm xl:absolute xl:left-7 xl:top-6 xl:h-9 xl:w-9 xl:text-sm">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
                 {ind.label}
                 {ind.tag && (
-                  <span className="rounded-full border border-white/30 px-2.5 py-1 text-[0.8125rem] font-bold uppercase leading-none tracking-[0.12em] text-white/90 md:text-[0.6875rem]">
+                  <span className="rounded-full border border-white/30 px-2.5 py-1 text-[0.6875rem] font-bold uppercase leading-none tracking-[0.12em] text-white/90">
                     {ind.tag}
                   </span>
                 )}
               </h3>
-              <p className="mt-2 max-w-[34ch] text-base leading-normal text-white/80 md:leading-snug">{ind.build}</p>
+              <p className="mt-2 max-w-[34ch] text-sm leading-snug text-white/80 xl:text-base">{ind.build}</p>
               {ind.proof && (
                 <Link
                   href={ind.proof.href}
-                  className="tap-area group/proof mt-3 inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-white underline decoration-white/30 underline-offset-4 transition-colors hover:text-magenta hover:decoration-magenta"
+                  className="tap-area group/proof mt-2.5 inline-flex w-fit items-center gap-1.5 text-sm font-semibold text-white underline decoration-white/30 underline-offset-4 transition-colors hover:text-magenta hover:decoration-magenta"
                 >
                   <span className="h-1.5 w-1.5 shrink-0 bg-magenta" aria-hidden="true" />
                   Concept build: {ind.proof.name}
@@ -202,8 +221,9 @@ export function WhoWeWorkFor() {
                 </Link>
               )}
 
-              {/* Business types: rise in on hover / focus; always shown on
-                  touch and under reduced motion. */}
+              {/* Business types: from xl only, rising in on hover / focus
+                  (shown from the start on touch and under reduced motion). */}
+              <div className="max-xl:hidden">
               <div className="bento-more">
                 <div className="overflow-hidden">
                   <ul className="flex flex-wrap gap-x-4 gap-y-1.5 pt-4 text-sm text-white/85">
@@ -216,23 +236,30 @@ export function WhoWeWorkFor() {
                   </ul>
                 </div>
               </div>
+              </div>
             </li>
           ))}
         </ul>
-        {/* Wrapper carries the breakpoint: .btn-outline sets its own display. */}
-        <div className="mt-6 md:hidden">
+        <div className="mt-4 flex items-center justify-end gap-2 sm:hidden">
           <button
             type="button"
-            aria-expanded={all}
             aria-controls="industries-list"
-            onClick={() => setAll((v) => !v)}
-            className="btn-outline btn-block"
+            aria-label="Previous industry"
+            disabled={edge.start}
+            onClick={() => step(-1)}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white transition-[opacity,border-color] hover:border-white/40 disabled:opacity-30"
           >
-            {all ? "Show fewer" : `View all ${INDUSTRIES.length} industries`}
-            <ChevronDown
-              className={`h-4 w-4 transition-transform duration-300 ${all ? "rotate-180" : ""}`}
-              aria-hidden="true"
-            />
+            <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            aria-controls="industries-list"
+            aria-label="Next industry"
+            disabled={edge.end}
+            onClick={() => step(1)}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white transition-[opacity,border-color] hover:border-white/40 disabled:opacity-30"
+          >
+            <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
       </div>

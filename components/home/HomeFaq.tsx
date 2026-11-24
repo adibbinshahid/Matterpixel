@@ -22,7 +22,7 @@ export function HomeFaq() {
   };
 
   return (
-    <PixelSection tone="light" className="py-12 lg:py-16" labelledBy="faq-title">
+    <PixelSection tone="light" className="py-12 lg:py-16 short:lg:py-10" labelledBy="faq-title">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="home-shell">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -46,7 +46,7 @@ export function HomeFaq() {
             .
           </p>
         </div>
-        <div data-reveal="block" className="mt-8">
+        <div data-reveal="block" className="mt-8 short:mt-6">
           <Accordion items={faq} defaultOpen closedOnPhones compact columns={2} />
         </div>
       </div>

@@ -67,24 +67,24 @@ function StatTile({ stat, tone, play }: { stat: Stat; tone: "before" | "after"; 
   const after = tone === "after";
   return (
     <div
-      className={`flex min-w-0 flex-col justify-center rounded-2xl p-4 sm:p-5 md:h-full ${
+      className={`flex min-w-0 flex-col justify-center rounded-xl p-3 sm:rounded-2xl sm:p-5 lg:h-full ${
         after ? "bg-blue text-white shadow-[0_18px_40px_-18px_rgba(44,75,255,0.7)]" : "border border-line bg-paper"
       }`}
     >
-      <span className={`text-[0.8125rem] font-bold uppercase tracking-[0.14em] md:text-[0.65rem] ${after ? "text-white/90" : "text-ink-soft"}`}>
+      <span className={`text-[0.6875rem] font-bold uppercase tracking-[0.14em] sm:text-[0.8125rem] lg:text-[0.65rem] ${after ? "text-white/90" : "text-ink-soft"}`}>
         {after ? "After" : "Before"}
       </span>
       <span
         data-m="roll"
         data-i="4"
-        className={`mt-2 block font-avenir text-3xl font-extrabold leading-none tracking-tight sm:text-4xl ${
+        className={`mt-1.5 block font-avenir text-2xl font-extrabold leading-none tracking-tight sm:mt-2 sm:text-4xl ${
           after ? "text-white" : "text-ink-soft"
         }`}
       >
         <CountUp stat={stat} play={play} />
         <span className="ml-0.5 text-base font-bold sm:text-lg">{stat.unit}</span>
       </span>
-      <span className={`mt-1.5 text-xs ${after ? "text-white/90" : "text-ink-soft"}`}>{stat.label}</span>
+      <span className={`mt-1 text-[11px] sm:mt-1.5 sm:text-xs ${after ? "text-white/90" : "text-ink-soft"}`}>{stat.label}</span>
     </div>
   );
 }
@@ -95,14 +95,14 @@ function StatTile({ stat, tone, play }: { stat: Stat; tone: "before" | "after"; 
  * then lays out to the same height, so switching packages never changes
  * the card's size.
  */
-const SLOT_H = "md:h-52";
+const SLOT_H = "lg:h-52 short:lg:h-32";
 
 function BeforeAfter({ pkg, play }: { pkg: ProblemPackage; play: boolean }) {
   const ba = pkg.beforeAfter;
   if (ba.kind === "image") {
     return (
       <figure>
-        <div data-m="swap" data-i="3" className={`relative aspect-video overflow-hidden rounded-2xl border border-line md:aspect-auto ${SLOT_H}`}>
+        <div data-m="swap" data-i="3" className={`relative aspect-[3/1] overflow-hidden rounded-2xl border border-line sm:aspect-video lg:aspect-auto ${SLOT_H}`}>
           <Image
             src={ba.src}
             alt={ba.alt}
@@ -112,7 +112,7 @@ function BeforeAfter({ pkg, play }: { pkg: ProblemPackage; play: boolean }) {
             className="object-cover object-[50%_38%]"
           />
         </div>
-        <figcaption data-m="roll" data-i="5" className="mt-3 flex items-center gap-2 text-sm font-semibold text-ink">
+        <figcaption data-m="roll" data-i="5" className="mt-2 flex items-center gap-2 text-sm font-semibold text-ink sm:mt-3">
           <span className="text-ink-soft">{ba.before}</span>
           <ArrowRight className="h-4 w-4 text-magenta" aria-hidden="true" />
           <span>{ba.after}</span>
@@ -124,12 +124,12 @@ function BeforeAfter({ pkg, play }: { pkg: ProblemPackage; play: boolean }) {
     <div>
       <div data-m="fade" data-k="ba-tiles" data-i="3" className={`grid grid-cols-[1fr_auto_1fr] items-center gap-2 sm:gap-3 ${SLOT_H}`}>
         <StatTile stat={ba.before} tone="before" play={play} />
-        <span className="flex h-9 w-9 items-center justify-center rounded-full bg-magenta text-white" aria-hidden="true">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-magenta text-white sm:h-9 sm:w-9" aria-hidden="true">
           <ArrowRight className="h-4 w-4" />
         </span>
         <StatTile stat={ba.after} tone="after" play={play} />
       </div>
-      <p data-m="fade" data-k="ba-cap" data-i="5" className="mt-2.5 text-sm text-ink-soft">
+      <p data-m="fade" data-k="ba-cap" data-i="5" className="mt-2.5 text-sm text-ink-soft max-sm:hidden short:lg:hidden">
         Typical before → after for this package.
       </p>
     </div>
@@ -169,22 +169,17 @@ function PackagePanel({
   pkg,
   proof,
   shown,
-  collapsed,
   leaving,
   play,
   tabId,
   panelId,
   level,
-  order,
   panelRef,
 }: {
   panelRef: (el: HTMLDivElement | null) => void;
-  order: number;
   pkg: ProblemPackage;
   proof?: ResolvedProof;
   shown: boolean;
-  /** Phones: the open accordion row was tapped shut. */
-  collapsed: boolean;
   /** Painted but inert: the outgoing package during a switch. */
   leaving: boolean;
   play: boolean;
@@ -208,40 +203,50 @@ function PackagePanel({
       // accessibility tree) and inert.
       aria-hidden={!shown}
       inert={!shown}
-      // Phones: the panels sit in the accordion, each straight under its
-      // own chip (`order`), and only the open one is displayed.
-      style={{ gridArea: "1 / 1", order: order }}
-      className={`grid gap-6 bg-paper-2 p-5 max-md:mb-2 max-md:rounded-[22px] max-md:border max-md:border-line sm:p-8 md:grid-cols-[1.05fr_1fr] md:gap-10 lg:gap-12 lg:p-10 ${
+      style={{ gridArea: "1 / 1" }}
+      // Below lg both columns dissolve (display: contents) and their pieces
+      // re-flow by `order`: phones read header → price + CTA → result →
+      // what you get, sized to fit one screen; tablets pair result with
+      // what you get, and CTA with proof, under a full-width header.
+      className={`grid grid-cols-1 content-start bg-paper-2 p-4 sm:p-6 md:grid-cols-2 md:gap-x-8 lg:grid-cols-[1.05fr_1fr] lg:gap-x-12 lg:p-10 short:lg:p-6 ${
         shown || leaving ? "visible" : "invisible"
-      } ${shown && !collapsed ? "" : "max-md:hidden"}`}
+      }`}
     >
-      <div className="flex min-w-0 flex-col">
-        <Title data-m="roll" data-i="0" className="text-balance text-2xl font-bold leading-[1.12] tracking-tight text-ink sm:text-3xl">
+      <div className="flex min-w-0 flex-col max-lg:contents">
+        <Title data-m="roll" data-i="0" className="text-balance text-xl font-bold leading-[1.15] tracking-tight text-ink max-lg:order-1 sm:text-3xl md:max-lg:col-span-2 short:lg:text-[1.75rem]">
           {pkg.headline}
         </Title>
 
-        <p data-m="roll" data-i="1" className="mt-3 flex items-center gap-2 text-sm font-bold text-magenta">
+        <p data-m="roll" data-i="1" className="mt-2 flex items-center gap-2 text-sm font-bold text-magenta max-lg:order-2 sm:mt-3 md:max-lg:col-span-2">
           <span className="h-1.5 w-1.5 bg-magenta" aria-hidden="true" />
           {pkg.name} package
+          <span className="font-semibold text-ink-soft sm:hidden">· {pkg.timeline}</span>
         </p>
 
-        <div data-m="roll" data-i="2" className="mt-5 flex flex-wrap md:mt-6 items-center gap-x-5 gap-y-3">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold text-ink">
+        <div data-m="roll" data-i="2" className="mt-3 flex items-center justify-between gap-x-4 gap-y-2 max-lg:order-3 max-lg:border-b max-lg:border-line max-lg:pb-3 sm:mt-5 sm:flex-wrap sm:justify-start sm:gap-x-5 sm:max-lg:pb-5 md:max-lg:col-span-2 lg:mt-6 short:lg:mt-4">
+          <span className="max-sm:hidden inline-flex items-center gap-1.5 rounded-full border border-line px-2.5 py-1 text-xs font-semibold text-ink sm:px-3 sm:py-1.5 sm:text-sm">
             <Clock className="h-3.5 w-3.5 text-[var(--blue-ink)]" aria-hidden="true" />
             {pkg.timeline}
           </span>
-          <p className="text-base text-ink-soft">
-            From <span className="font-avenir text-xl font-extrabold text-ink">{usd(pkg.priceFrom)}</span> · fixed quote
+          <p className="text-sm text-ink-soft sm:text-base">
+            From <span className="font-avenir text-lg font-extrabold text-ink sm:text-xl">{usd(pkg.priceFrom)}</span>
+            <span className="max-sm:hidden"> · fixed quote</span>
           </p>
+          {/* Wrapper carries the breakpoint: .btn-brand sets its own display. */}
+          <span className="sm:hidden">
+            <CtaLink section="packages" cta="quote" params={{ package: pkg.slug }} />
+          </span>
         </div>
 
-        <div data-m="fade" data-k="cta" data-i="3" className="mt-6 flex md:mt-7 flex-wrap items-center gap-x-6 gap-y-3">
+        <div data-m="fade" data-k="cta" data-i="3" className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 max-lg:order-6 max-sm:hidden md:max-lg:self-center lg:mt-7 short:lg:mt-5">
+          {/* Phones: the quote CTA sits beside the price, and the sticky bar
+              carries "Book a free audit call". */}
           <CtaLink section="packages" cta="quote" params={{ package: pkg.slug }} />
           <CtaLink section="packages" cta="book" variant="text" className="text-ink" />
         </div>
 
         {proof ? (
-          <div data-m="swap" data-i="4" className="mt-6 md:mt-7">
+          <div data-m="swap" data-i="4" className="mt-5 max-lg:order-7 max-sm:hidden lg:mt-7 short:lg:hidden">
             <ProofCard proof={proof} />
           </div>
         ) : (
@@ -249,7 +254,7 @@ function PackagePanel({
             <p
               data-m="swap"
               data-i="4"
-              className="mt-7 rounded-2xl border border-dashed border-line p-4 text-sm leading-relaxed text-ink-soft"
+              className="mt-5 rounded-2xl border border-dashed border-line p-4 text-sm leading-relaxed text-ink-soft max-lg:order-7 max-sm:hidden lg:mt-7 short:lg:hidden"
             >
               {pkg.noProofNote}
             </p>
@@ -257,21 +262,23 @@ function PackagePanel({
         )}
       </div>
 
-      <div className="flex min-w-0 flex-col gap-6 md:gap-7">
-        <BeforeAfter pkg={pkg} play={play} />
-        <div>
-          <Sub data-m="fade" data-k="wyg" data-i="5" className="text-sm font-bold text-ink-soft">
+      <div className="flex min-w-0 flex-col gap-7 max-lg:contents short:gap-4">
+        <div className="min-w-0 max-lg:order-4 max-lg:mt-3 sm:max-lg:mt-4">
+          <BeforeAfter pkg={pkg} play={play} />
+        </div>
+        <div className="min-w-0 max-lg:order-5 max-lg:mt-3 sm:max-lg:mt-4 sm:max-lg:rounded-2xl sm:max-lg:border sm:max-lg:border-line sm:max-lg:bg-white/[0.02] sm:max-lg:p-4">
+          <Sub data-m="fade" data-k="wyg" data-i="5" className="text-sm font-bold text-ink-soft max-sm:sr-only">
             What you get
           </Sub>
-          <ul className="mt-3 grid gap-x-5 gap-y-2.5 sm:grid-cols-2">
+          <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5 sm:mt-3 sm:gap-x-5 sm:gap-y-2.5 md:max-lg:grid-cols-1 short:lg:gap-y-2">
             {pkg.items.map((item, idx) => (
               <li
                 key={item}
                 data-m="roll"
                 data-i={6 + Math.floor(idx / 2)}
-                className="flex items-start gap-3 text-base leading-snug text-ink"
+                className="flex items-start gap-2 text-[0.8125rem] leading-snug text-ink sm:gap-3 sm:text-[0.9375rem] lg:text-base"
               >
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue/20 text-[var(--blue-ink)]">
+                <span className="mt-px flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue/20 text-[var(--blue-ink)] sm:mt-0.5 sm:h-5 sm:w-5">
                   <Check className="h-3 w-3" strokeWidth={3} aria-hidden="true" />
                 </span>
                 {item}
@@ -305,7 +312,6 @@ export function ProblemPicker({
 }) {
   const [shown, setShown] = useState(0);
   const [leaving, setLeaving] = useState<number | null>(null);
-  const [collapsed, setCollapsed] = useState(false);
   const dirRef = useRef<1 | -1>(1);
   const edgeRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -340,27 +346,6 @@ export function ProblemPicker({
   const select = (i: number, focus = false) => {
     const next = (i + packages.length) % packages.length;
     if (focus) tabRefs.current[next]?.focus();
-    // Phones: the chips are accordion rows. Tapping the open row closes
-    // it; opening another skips the sweep (the panels aren't stacked in
-    // one cell there) and keeps its chip on screen as the row above it
-    // collapses.
-    const phone = window.matchMedia("(max-width: 767px)").matches;
-    if (phone) {
-      if (next === shown && !focus) {
-        setCollapsed((c) => !c);
-        return;
-      }
-      setCollapsed(false);
-      if (next === shown) return;
-      setShown(next);
-      requestAnimationFrame(() => {
-        const chip = tabRefs.current[next];
-        if (!chip) return;
-        const top = chip.getBoundingClientRect().top;
-        if (top < 72) window.scrollBy({ top: top - 80 });
-      });
-      return;
-    }
     if (next === shown) return;
     dirRef.current = next > shown ? 1 : -1;
     setLeaving(prefersReducedMotion() ? null : shown);
@@ -393,16 +378,16 @@ export function ProblemPicker({
         }
       />
 
-      {/* Phones: the tablist and the card dissolve into one column
-          (display: contents) where each chip is followed by its own panel —
-          an accordion, first row open — from the same markup. */}
-      <div className="max-md:mt-10 max-md:flex max-md:flex-col">
+      {/* Four chips side by side at every width; on narrow screens the
+          labels wrap inside taller rounded chips instead of the row
+          breaking. */}
+      <div className="mt-4 md:mt-6">
       <div
         role="tablist"
         data-reveal="block"
         aria-label="Pick the problem closest to yours"
         onKeyDown={onKeyDown}
-        className="grid grid-cols-1 gap-2 max-md:contents sm:grid-cols-2 sm:gap-3 md:mt-10 xl:grid-cols-4"
+        className="grid grid-cols-4 gap-1.5 sm:gap-2 md:gap-3"
       >
         {packages.map((pkg, i) => {
           const isSelected = i === shown;
@@ -416,12 +401,10 @@ export function ProblemPicker({
               type="button"
               role="tab"
               aria-selected={isSelected}
-              aria-expanded={isSelected && !collapsed}
               aria-controls={`problem-panel-${pkg.slug}`}
               tabIndex={isSelected ? 0 : -1}
               onClick={() => select(i)}
-              style={{ order: i * 2 }}
-              className={`relative min-h-11 rounded-full border px-4 py-2.5 text-center text-base font-semibold transition-[color,border-color] duration-300 max-md:mb-2 sm:px-5 ${
+              className={`relative flex min-h-11 items-center justify-center rounded-2xl border px-1 py-1.5 text-center text-[0.6875rem] font-semibold leading-tight transition-[color,border-color] duration-300 sm:px-3 sm:text-sm md:px-4 md:py-2.5 md:text-base lg:text-sm xl:rounded-full xl:text-base ${
                 isSelected
                   ? "border-transparent text-white"
                   : "border-line bg-white/[0.03] text-ink-soft hover:border-white/30 hover:text-ink"
@@ -431,7 +414,7 @@ export function ProblemPicker({
                 <motion.span
                   layoutId="problem-chip-pill"
                   aria-hidden="true"
-                  className="absolute inset-0 z-0 rounded-full bg-blue shadow-[0_10px_28px_-10px_rgba(44,75,255,0.8)]"
+                  className="absolute inset-0 z-0 rounded-2xl bg-blue xl:rounded-full shadow-[0_10px_28px_-10px_rgba(44,75,255,0.8)]"
                   // Same curve and length as the panel sweep, so the chip
                   // and the card move as one shot.
                   transition={{ duration: SWEEP_MS / 1000, ease: [0.77, 0, 0.175, 1] }}
@@ -448,7 +431,7 @@ export function ProblemPicker({
       <div
         ref={cardRef}
         data-reveal="block"
-        className="relative grid overflow-hidden rounded-[28px] border border-line bg-paper-2 max-md:contents md:mt-8"
+        className="relative mt-3 grid overflow-hidden rounded-[22px] border border-line bg-paper-2 md:mt-5 md:rounded-[28px] short:md:mt-4"
       >
         {packages.map((pkg, i) => (
           <PackagePanel
@@ -459,8 +442,6 @@ export function ProblemPicker({
             pkg={pkg}
             proof={proofs[pkg.slug]}
             shown={i === shown}
-            collapsed={collapsed}
-            order={i * 2 + 1}
             leaving={i === leaving}
             play={seen && i === shown}
             tabId={`problem-tab-${pkg.slug}`}

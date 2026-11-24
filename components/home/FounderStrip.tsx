@@ -174,13 +174,13 @@ export function FounderStrip() {
 
   return (
     <PixelSection seam tone="magenta" labelledBy="founder-strip-title" className="overflow-hidden">
-      <div ref={gridRef} className="grid lg:min-h-[640px] lg:grid-cols-2">
+      <div ref={gridRef} className="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] sm:grid-cols-2 lg:min-h-[640px]">
         {/* Portrait: edge to edge on the left half, no frame. */}
         <div
           ref={frameRef}
           onPointerMove={onMove}
           onPointerLeave={() => lightRef.current && (lightRef.current.style.opacity = "0")}
-          className="relative aspect-[5/4] overflow-hidden bg-[#0b0c0e] sm:aspect-[16/11] lg:aspect-auto"
+          className="founder-frame relative min-h-full overflow-hidden bg-[#0b0c0e]"
         >
           <div ref={imgRef} className="absolute -inset-y-12 inset-x-0 will-change-transform">
             {founder.photo && (
@@ -199,21 +199,26 @@ export function FounderStrip() {
             aria-hidden="true"
             className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500"
           />
+          {/* Specular rake, same as the project thumbnails. */}
+          <div
+            aria-hidden="true"
+            className="founder-rake pointer-events-none absolute -inset-y-1/2 left-[-45%] w-[38%] rotate-[18deg] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.34),transparent)] blur-[3px] will-change-[translate] motion-reduce:hidden"
+          />
           {/* Bottom scrim + caption, set on the photograph. */}
           <div
             aria-hidden="true"
             className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(0deg,rgba(11,12,14,0.85),transparent)]"
           />
-          <p className="absolute bottom-6 left-6 text-white sm:bottom-8 sm:left-10">
-            <span className="block text-2xl font-bold tracking-tight sm:text-[1.75rem]">{founder.name}</span>
-            <span className="mt-1.5 block text-base font-medium text-white/80 sm:text-[1.0625rem]">
+          <p className="absolute bottom-3 left-3 right-3 text-white sm:bottom-8 sm:left-10 sm:right-6">
+            <span className="block text-sm font-bold tracking-tight sm:text-2xl lg:text-[1.75rem]">{founder.name}</span>
+            <span className="mt-1 block text-[10px] font-medium leading-snug text-white/80 sm:mt-1.5 sm:text-base lg:text-[1.0625rem]">
               {founder.role} · {founder.roleScope}
             </span>
           </p>
         </div>
 
         {/* Statement */}
-        <div className="flex flex-col justify-center px-6 py-12 sm:px-10 md:py-14 lg:py-20 lg:pl-16 lg:pr-[max(3rem,calc((100vw-1200px)/2))]">
+        <div className="flex min-w-0 flex-col justify-center px-4 py-8 sm:px-10 sm:py-12 md:py-14 lg:py-20 lg:pl-16 lg:pr-[max(3rem,calc((100vw-1200px)/2))]">
           <p
             data-reveal="eyebrow"
             className="flex items-center gap-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-ink-soft md:text-xs"
@@ -224,25 +229,25 @@ export function FounderStrip() {
           <h2
             id="founder-strip-title"
             data-reveal="title"
-            className="mt-4 max-w-[18ch] text-balance text-[clamp(2rem,1.35rem+2.6vw,3.25rem)] font-bold leading-[1.06] tracking-[-0.025em] text-ink"
+            className="mt-3 max-w-[18ch] text-balance text-[clamp(1.25rem,0.6rem+3.4vw,3.25rem)] sm:mt-4 font-bold leading-[1.06] tracking-[-0.025em] text-ink"
           >
             You talk to the <Hl tone="magenta">founder</Hl>, never an account manager.
           </h2>
           <p
             data-reveal="lede"
-            className="mt-6 max-w-[46ch] text-lg leading-relaxed text-ink-soft max-md:text-[1.1875rem] max-md:font-semibold max-md:text-white"
+            className="mt-3 max-w-[46ch] text-sm leading-relaxed text-white sm:mt-6 sm:text-lg md:font-normal md:text-ink-soft max-md:font-semibold"
           >
             One person owns the direction, keeps the work moving, and stays accountable for the result.
           </p>
 
-          <div ref={proofRef} data-reveal="block" className="mt-8 md:mt-10">
+          <div ref={proofRef} data-reveal="block" className="mt-5 sm:mt-8 md:mt-10">
             <span ref={ruleRef} aria-hidden="true" className="block h-px origin-left bg-white/50" />
-            <dl className="mt-6 grid grid-cols-3 gap-4">
+            <dl className="mt-4 grid grid-cols-3 gap-2 sm:mt-6 sm:gap-4">
               {PROOF.map((p, i) => (
                 // dt before dd in the markup (valid <dl>), shown under it.
                 <div key={p.label} className="flex flex-col-reverse justify-end">
-                  <dt className="mt-2 text-sm font-medium text-ink-soft">{p.label}</dt>
-                  <dd className="text-[clamp(2rem,1.4rem+2vw,3rem)] font-bold leading-none tracking-[-0.025em] text-ink tabular-nums">
+                  <dt className="mt-1 text-[10px] font-medium leading-tight text-ink-soft sm:mt-2 sm:text-sm">{p.label}</dt>
+                  <dd className="text-[clamp(1.25rem,0.7rem+2.6vw,3rem)] font-bold leading-none tracking-[-0.025em] text-ink tabular-nums">
                     <span
                       ref={(el) => {
                         numRefs.current[i] = el;
@@ -260,7 +265,7 @@ export function FounderStrip() {
           <Link
             href="/about"
             data-reveal="lede"
-            className="group mt-8 inline-flex min-h-11 md:mt-10 w-fit items-center gap-1.5 text-base font-semibold text-ink underline decoration-white/50 underline-offset-4 transition-colors hover:decoration-white"
+            className="group mt-4 inline-flex min-h-11 w-fit items-center gap-1.5 text-sm sm:mt-8 sm:text-base md:mt-10 font-semibold text-ink underline decoration-white/50 underline-offset-4 transition-colors hover:decoration-white"
           >
             More about Adib
             <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden="true" />

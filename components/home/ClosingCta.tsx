@@ -204,42 +204,45 @@ export function ClosingCta({
   return (
     <section ref={sectionRef} data-nav-scrim="light" aria-labelledby="closing-title" className="relative overflow-hidden">
       <div className="home-shell relative py-16 md:py-24 lg:py-36">
-        {/* Phones: the M stands above the line. From lg it sits in its own
-            column right of the copy, close enough to read as the line's
-            backdrop without a block ever crossing the text. */}
-        <div className="pointer-events-none mb-8 w-1/2 md:mb-12 md:w-2/3 max-w-[420px] lg:absolute lg:inset-y-0 lg:right-0 lg:mb-0 lg:flex lg:w-[50%] lg:max-w-none lg:items-center lg:px-8">
-          <div className="w-full">
+        {/* Copy left, M right at every width. On phones the CTA row drops
+            under both columns so the buttons keep their full width; from
+            sm it stays under the copy and the M spans both rows. */}
+        <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-center gap-x-4 gap-y-6 sm:gap-x-8 lg:gap-x-12">
+          <div className="relative col-start-1 row-start-1 max-w-[34rem] self-end">
+            <p
+              data-reveal="eyebrow"
+              className="flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft"
+            >
+              <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 bg-magenta" />
+              {eyebrow}
+            </p>
+            <h2
+              id="closing-title"
+              data-reveal="title"
+              className="mt-3 text-balance text-[clamp(1.625rem,0.9rem+3.8vw,5rem)] font-bold leading-[1.02] tracking-[-0.035em] text-white [text-shadow:0_2px_30px_rgba(10,11,16,0.6)] sm:mt-4"
+            >
+              {title}
+            </h2>
+            <p data-reveal="lede" className="mt-3 max-w-[38ch] text-sm leading-relaxed text-white/80 sm:mt-6 sm:text-lg">
+              {lede}
+            </p>
+          </div>
+
+          <div className="pointer-events-none col-start-2 row-start-1 w-full sm:row-span-2 sm:self-center lg:px-8">
             <PixelMark />
           </div>
-        </div>
 
-        <div className="relative max-w-[34rem]">
-          <p
-            data-reveal="eyebrow"
-            className="flex items-center gap-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-ink-soft md:text-xs"
-          >
-            <span aria-hidden="true" className="h-1.5 w-1.5 shrink-0 bg-magenta" />
-            {eyebrow}
-          </p>
-          <h2
-            id="closing-title"
-            data-reveal="title"
-            className="mt-4 text-balance text-[clamp(2.5rem,1.6rem+4vw,5rem)] font-bold leading-[1.02] tracking-[-0.035em] text-white [text-shadow:0_2px_30px_rgba(10,11,16,0.6)]"
-          >
-            {title}
-          </h2>
-          <p data-reveal="lede" className="mt-6 max-w-[38ch] text-base leading-relaxed text-white/80 sm:text-lg">
-            {lede}
-          </p>
-          <div data-reveal="block" className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3">
-            <CtaLink section="closing" cta={lead} className="w-fit" />
-            <CtaLink section="closing" cta={second} variant="text" className="text-white" />
+          <div className="col-span-2 row-start-2 sm:col-span-1 sm:col-start-1 sm:self-start">
+            <div data-reveal="block" className="flex flex-wrap items-center gap-x-6 gap-y-3 sm:mt-3">
+              <CtaLink section="closing" cta={lead} className="w-fit" />
+              <CtaLink section="closing" cta={second} variant="text" className="text-white" />
+            </div>
+            {note && (
+              <p data-reveal="lede" className="mt-6 max-w-[42ch] text-sm leading-relaxed text-white/55">
+                {note}
+              </p>
+            )}
           </div>
-          {note && (
-            <p data-reveal="lede" className="mt-6 max-w-[42ch] text-sm leading-relaxed text-white/55">
-              {note}
-            </p>
-          )}
         </div>
       </div>
     </section>
