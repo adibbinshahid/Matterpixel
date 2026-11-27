@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { getCalApi } from "@calcom/embed-react";
 import { CAL_BRAND_COLOR, CAL_CSS_VARS, CAL_LAYOUT, CAL_NAMESPACE, CAL_THEME } from "@/lib/cal";
 import { captureUtm } from "@/lib/utm";
+import { guardCalModal } from "@/lib/calModal";
 
 /**
  * Root-layout boot for the contact pathways: saves the landing page's UTM
@@ -50,6 +51,7 @@ export function initCal() {
       cssVarsPerTheme: CAL_CSS_VARS,
       styles: { branding: { brandColor: CAL_BRAND_COLOR } },
     });
+    guardCalModal();
     return cal;
   });
   ready.catch(() => {
