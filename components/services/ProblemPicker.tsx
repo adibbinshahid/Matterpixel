@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Check, Clock, Gauge, Images } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Check, ChevronLeft, ChevronRight, Clock, Gauge, Images } from "lucide-react";
 import { motion, useInView } from "motion/react";
 import { SectionHeading } from "@/components/home/SectionHeading";
 import { Hl } from "@/components/home/Hl";
@@ -71,7 +71,7 @@ function StatTile({ stat, tone, play }: { stat: Stat; tone: "before" | "after"; 
         after ? "bg-blue text-white shadow-[0_18px_40px_-18px_rgba(44,75,255,0.7)]" : "border border-line bg-paper"
       }`}
     >
-      <span className={`text-[0.6875rem] font-bold uppercase tracking-[0.14em] sm:text-[0.8125rem] lg:text-[0.65rem] ${after ? "text-white/90" : "text-ink-soft"}`}>
+      <span className={`text-xs font-bold uppercase tracking-[0.14em] sm:text-[0.8125rem] lg:text-[0.65rem] ${after ? "text-white/90" : "text-ink-soft"}`}>
         {after ? "After" : "Before"}
       </span>
       <span
@@ -84,7 +84,7 @@ function StatTile({ stat, tone, play }: { stat: Stat; tone: "before" | "after"; 
         <CountUp stat={stat} play={play} />
         <span className="ml-0.5 text-base font-bold sm:text-lg">{stat.unit}</span>
       </span>
-      <span className={`mt-1 text-[11px] sm:mt-1.5 sm:text-xs ${after ? "text-white/90" : "text-ink-soft"}`}>{stat.label}</span>
+      <span className={`mt-1 text-xs sm:mt-1.5 ${after ? "text-white/90" : "text-ink-soft"}`}>{stat.label}</span>
     </div>
   );
 }
@@ -266,7 +266,10 @@ function PackagePanel({
         <div className="min-w-0 max-lg:order-4 max-lg:mt-3 sm:max-lg:mt-4">
           <BeforeAfter pkg={pkg} play={play} />
         </div>
-        <div className="min-w-0 max-lg:order-5 max-lg:mt-3 sm:max-lg:mt-4 sm:max-lg:rounded-2xl sm:max-lg:border sm:max-lg:border-line sm:max-lg:bg-white/[0.02] sm:max-lg:p-4">
+        {/* Phones: the ticks are left out — package, price, the before
+            and after and the action already make the case; the full list
+            is one tap away on the package's quote. */}
+        <div className="min-w-0 max-sm:hidden max-lg:order-5 max-lg:mt-3 sm:max-lg:mt-4 sm:max-lg:rounded-2xl sm:max-lg:border sm:max-lg:border-line sm:max-lg:bg-white/[0.02] sm:max-lg:p-4">
           <Sub data-m="fade" data-k="wyg" data-i="5" className="text-sm font-bold text-ink-soft max-sm:sr-only">
             What you get
           </Sub>
@@ -311,10 +314,61 @@ export function ProblemPicker({
   firstSection?: boolean;
 }) {
   const [shown, setShown] = useState(0);
+  const shownRef = useRef(0);
+  shownRef.current = shown;
   const [leaving, setLeaving] = useState<number | null>(null);
   const dirRef = useRef<1 | -1>(1);
   const edgeRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const rowRef = useRef<HTMLDivElement>(null);
+  /** True while the row is being moved by code, so the scroll-settle
+   * handler doesn't treat that motion as the visitor choosing a chip. */
+  const steering = useRef(false);
+  /** Phones: glide the row so chip `i` sits dead centre, its neighbours
+   * peeking in at either side. A no-op where the chips are a static grid
+   * (sm and up). */
+  const centerChip = (i: number, instant = false) => {
+    const row = rowRef.current;
+    const chip = tabRefs.current[i];
+    if (!row || !chip || row.scrollWidth <= row.clientWidth + 1) return;
+    const left = row.scrollLeft + chip.getBoundingClientRect().left - row.getBoundingClientRect().left - (row.clientWidth - chip.offsetWidth) / 2;
+    steering.current = true;
+    row.scrollTo({ left, behavior: instant || prefersReducedMotion() ? "auto" : "smooth" });
+  };
+  useEffect(() => {
+    // Start with the first problem centred.
+    centerChip(0, true);
+    const onResize = () => centerChip(shownRef.current, true);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+  /** When the row comes to rest after a finger swipe, the chip that snapped
+   * to the centre becomes the selection (an iOS-picker feel). */
+  const settle = useRef<number | undefined>(undefined);
+  const onRowScroll = () => {
+    window.clearTimeout(settle.current);
+    settle.current = window.setTimeout(() => {
+      const row = rowRef.current;
+      if (!row || row.scrollWidth <= row.clientWidth + 1) return;
+      if (steering.current) {
+        steering.current = false;
+        return;
+      }
+      const mid = row.getBoundingClientRect().left + row.clientWidth / 2;
+      let best = 0;
+      let bestD = Infinity;
+      tabRefs.current.forEach((chip, i) => {
+        if (!chip) return;
+        const r = chip.getBoundingClientRect();
+        const d = Math.abs(r.left + r.width / 2 - mid);
+        if (d < bestD) {
+          bestD = d;
+          best = i;
+        }
+      });
+      if (best !== shownRef.current) select(best, false, false);
+    }, 140);
+  };
   const panelEls = useRef<(HTMLDivElement | null)[]>([]);
   const cardRef = useRef<HTMLDivElement>(null);
   const seen = useInView(cardRef, { once: true, amount: 0.35 });
@@ -343,13 +397,31 @@ export function ProblemPicker({
     };
   }, [shown, leaving]);
 
-  const select = (i: number, focus = false) => {
+  const select = (i: number, focus = false, recentre = true) => {
     const next = (i + packages.length) % packages.length;
-    if (focus) tabRefs.current[next]?.focus();
+    if (focus) tabRefs.current[next]?.focus({ preventScroll: true });
+    if (recentre) centerChip(next);
     if (next === shown) return;
     dirRef.current = next > shown ? 1 : -1;
     setLeaving(prefersReducedMotion() ? null : shown);
     setShown(next);
+  };
+
+  // A horizontal swipe across the card steps to the next or previous
+  // problem, the way a phone user expects a paged card to behave. Only a
+  // clearly sideways flick counts; anything steeper is the page scrolling.
+  const swipe = useRef<{ x: number; y: number } | null>(null);
+  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "touch") return;
+    swipe.current = { x: e.clientX, y: e.clientY };
+  };
+  const onPointerUp = (e: PointerEvent<HTMLDivElement>) => {
+    const start = swipe.current;
+    swipe.current = null;
+    if (!start) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.6) select(shown + (dx < 0 ? 1 : -1));
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -378,60 +450,90 @@ export function ProblemPicker({
         }
       />
 
-      {/* Four chips side by side at every width; on narrow screens the
-          labels wrap inside taller rounded chips instead of the row
-          breaking. */}
-      <div className="mt-4 md:mt-6">
-      <div
-        role="tablist"
-        data-reveal="block"
-        aria-label="Pick the problem closest to yours"
-        onKeyDown={onKeyDown}
-        className="grid grid-cols-4 gap-1.5 sm:gap-2 md:gap-3"
-      >
-        {packages.map((pkg, i) => {
-          const isSelected = i === shown;
-          return (
-            <button
-              key={pkg.slug}
-              ref={(el) => {
-                tabRefs.current[i] = el;
-              }}
-              id={`problem-tab-${pkg.slug}`}
-              type="button"
-              role="tab"
-              aria-selected={isSelected}
-              aria-controls={`problem-panel-${pkg.slug}`}
-              tabIndex={isSelected ? 0 : -1}
-              onClick={() => select(i)}
-              className={`relative flex min-h-11 items-center justify-center rounded-2xl border px-1 py-1.5 text-center text-[0.6875rem] font-semibold leading-tight transition-[color,border-color] duration-300 sm:px-3 sm:text-sm md:px-4 md:py-2.5 md:text-base lg:text-sm xl:rounded-full xl:text-base ${
-                isSelected
-                  ? "border-transparent text-white"
-                  : "border-line bg-white/[0.03] text-ink-soft hover:border-white/30 hover:text-ink"
-              }`}
-            >
-              {isSelected && (
-                <motion.span
-                  layoutId="problem-chip-pill"
-                  aria-hidden="true"
-                  className="absolute inset-0 z-0 rounded-2xl bg-blue xl:rounded-full shadow-[0_10px_28px_-10px_rgba(44,75,255,0.8)]"
-                  // Same curve and length as the panel sweep, so the chip
-                  // and the card move as one shot.
-                  transition={{ duration: SWEEP_MS / 1000, ease: [0.77, 0, 0.175, 1] }}
-                />
-              )}
-              {/* z-10: the sliding pill passes beneath every chip's label,
-                  not over the ones it travels across. */}
-              <span className="relative z-10">{pkg.problem}</span>
-            </button>
-          );
-        })}
+      {/* From sm up: four chips side by side. Phones: a picker — the
+          selected chip sits dead centre with its neighbours peeking in at
+          either side (fading out before they reach the arrows), between a
+          ← and → button. Tapping a chip or an arrow glides it to the
+          centre; swiping the row snaps a chip to the centre and selects
+          it. The arrows dim at the first and last problem. */}
+      <div className="relative mt-4 md:mt-6">
+      <div className="-mx-3 flex items-center gap-1.5 sm:mx-0 sm:block">
+        <button
+          type="button"
+          aria-label="Previous problem"
+          disabled={shown === 0}
+          onClick={() => select(shown - 1)}
+          className="grid-box relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition-[opacity,scale] duration-200 active:scale-95 disabled:pointer-events-none disabled:opacity-30 sm:hidden"
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+        </button>
+        <div
+          ref={rowRef}
+          onScroll={onRowScroll}
+          role="tablist"
+          data-reveal="block"
+          aria-label="Pick the problem closest to yours"
+          onKeyDown={onKeyDown}
+          className="no-scrollbar -my-4 flex min-w-0 flex-1 snap-x snap-mandatory gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain py-5 before:w-1/2 before:shrink-0 before:content-[''] after:w-1/2 after:shrink-0 after:content-[''] sm:before:hidden sm:after:hidden [mask-image:linear-gradient(to_right,transparent,#000_20px,#000_calc(100%-20px),transparent)] sm:my-0 sm:grid sm:grid-cols-4 sm:gap-2 sm:overflow-visible sm:px-0 sm:py-0 sm:[mask-image:none] md:gap-3"
+        >
+          {packages.map((pkg, i) => {
+            const isSelected = i === shown;
+            return (
+              <button
+                key={pkg.slug}
+                ref={(el) => {
+                  tabRefs.current[i] = el;
+                }}
+                id={`problem-tab-${pkg.slug}`}
+                type="button"
+                role="tab"
+                aria-selected={isSelected}
+                aria-controls={`problem-panel-${pkg.slug}`}
+                tabIndex={isSelected ? 0 : -1}
+                onClick={() => select(i)}
+                className={`relative flex min-h-11 shrink-0 snap-center items-center justify-center whitespace-nowrap rounded-full border px-4 py-2 text-center text-[0.8125rem] font-semibold leading-tight transition-[color,border-color,scale] duration-300 active:scale-[0.97] sm:whitespace-normal sm:rounded-2xl sm:px-3 sm:py-1.5 sm:text-sm md:px-4 md:py-2.5 md:text-base lg:text-sm xl:rounded-full xl:text-base ${
+                  isSelected
+                    // Selected sits above its neighbours (z-10), so their black
+                    // grid-box glow never paints over the blue pill.
+                    ? "z-10 border-transparent text-white"
+                    : "z-0 grid-box text-ink-soft hover:text-ink"
+                }`}
+              >
+                {isSelected && (
+                  <motion.span
+                    layoutId="problem-chip-pill"
+                    aria-hidden="true"
+                    className="absolute inset-0 z-0 rounded-full bg-blue sm:rounded-2xl xl:rounded-full shadow-[0_10px_28px_-10px_rgba(44,75,255,0.8)]"
+                    // Same curve and length as the panel sweep, so the chip
+                    // and the card move as one shot.
+                    transition={{ duration: SWEEP_MS / 1000, ease: [0.77, 0, 0.175, 1] }}
+                  />
+                )}
+                {/* z-10: the sliding pill passes beneath every chip's label,
+                    not over the ones it travels across. */}
+                <span className="relative z-10">{pkg.problem}</span>
+              </button>
+            );
+          })}
+        </div>
+        <button
+          type="button"
+          aria-label="Next problem"
+          disabled={shown === packages.length - 1}
+          onClick={() => select(shown + 1)}
+          className="grid-box relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white transition-[opacity,scale] duration-200 active:scale-95 disabled:pointer-events-none disabled:opacity-30 sm:hidden"
+        >
+          <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </button>
       </div>
 
       <div
         ref={cardRef}
         data-reveal="block"
-        className="relative mt-3 grid overflow-hidden rounded-[22px] border border-line bg-paper-2 md:mt-5 md:rounded-[28px] short:md:mt-4"
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => (swipe.current = null)}
+        className="grid-box relative mt-3 grid touch-pan-y overflow-hidden rounded-[22px] md:mt-5 md:rounded-[28px] short:md:mt-4"
       >
         {packages.map((pkg, i) => (
           <PackagePanel

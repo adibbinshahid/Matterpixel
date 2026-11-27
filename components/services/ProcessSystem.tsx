@@ -40,6 +40,17 @@ export function ProcessSystem() {
    * Tracked rather than hard-coded because the rail's height changes with the
    * active step's copy and with the fluid `clamp()` numeral. */
   const [railHeight, setRailHeight] = useState(0);
+  // Below lg there's no sticky rail, so every step carries its own text:
+  // steps not yet reached stay readable on the blue (0.4 dropped them
+  // under contrast), just quieter than the active one.
+  const [dimTo, setDimTo] = useState(0.4);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const set = () => setDimTo(mq.matches ? 0.4 : 0.62);
+    set();
+    mq.addEventListener("change", set);
+    return () => mq.removeEventListener("change", set);
+  }, []);
 
   // Progress along the steps column specifically (not the whole section) —
   // so the connector is full exactly when the last step is reached, rather
@@ -99,7 +110,9 @@ export function ProcessSystem() {
     <section ref={sectionRef} className="panel-blue relative border-t border-line">
       <div className="section-shell py-[72px] lg:py-[120px]">
         <Reveal>
-          <div className="flex flex-col items-center text-center">
+          {/* Left-aligned on phones like every other section heading there;
+              the centred giant setting is a wide-screen composition. */}
+          <div className="flex flex-col items-start text-left lg:items-center lg:text-center">
             {/* .label-eyebrow hardcodes var(--blue) — invisible on a blue
                 panel, so it takes an explicit override here. Same handling
                 as components/Process.tsx. */}
@@ -115,7 +128,7 @@ export function ProcessSystem() {
           </div>
         </Reveal>
 
-        <div className="mt-20 grid gap-12 lg:mt-28 lg:grid-cols-12 lg:gap-16">
+        <div className="mt-10 grid gap-12 lg:mt-28 lg:grid-cols-12 lg:gap-16">
           {/* ── Sticky rail: the currently-active step, oversized ──────
               Desktop only. Without a sticky viewport to pin against, the
               rail on mobile would just be a second, out-of-sync copy of
@@ -189,14 +202,14 @@ export function ProcessSystem() {
                 <p className="mt-4 max-w-sm text-sm leading-relaxed text-white/75">
                   {active.detail}
                 </p>
-                <p className="mt-4 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-white/50">
+                <p className="mt-4 font-mono text-xs uppercase tracking-[0.18em] text-white/50">
                   output — {active.output}
                 </p>
               </motion.div>
 
               {/* Step position readout, in the same annotation register the
                   rest of the page uses. */}
-              <p className="mt-5 font-mono text-[0.6875rem] tracking-[0.16em] text-white/40">
+              <p className="mt-5 font-mono text-xs tracking-[0.16em] text-white/40">
                 {String(activeIndex + 1).padStart(2, "0")} /{" "}
                 {String(processMethod.steps.length).padStart(2, "0")}
               </p>
@@ -236,13 +249,13 @@ export function ProcessSystem() {
                     // Uniform padding (no `first:pt-0`): the node's absolute
                     // offset is tuned to this padding, and shortening the
                     // first item would slide its node off the title line.
-                    className="relative py-10 pl-12 lg:py-14"
+                    className="relative py-7 pl-12 lg:py-14"
                   >
                     {/* Node on the connector — a pixel, not a circle. Fills
                         magenta and grows once its step is the active one. */}
                     <motion.span
                       aria-hidden="true"
-                      className="absolute left-0 top-[3.25rem] block h-[15px] w-[15px] lg:top-[4.25rem]"
+                      className="absolute left-0 top-[2.5rem] block h-[15px] w-[15px] lg:top-[4.25rem]"
                       animate={{
                         backgroundColor: isActive ? "var(--magenta)" : "rgba(255,255,255,0.3)",
                         scale: isActive ? 1 : 0.6,
@@ -251,11 +264,11 @@ export function ProcessSystem() {
                     />
 
                     <motion.div
-                      animate={{ opacity: isActive ? 1 : 0.4 }}
+                      animate={{ opacity: isActive ? 1 : dimTo }}
                       transition={{ duration: 0.4, ease: EASE }}
                     >
                       <div className="flex items-baseline gap-4">
-                        <span className="font-mono text-[0.6875rem] tracking-[0.16em] text-white/50">
+                        <span className="font-mono text-xs tracking-[0.16em] text-white/50">
                           {s.id}
                         </span>
                         <h3 className="text-[clamp(1.5rem,3vw,2.25rem)] font-extrabold uppercase leading-none tracking-tight text-white">
@@ -271,7 +284,7 @@ export function ProcessSystem() {
                       <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/65 lg:hidden">
                         {s.detail}
                       </p>
-                      <p className="mt-4 font-mono text-[0.625rem] uppercase tracking-[0.18em] text-white/45 lg:hidden">
+                      <p className="mt-4 font-mono text-xs uppercase tracking-[0.18em] text-white/45 lg:hidden">
                         output — {s.output}
                       </p>
                     </motion.div>

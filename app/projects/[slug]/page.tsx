@@ -98,6 +98,7 @@ export default async function CaseStudyPage({
     <LightPage
       closing={
         <ClosingCta
+          service={project.medium === "website" ? "website" : "brand-visuals"}
           eyebrow="Your brief next"
           title={
             <>

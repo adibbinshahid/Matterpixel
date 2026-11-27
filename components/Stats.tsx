@@ -3,12 +3,21 @@
 import { stats } from "@/content/siteConfig";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 
+/** Facts the phone hero already shows as pills (90+ PageSpeed, NDA):
+ * phones skip them here, so the band adds new proof instead of repeating
+ * what sits just above it. */
+const IN_PHONE_HERO = new Set(["90+", "NDA"]);
+
 /** Compact chip — number + label side by side, no desc paragraph: a
  * marquee's items are read at a glance while passing by. Sized so labels
  * stay legible on a phone while three or four chips still fit across. */
 function StatChip({ stat }: { stat: (typeof stats)[number] }) {
   return (
-    <div className="flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl border border-line bg-paper-2 px-3.5 py-2 sm:gap-3 sm:rounded-2xl sm:px-5 sm:py-3">
+    <div
+      className={`flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-xl border border-line bg-paper-2 px-3.5 py-2 sm:gap-3 sm:rounded-2xl sm:px-5 sm:py-3 ${
+        IN_PHONE_HERO.has(stat.value) ? "max-md:hidden" : ""
+      }`}
+    >
       <span className="font-avenir text-lg font-extrabold leading-none tracking-tight text-ink sm:text-2xl">{stat.value}</span>
       <span className="text-[0.8125rem] font-semibold uppercase leading-tight tracking-[0.1em] text-ink-soft md:text-xs">
         {stat.label}
@@ -56,7 +65,14 @@ function MarqueeRow({ reverse, duration }: { reverse?: boolean; duration: number
 
 export function Stats() {
   return (
-    <section className="relative overflow-hidden py-12 sm:py-16" data-nav-scrim="light" aria-label="Track record">
+    // Phones: one row only, and the band is a fixed --phone-stats-h tall so
+    // the hero can size itself to fill exactly the rest of the first
+    // screen (see Hero.tsx).
+    <section
+      className="relative overflow-hidden py-7 max-md:flex max-md:h-[var(--phone-stats-h)] max-md:items-center max-md:py-0 sm:py-16"
+      data-nav-scrim="light"
+      aria-label="Track record"
+    >
       {/* Brand-blue band behind the marquee: full strength through the chip
           rows, fading out above and below into the grid ground, so it
           lifts the strip without a hard edge. */}
@@ -64,9 +80,11 @@ export function Stats() {
         aria-hidden="true"
         className="absolute inset-0 bg-[linear-gradient(180deg,rgba(44,75,255,0)_0%,rgba(44,75,255,0.85)_32%,rgba(44,75,255,0.85)_68%,rgba(44,75,255,0)_100%)]"
       />
-      <div className="relative flex flex-col gap-3 sm:gap-4">
+      <div className="relative flex w-full flex-col gap-3 sm:gap-4">
         <MarqueeRow duration={38} />
-        <MarqueeRow duration={34} reverse />
+        <div className="max-md:hidden">
+          <MarqueeRow duration={34} reverse />
+        </div>
       </div>
     </section>
   );

@@ -181,7 +181,7 @@ function LeadNode({ active }: { active: boolean }) {
         />
 
         <div className="relative">
-          <p className="text-[0.6875rem] font-bold uppercase tracking-[0.18em] text-white/50">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/50">
             Your single point of contact
           </p>
 
@@ -201,7 +201,7 @@ function LeadNode({ active }: { active: boolean }) {
             {team.lead.duties.map((duty, i) => (
               <motion.li
                 key={duty}
-                className="flex items-center gap-2.5 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-white/85"
+                className="flex items-center gap-2.5 text-xs font-bold uppercase tracking-[0.14em] text-white/85"
                 initial={{ opacity: 0, y: 8 }}
                 animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
                 transition={{
@@ -264,7 +264,7 @@ function RoleNode({
           <span className="text-xs font-bold tracking-[0.18em] text-blue">
             {String(index + 1).padStart(2, "0")}
           </span>
-          <span className="inline-flex items-center gap-2 text-[0.625rem] font-bold uppercase tracking-[0.16em] text-ink-soft/60">
+          <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-ink-soft/60">
             <motion.span
               aria-hidden="true"
               className="h-1 w-1 rounded-full bg-magenta"
@@ -332,7 +332,7 @@ function ResultNode({ active }: { active: boolean }) {
         {team.result.marks.map((mark, i) => (
           <motion.li
             key={mark}
-            className="inline-flex items-center gap-2 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-white/90"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-white/90"
             initial={{ opacity: 0, y: 6 }}
             animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: 6 }}
             transition={{

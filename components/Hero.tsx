@@ -31,8 +31,8 @@ const TRUST_BADGE_ICONS: Record<string, LucideIcon> = {
 };
 /** Phones show only these two badges, on one row, under a short label. */
 const PHONE_BADGES: Record<string, string> = {
-  "Fiverr Top Rated Seller": "Fiverr Top Rated Seller",
   "Minimum 90+ PageSpeed Score": "90+ PageSpeed",
+  "NDA Friendly": "NDA Friendly",
 };
 
 /**
@@ -74,21 +74,35 @@ export function Hero() {
     };
   }, [reduced]);
 
-  // The clip is loaded by script, never by the HTML: on a phone its 1.4MB
-  // first frame was the page's largest paint and put mobile LCP at 6–7s, so
-  // phones keep the poster (a 6KB still of frame 0), and wider screens only
-  // fetch the clip once the page is idle. Reduced motion keeps the poster
-  // everywhere: a moving background is exactly what it asks us to avoid.
+  // The clip is loaded by script, never by the HTML: on a phone a 1.4MB
+  // first frame was the page's largest paint and put mobile LCP at 6–7s.
+  // So every screen paints the 6KB poster first, and the clip arrives only
+  // after it — the full 720p file on wide screens once the page is idle;
+  // on phones a 284KB 432px-wide cut (HeroBG1-mobile.mp4, cropped toward
+  // portrait, 24fps) requested straight away, so it is moving by the time
+  // the hero has finished rising in (the poster is frame 0, so the hand-off
+  // is seamless). Phones on Data Saver or a 2G-class connection keep the
+  // poster. Reduced motion keeps the poster everywhere: a moving
+  // background is exactly what it asks us to avoid.
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || reduced || !window.matchMedia("(min-width: 768px)").matches) return;
+    if (!video || reduced) return;
+    const wide = window.matchMedia("(min-width: 768px)").matches;
+    const conn = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+    if (!wide && (conn?.saveData || /2g/.test(conn?.effectiveType ?? ""))) return;
     let done = false;
     const start = () => {
       if (done) return;
       done = true;
-      video.src = "/videos/HeroBG1.mp4";
+      video.src = wide ? "/videos/HeroBG1.mp4" : "/videos/HeroBG1-mobile.mp4";
       video.play().catch(() => undefined);
     };
+    if (!wide) {
+      start();
+      return () => {
+        done = true;
+      };
+    }
     const idle = window.requestIdleCallback
       ? window.requestIdleCallback(start, { timeout: 2500 })
       : window.setTimeout(start, 1200);
@@ -126,9 +140,15 @@ export function Hero() {
 
       {/* Centred poster: the offer, the actions and the proof stack on one
           axis and fill the first screen, with the scroll cue at its foot. */}
-      <div className="home-shell flex flex-col items-center justify-center pb-14 pt-24 text-center md:min-h-[100svh] md:pb-6 md:pt-28">
+      {/* Phones: the hero plus the one-row stats band below it fill exactly
+          the first screen on any phone — 100svh (the height with the
+          browser's bars showing) minus the band's fixed height — so nothing
+          of the next section peeks in until the visitor scrolls. Content is
+          centred in whatever room the phone has; very short screens (an SE
+          with Safari's bars, under 620px tall) set it a step tighter. */}
+      <div className="home-shell flex flex-col items-center justify-center pb-5 pt-[calc(4.75rem+env(safe-area-inset-top))] text-center max-md:min-h-[calc(100svh-var(--phone-stats-h))] md:min-h-[100svh] md:pb-6 md:pt-28 max-md:[@media(max-height:620px)]:pb-3 max-md:[@media(max-height:620px)]:pt-[calc(4.25rem+env(safe-area-inset-top))]">
         <p
-          className="hero-rise inline-flex max-w-full flex-wrap max-md:hidden items-center justify-center gap-x-3 gap-y-1.5 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-white backdrop-blur-xl sm:px-5 sm:py-2.5 sm:text-sm"
+          className="hero-rise inline-flex max-w-full flex-wrap max-md:hidden items-center justify-center gap-x-3 gap-y-1.5 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] text-white backdrop-blur-xl sm:px-5 sm:py-2.5 sm:text-sm"
         >
           {/* A marker leads every item, so a wrapped line never opens on an
               orphaned separator. */}
@@ -140,13 +160,16 @@ export function Hero() {
           ))}
         </p>
 
-        {/* Three lines, the middle one — what we build — set largest. */}
-        <h1 className="text-balance md:mt-6 text-[clamp(1.75rem,0.9rem+2.6vw,3.5rem)] font-bold leading-[1.08] tracking-[-0.03em] text-white">
+        {/* Three lines, the middle one — what we build — set largest.
+            Phones: both sizes come from --hero-mid / --hero-small
+            (globals.css), fitted to the screen's width and height, so the
+            headline is as large as the phone allows. */}
+        <h1 className="text-balance md:mt-6 text-[clamp(1.75rem,0.9rem+2.6vw,3.5rem)] max-md:text-[length:var(--hero-small)] font-bold leading-[1.08] tracking-[-0.03em] text-white">
           <HeroLine delay="0.1s">
             We <span className="text-blue">build</span>
           </HeroLine>
           <HeroLine delay="0.16s">
-            <span className="block text-[clamp(2.4rem,0.6rem+6.2vw,6.25rem)] leading-[1]">
+            <span className="block text-[clamp(2.4rem,0.6rem+6.2vw,6.25rem)] leading-[1] max-md:text-[length:var(--hero-mid)]">
               websites and AI systems
             </span>
           </HeroLine>
@@ -156,14 +179,15 @@ export function Hero() {
         </h1>
 
         <p
-          className="hero-rise mt-6 max-w-[40rem] text-base leading-relaxed text-white/75 sm:text-lg"
+          className="hero-rise mt-5 max-w-[40rem] text-base leading-relaxed text-white/75 max-md:mt-[max(1rem,2.4svh)] sm:mt-6 sm:text-lg max-md:[@media(min-height:780px)]:text-[1.0625rem] max-md:[@media(max-height:620px)]:mt-3 max-md:[@media(max-height:620px)]:text-[0.9375rem]"
           style={{ animationDelay: "0.3s" }}
         >
           {hero.sub}
         </p>
 
         <div
-          className="hero-rise mt-8 flex flex-wrap items-center justify-center gap-3 sm:gap-4"
+          // Phones: the pill and the text link always on two centred lines.
+          className="hero-rise mt-6 flex flex-wrap items-center justify-center gap-3 max-md:mt-[max(1.25rem,3.2svh)] max-md:flex-col max-md:gap-1.5 sm:mt-8 sm:gap-4 max-md:[@media(max-height:620px)]:mt-4 max-md:[@media(max-height:620px)]:gap-1"
           style={{ animationDelay: "0.4s" }}
         >
           <CtaLink section="hero" cta="book" />
@@ -183,7 +207,7 @@ export function Hero() {
         </div>
 
         <ul
-          className="hero-rise mt-8 flex justify-center gap-2 max-md:flex-nowrap md:mt-6 md:flex-wrap"
+          className="hero-rise mt-6 flex flex-wrap justify-center gap-2 max-md:mt-[max(1rem,2.6svh)] md:mt-6 max-md:[@media(max-height:620px)]:mt-3"
           style={{ animationDelay: "0.6s" }}
           aria-label="Standards"
         >
@@ -193,6 +217,7 @@ export function Hero() {
             return (
               <li
                 key={badge}
+                // Phones: only the two in PHONE_BADGES, side by side.
                 className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[0.8125rem] font-medium text-white/80 backdrop-blur-md md:px-3.5 ${
                   phone ? "" : "max-md:hidden"
                 }`}
@@ -217,7 +242,7 @@ export function Hero() {
           style={{ animationDelay: "0.7s" }}
           aria-hidden="true"
         >
-          <span className="text-[0.65rem] font-semibold uppercase tracking-[0.22em]">Scroll to explore</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.22em]">Scroll to explore</span>
           <span className="hero-cue">
             <ChevronDown className="h-4 w-4" />
           </span>

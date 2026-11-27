@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { Check } from "lucide-react";
+import { PixelPager } from "@/components/ui/PixelPager";
 import { PixelSection } from "@/components/home/PixelSection";
 import { SectionHeading } from "@/components/home/SectionHeading";
 import { Hl } from "@/components/home/Hl";
@@ -10,7 +11,7 @@ import { CtaLink } from "@/components/CtaLink";
 
 const LAST = engagementModels.length - 1;
 /** Phones show this many ticks per card; the rest open on "See all". */
-const PHONE_FEATURES = 3;
+const PHONE_FEATURES = 2;
 
 /**
  * The engagement models as a commitment spectrum: one line from a single
@@ -192,8 +193,9 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
               size. */}
           <div
             ref={rowRef}
+            id="engagement-row"
             data-hscroll
-            className="no-scrollbar grid gap-8 pl-6 max-md:-mx-6 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:scroll-px-6 max-md:gap-3 max-md:overflow-x-auto max-md:px-6 max-md:pb-2 md:grid-cols-3 md:grid-rows-[repeat(6,auto)] md:gap-x-8 md:gap-y-0 md:pl-0 lg:gap-x-16"
+            className="no-scrollbar grid gap-8 pl-6 max-md:-mx-6 max-md:flex max-md:snap-x max-md:snap-mandatory max-md:scroll-px-6 max-md:gap-3 max-md:overflow-x-auto max-md:overflow-y-hidden max-md:overscroll-x-contain max-md:px-6 max-md:-my-6 max-md:py-6 md:grid-cols-3 md:grid-rows-[repeat(6,auto)] md:gap-x-8 md:gap-y-0 md:pl-0 lg:gap-x-16"
           >
             {engagementModels.map((m, i) => {
               const isActive = i === active;
@@ -214,7 +216,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                   }}
                   tabIndex={0}
                   aria-label={`${m.title}: ${m.anchor}`}
-                  className={`group relative z-10 transition-opacity duration-200 focus-visible:outline-none motion-reduce:transition-none max-md:w-[85vw] max-md:max-w-[340px] max-md:shrink-0 max-md:snap-start max-md:rounded-[22px] max-md:border max-md:bg-paper-2 max-md:p-4 max-md:focus-visible:border-[var(--blue-ink)] ${
+                  className={`group relative z-10 transition-opacity duration-200 focus-visible:outline-none motion-reduce:transition-none max-md:w-[85vw] max-md:max-w-[340px] max-md:shrink-0 max-md:snap-start max-md:rounded-[22px] grid-box-phone max-md:p-4 ${
                     isActive ? "max-md:border-magenta" : "max-md:border-line"
                   } md:row-span-6 md:grid md:grid-rows-subgrid ${
                     dimOthers && !isActive ? "opacity-45" : "opacity-100"
@@ -244,7 +246,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                       {m.stage}
                     </span>
                     {m.featured && (
-                      <span className="whitespace-nowrap rounded-full bg-magenta px-2.5 py-1 text-[0.6875rem] font-extrabold uppercase leading-none tracking-[0.12em] text-white max-lg:hidden">
+                      <span className="whitespace-nowrap rounded-full bg-magenta px-2.5 py-1 text-xs font-extrabold uppercase leading-none tracking-[0.12em] text-white max-lg:hidden">
                         {m.tag}
                       </span>
                     )}
@@ -263,7 +265,7 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
                     <h3 className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-lg font-bold tracking-tight text-ink lg:text-xl">
                       {m.title}
                       {m.featured && (
-                        <span className="whitespace-nowrap rounded-full bg-magenta px-2.5 py-1 text-[0.6875rem] font-extrabold uppercase leading-none tracking-[0.12em] text-white lg:hidden">
+                        <span className="whitespace-nowrap rounded-full bg-magenta px-2.5 py-1 text-xs font-extrabold uppercase leading-none tracking-[0.12em] text-white lg:hidden">
                           {m.tag}
                         </span>
                       )}
@@ -311,6 +313,18 @@ export function EngagementModels({ firstSection = false }: { firstSection?: bool
               );
             })}
           </div>
+          <PixelPager
+            count={engagementModels.length}
+            index={scrolled}
+            onSelect={(i) => {
+              const row = rowRef.current;
+              const col = cols.current[i];
+              if (row && col) row.scrollTo({ left: row.scrollLeft + col.getBoundingClientRect().left - row.getBoundingClientRect().left - 24, behavior: "smooth" });
+            }}
+            controls="engagement-row"
+            itemLabel="engagement model"
+            className="-mb-2 md:hidden"
+          />
         </div>
 
       </div>

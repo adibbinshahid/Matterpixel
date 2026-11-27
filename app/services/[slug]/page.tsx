@@ -13,6 +13,18 @@ import { PageHero } from "@/components/PageHero";
 import { ClosingCta } from "@/components/home/ClosingCta";
 import { Hl } from "@/components/home/Hl";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
+import type { ServiceSlug } from "@/lib/schema";
+
+/** The quote form's service for each service page, so its quote CTAs
+ * arrive with the service already picked. */
+const QUOTE_SERVICE: Record<string, ServiceSlug> = {
+  "web-app-development": "website",
+  "ai-automation": "ai-automation",
+  "branding-identity": "brand-visuals",
+  "ai-product-photography": "brand-visuals",
+  "ai-video": "brand-visuals",
+  "seo-growth": "other",
+};
 
 const WHY_MATTERPIXEL = [
   "Founder-led from strategy to final delivery",
@@ -87,7 +99,7 @@ export default async function ServiceDetailPage({
 
   if (service.slug === "web-app-development") {
     return (
-      <LightPage closing={<ClosingCta eyebrow="Web & App Development" title="Got something worth building?" />}>
+      <LightPage closing={<ClosingCta eyebrow="Web & App Development" title="Got something worth building?" service={QUOTE_SERVICE[service.slug]} />}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -114,6 +126,7 @@ export default async function ServiceDetailPage({
     <LightPage
       closing={
         <ClosingCta
+          service={QUOTE_SERVICE[service.slug]}
           eyebrow={service.title}
           title={
             <>
@@ -137,7 +150,13 @@ export default async function ServiceDetailPage({
       >
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <CtaLink section="hero" cta="book" />
-          <CtaLink section="hero" cta="quote" variant="text" className="text-ink" />
+          <CtaLink
+            section="hero"
+            cta="quote"
+            params={{ service: QUOTE_SERVICE[service.slug] }}
+            variant="text"
+            className="text-ink"
+          />
         </div>
         <Link
           href="/services"

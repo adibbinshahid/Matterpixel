@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Turnstile } from "@/components/Turnstile";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm, type FieldErrors, type UseFormRegisterReturn } from "react-hook-form";
 import { cleanSrc, trackEvent } from "@/lib/analytics";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,43 +26,29 @@ import {
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import {
-  inquirySchema,
-  inquiryFieldSchemas,
+  quoteSchema,
+  quoteFieldSchemas,
   normalizeWebsite,
-  bookingSchema,
-  bookingFieldSchemas,
-  AUDIT_FOCUS_OPTIONS,
-  CHALLENGE_OPTIONS,
-  ROLE_OPTIONS,
+  isServiceSlug,
+  serviceLabel,
   BUDGET_OPTIONS,
+  SERVICE_OPTIONS,
   TIMELINE_OPTIONS,
-  PROJECT_TYPE_OPTIONS,
-  type InquiryValues,
-  type BookingValues,
+  type QuoteValues,
 } from "@/lib/schema";
-import { SchedulePicker } from "@/components/BookingScheduler";
-import {
-  AVAILABILITY,
-  detectTimeZone,
-  OFFICE_TIME_ZONE,
-  formatDateKeyLong,
-  formatTimeKey,
-  zonedDateKey,
-  zonedTimeKey,
-  zoneOffsetLabel,
-} from "@/lib/availability";
 import type { InquiryPrefill } from "@/content/packages";
-import { ctas, footer, siteGreeting, whatsappHref } from "@/content/siteConfig";
+import { CONTACT_EMAIL, WHATSAPP_NUMBER, ctas } from "@/content/siteConfig";
+import { CalLink } from "@/components/CalLink";
+import { readUtm } from "@/lib/utm";
 import { cn, EASE, DURATIONS } from "@/lib/utils";
 import { useReducedMotion } from "@/lib/useReducedMotion";
 import { clearDraft, isDraftEmpty, readDraft, saveDraft } from "@/lib/formDraft";
 
-/** localStorage keys for the two persisted contact forms. The inquiry key
- * moved when the wizard went from eleven questions to five; drafts under
- * the old key are migrated once, then deleted (see loadInquiryDraft). */
-const INQUIRY_DRAFT_KEY = "contact-inquiry-v2";
-const LEGACY_INQUIRY_DRAFT_KEY = "contact-inquiry";
-const BOOKING_DRAFT_KEY = "contact-booking";
+/** localStorage key for the quote form's draft. Drafts from the earlier
+ * forms (other fields, and the retired booking form) are deleted on first
+ * load (see loadInquiryDraft). */
+const INQUIRY_DRAFT_KEY = "contact-quote-v1";
+const RETIRED_DRAFT_KEYS = ["contact-inquiry-v2", "contact-inquiry", "contact-booking"];
 
 const BURST = Array.from({ length: 14 }, (_, i) => {
   const angle = (i / 14) * Math.PI * 2;
@@ -340,7 +326,7 @@ export function ContactSplit({
                     exit="exit"
                     className="h-full"
                   >
-                    <BookingPanel src={linkSrc} />
+                    <AuditPanel />
                   </motion.div>
                 )}
                 {active === "chat" && (
@@ -352,7 +338,7 @@ export function ContactSplit({
                     exit="exit"
                     className="h-full"
                   >
-                    <QuickChatPanel onBookCall={() => selectTab("booking")} />
+                    <QuickChatPanel />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -519,6 +505,11 @@ function FloatingInput({
           // Autofill deliberately left on for every wizard question —
           // browser/password-manager suggestions are faster than typing.
           autoComplete={autoComplete}
+          // Phone keyboard: the return key reads "next" (Enter advances the
+          // wizard), and address/number fields skip auto-capitalisation.
+          enterKeyHint="next"
+          autoCapitalize={type === "email" || type === "tel" || type === "url" ? "none" : undefined}
+          autoCorrect={type === "email" || type === "tel" || type === "url" ? "off" : undefined}
           onKeyDown={onKeyDown}
           aria-label={label}
           aria-invalid={!!error}
@@ -726,8 +717,9 @@ function SubmitRow({
   status: "idle" | "success" | "error";
   label: string;
   successMsg: string;
-  /** The server's own reason (slot taken, bot check), when it gave one. */
-  errorMsg?: string | null;
+  /** What to say when sending failed: the server's own reason, or the
+   * direct-contact fallback. */
+  errorMsg?: ReactNode;
   /** When given, a Start over escape hatch sits under Send, behind a confirm. */
   onStartOver?: () => void;
 }) {
@@ -815,19 +807,13 @@ function SubmitRow({
   );
 }
 
-type InquiryFieldId =
-  | "fullName"
-  | "workEmail"
-  | "whatsapp"
-  | "company"
-  | "website"
-  | "projectTypes"
-  | "budget"
-  | "projectDetails";
+type InquiryFieldId = "name" | "email" | "service" | "details" | "budget" | "timeline" | "website" | "link";
+
+type Option = { value: string; label: string };
 
 interface InquiryField {
   id: InquiryFieldId;
-  kind: "text" | "email" | "tel" | "textarea" | "choice" | "multi";
+  kind: "text" | "email" | "url" | "textarea" | "choice";
   /** Short label for the review grid and the accessible name on screens
    * that carry more than one field. */
   label: string;
@@ -837,66 +823,52 @@ interface InquiryField {
    * no standard token. */
   autoComplete?: string;
   optional?: boolean;
-  options?: readonly string[];
+  options?: readonly Option[];
 }
 
+const asOptions = (list: readonly string[]): Option[] => list.map((v) => ({ value: v, label: v }));
+
 const INQUIRY_FIELDS: Record<InquiryFieldId, InquiryField> = {
-  fullName: { id: "fullName", kind: "text", label: "Name", placeholder: "Your name", autoComplete: "name" },
-  workEmail: {
-    id: "workEmail",
-    kind: "email",
-    label: "Work email",
-    placeholder: "you@company.com",
-    autoComplete: "email",
+  name: { id: "name", kind: "text", label: "Name", placeholder: "Your name", autoComplete: "name" },
+  email: { id: "email", kind: "email", label: "Email", placeholder: "you@company.com", autoComplete: "email" },
+  service: {
+    id: "service",
+    kind: "choice",
+    label: "Service",
+    options: SERVICE_OPTIONS.map((o) => ({ value: o.slug, label: o.label })),
   },
-  projectTypes: { id: "projectTypes", kind: "multi", label: "Project type", options: PROJECT_TYPE_OPTIONS },
-  budget: { id: "budget", kind: "choice", label: "Budget", options: BUDGET_OPTIONS },
-  projectDetails: {
-    id: "projectDetails",
+  details: {
+    id: "details",
     kind: "textarea",
     label: "Project details",
-    placeholder: "We're building...",
+    placeholder: "What do you need? Pages, features, deadline, links to sites you like…",
   },
-  whatsapp: {
-    id: "whatsapp",
-    kind: "tel",
-    label: "WhatsApp",
-    placeholder: "WhatsApp number",
-    autoComplete: "tel",
-    optional: true,
-  },
-  company: {
-    id: "company",
-    kind: "text",
-    label: "Company",
-    placeholder: "Company or brand",
-    autoComplete: "organization",
-    optional: true,
-  },
+  budget: { id: "budget", kind: "choice", label: "Budget", options: asOptions(BUDGET_OPTIONS), optional: true },
+  timeline: { id: "timeline", kind: "choice", label: "Timeline", options: asOptions(TIMELINE_OPTIONS), optional: true },
   website: {
     id: "website",
-    kind: "text",
+    kind: "url",
     label: "Website",
-    placeholder: "Website, e.g. acme.com",
+    placeholder: "Your website, e.g. acme.com",
     autoComplete: "url",
+    optional: true,
+  },
+  link: {
+    id: "link",
+    kind: "url",
+    label: "Link",
+    placeholder: "Figma, Drive or brief link",
     optional: true,
   },
 };
 
-/** Review-grid order: the four required answers first, the optional
- * extras after. */
-const REVIEW_FIELDS: InquiryFieldId[] = [
-  "fullName",
-  "workEmail",
-  "projectTypes",
-  "budget",
-  "projectDetails",
-  "whatsapp",
-  "company",
-  "website",
-];
+/** Review-grid order: the required answers first, the optional ones after. */
+const REVIEW_FIELDS: InquiryFieldId[] = ["name", "email", "service", "details", "budget", "timeline", "website", "link"];
 
-type InquiryStepId = "contact" | "projectTypes" | "budget" | "projectDetails" | "extras";
+/** Fields whose typed value is rewritten to a full URL on commit. */
+const URL_FIELDS = new Set<InquiryFieldId>(["website", "link"]);
+
+type InquiryStepId = "contact" | "service" | "scope" | "details" | "extras";
 
 interface WizardStep {
   id: InquiryStepId;
@@ -950,41 +922,43 @@ function displayNameOf(fullName: string | undefined): string | null {
   return clean;
 }
 
-/** Four required screens, then one optional extras screen, then review. A
- * link from a package or a stack skips the screens it already answers. */
+/** Three required screens around one optional budget/timeline screen, then
+ * an optional extras screen, then review. A link that names a service (or
+ * a package/stack that implies one) skips the service screen. */
 const WIZARD_STEPS: WizardStep[] = [
   {
     id: "contact",
-    fields: ["fullName", "workEmail"],
+    fields: ["name", "email"],
     title: "Let's start with you.",
-    desc: "Your name, and where your proposal should land.",
+    desc: "Your name, and where your quote should land.",
   },
   {
-    id: "projectTypes",
-    fields: ["projectTypes"],
+    id: "service",
+    fields: ["service"],
     title: "What do you need?",
     titleWithName: (n) => `So ${n}, what are we building?`,
-    desc: "Select all that apply.",
+    desc: "Pick the closest fit.",
   },
   {
-    id: "budget",
-    fields: ["budget"],
-    title: "What's your budget range?",
-    titleWithName: (n) => `${n}, what budget are you working with?`,
-    desc: "Ballpark is fine — this helps us scope things right.",
+    id: "scope",
+    fields: ["budget", "timeline"],
+    title: "Budget and timeline?",
+    titleWithName: (n) => `${n}, what budget and timeline?`,
+    desc: "Optional. Ballpark is fine — this helps us scope things right.",
+    optional: true,
   },
   {
-    id: "projectDetails",
-    fields: ["projectDetails"],
+    id: "details",
+    fields: ["details"],
     title: "Tell us about the project.",
     titleWithName: (n) => `${n}, tell us about the project.`,
     desc: "The more detail, the better we can scope it.",
   },
   {
     id: "extras",
-    fields: ["whatsapp", "company", "website"],
+    fields: ["website", "link"],
     title: "Anything else that helps?",
-    desc: "Optional — WhatsApp for faster back-and-forth, plus your company and site.",
+    desc: "Optional — your current site, plus a Figma, Drive or brief link.",
     optional: true,
   },
 ];
@@ -999,27 +973,26 @@ const stepVariants: Variants = {
   exit: (dir: number) => ({ opacity: 0, x: dir > 0 ? -28 : 28, transition: { duration: 0.35, ease: EASE } }),
 };
 
-function isFieldEmpty(id: InquiryFieldId, values: InquiryValues): boolean {
+function isFieldEmpty(id: InquiryFieldId, values: QuoteValues): boolean {
   const v = values[id];
-  if (Array.isArray(v)) return v.length === 0;
   if (typeof v === "string") return v.trim().length === 0;
   return v == null;
 }
 
 /**
  * The one validation authority for a single answer: runs that field's own
- * slice of `inquirySchema`, so nothing can reach the review screen that the
+ * slice of `quoteSchema`, so nothing can reach the review screen that the
  * final submit would then reject. Returns the message to show, or null if
  * the answer is acceptable.
  */
-function fieldIssue(id: InquiryFieldId, values: InquiryValues): string | null {
+function fieldIssue(id: InquiryFieldId, values: QuoteValues): string | null {
   // Optional and untouched is a valid state — that's what Skip means.
   if (INQUIRY_FIELDS[id].optional && isFieldEmpty(id, values)) return null;
-  const result = inquiryFieldSchemas[id].safeParse(values[id]);
+  const result = quoteFieldSchemas[id].safeParse(values[id]);
   return result.success ? null : (result.error.issues[0]?.message ?? "Check this answer.");
 }
 
-function stepIssue(step: WizardStep, values: InquiryValues): string | null {
+function stepIssue(step: WizardStep, values: QuoteValues): string | null {
   for (const id of step.fields) {
     const issue = fieldIssue(id, values);
     if (issue) return issue;
@@ -1027,79 +1000,44 @@ function stepIssue(step: WizardStep, values: InquiryValues): string | null {
   return null;
 }
 
-function displayValue(id: InquiryFieldId, values: InquiryValues): string {
+function displayValue(id: InquiryFieldId, values: QuoteValues): string {
   const v = values[id];
-  if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
-  if (typeof v === "string") return v.trim() ? v : "—";
-  return "—";
+  if (typeof v !== "string" || !v.trim()) return "—";
+  return id === "service" ? serviceLabel(v) : v;
 }
-
-/** The old eleven-question wizard's answers, mapped onto the merged
- * project-type question. "Multiple Services" says nothing on its own. */
-const LEGACY_PROJECT_TYPES: Record<string, string> = {
-  "New Website": "New website",
-  "Website Redesign": "Website redesign",
-  "AI Automation": "AI automation",
-  "Brand Identity": "Branding & identity",
-  "Content Creation": "AI visuals & video",
-  "Growth Marketing": "SEO & marketing",
-  "Web & App Development": "Web app",
-  "Business Software": "Business software",
-  "Web app or software": "Web app",
-  "Branding & Identity": "Branding & identity",
-  "AI Product Visuals & Video": "AI visuals & video",
-  "SEO & Digital Marketing": "SEO & marketing",
-};
 
 /**
  * Turns whatever came out of localStorage into values this form can hold —
  * strings stay strings, choices must still be on offer, everything else is
- * dropped. Drafts from the previous wizard (separate project type and
- * services, timeline, goals) are folded into the new fields here, so a
- * visitor mid-way through the old form keeps their answers rather than
- * crashing the new one.
+ * dropped.
  */
-function sanitizeInquiryDraft(raw: Record<string, unknown>): Partial<InquiryValues> {
+function sanitizeInquiryDraft(raw: Record<string, unknown>): Partial<QuoteValues> {
   const str = (v: unknown) => (typeof v === "string" ? v : undefined);
-  const known = new Set<string>(PROJECT_TYPE_OPTIONS);
-  const types = new Set<string>();
-  const addType = (v: unknown) => {
-    if (typeof v !== "string") return;
-    const mapped = known.has(v) ? v : LEGACY_PROJECT_TYPES[v];
-    if (mapped) types.add(mapped);
-  };
-  for (const key of ["projectTypes", "serviceTypes"]) {
-    const list = raw[key];
-    if (Array.isArray(list)) list.forEach(addType);
-  }
-  addType(raw.projectType);
-  const budget = str(raw.budget);
+  const pick = <T extends string>(v: unknown, list: readonly T[]) =>
+    typeof v === "string" && (list as readonly string[]).includes(v) ? (v as T) : undefined;
   return {
-    fullName: str(raw.fullName),
-    workEmail: str(raw.workEmail),
-    whatsapp: str(raw.whatsapp),
-    company: str(raw.company),
+    name: str(raw.name),
+    email: str(raw.email),
+    service: isServiceSlug(raw.service) ? raw.service : undefined,
+    details: str(raw.details),
+    budget: pick(raw.budget, BUDGET_OPTIONS),
+    timeline: pick(raw.timeline, TIMELINE_OPTIONS),
     website: str(raw.website),
-    projectTypes: PROJECT_TYPE_OPTIONS.filter((t) => types.has(t)),
-    budget: budget && (BUDGET_OPTIONS as readonly string[]).includes(budget) ? budget : undefined,
-    projectDetails: str(raw.projectDetails),
+    link: str(raw.link),
     selection: str(raw.selection),
     src: cleanSrc(str(raw.src)),
   };
 }
 
-/** Reads the current draft, or migrates one left by the old wizard (and
- * deletes it, so it's read once). Returns null when there's nothing usable. */
-function loadInquiryDraft(): { values: Partial<InquiryValues>; step?: number } | null {
-  const current = readDraft<Record<string, unknown>>(INQUIRY_DRAFT_KEY);
-  const legacy = readDraft<Record<string, unknown>>(LEGACY_INQUIRY_DRAFT_KEY);
-  if (legacy) clearDraft(LEGACY_INQUIRY_DRAFT_KEY);
-  const draft = current ?? legacy;
+/** Reads the current draft, and deletes drafts the earlier forms left
+ * behind. Returns null when there's nothing usable. */
+function loadInquiryDraft(): { values: Partial<QuoteValues>; step?: number } | null {
+  RETIRED_DRAFT_KEYS.forEach(clearDraft);
+  const draft = readDraft<Record<string, unknown>>(INQUIRY_DRAFT_KEY);
   if (!draft) return null;
   const values = sanitizeInquiryDraft(draft.values as Record<string, unknown>);
   if (isDraftEmpty({ ...values, src: undefined } as Record<string, unknown>)) return null;
-  // A legacy step index pointed into a different list of questions.
-  return { values, step: current ? draft.step : undefined };
+  return { values, step: draft.step };
 }
 
 /** "Your selection" — what the visitor picked before landing here (a
@@ -1118,7 +1056,7 @@ function SelectionCard({
   return (
     <div className="relative z-10 mb-3 flex shrink-0 items-start justify-between gap-3 rounded-2xl border border-blue/40 bg-blue/10 px-4 py-2.5">
       <div className="min-w-0">
-        <p className="text-[0.6rem] font-bold uppercase tracking-[0.08em] text-blue">Your selection</p>
+        <p className="text-xs font-bold uppercase tracking-[0.08em] text-blue">Your selection</p>
         {heading && <p className="truncate text-[0.9rem] font-extrabold tracking-tight text-ink">{heading}</p>}
         {lines.map((line) => (
           <p key={line} className="truncate text-[0.72rem] font-semibold text-ink-soft">
@@ -1134,7 +1072,7 @@ function SelectionCard({
       <button
         type="button"
         onClick={onChange}
-        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue/25 px-3 py-1.5 text-[0.7rem] font-bold text-ink transition-colors hover:bg-blue/40"
+        className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue/25 px-3 py-1.5 text-xs font-bold text-ink transition-colors hover:bg-blue/40"
       >
         <Pencil className="h-3 w-3" />
         Change
@@ -1176,10 +1114,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
   const [direction, setDirection] = useState(1);
   /** Steps a package/stack link already answered. Hidden from the run of
    * questions until the visitor asks to change the selection. */
-  const [skipped, setSkipped] = useState<InquiryStepId[]>(() => [
-    ...(prefill?.projectTypes?.length ? (["projectTypes"] as const) : []),
-    ...(prefill?.budget ? (["budget"] as const) : []),
-  ]);
+  const [skipped, setSkipped] = useState<InquiryStepId[]>(() => (prefill?.service ? ["service"] : []));
   /** Off on mount (and on a restored draft) so the browser never auto-scrolls
    * the page to the field on load — flips on once the visitor actually
    * advances a step, so focus-follows-step still works while stepping
@@ -1199,10 +1134,10 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
   /** What the link set — applied on top of defaults, and on top of a
    * restored draft too: an explicit choice from the link beats an older
    * half-typed answer. */
-  const linkValues: Partial<InquiryValues> = {
-    ...(prefill?.projectTypes?.length ? { projectTypes: prefill.projectTypes } : {}),
+  const linkValues: Partial<QuoteValues> = {
+    ...(prefill?.service ? { service: prefill.service } : {}),
     ...(prefill?.budget ? { budget: prefill.budget } : {}),
-    ...(prefill?.details ? { projectDetails: prefill.details } : {}),
+    ...(prefill?.details ? { details: prefill.details } : {}),
     ...(prefill?.selection ? { selection: prefill.selection } : {}),
     ...(src ? { src } : {}),
   };
@@ -1220,9 +1155,9 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
     getValues,
     trigger,
     formState: { errors, isSubmitting },
-  } = useForm<InquiryValues>({
-    resolver: zodResolver(inquirySchema),
-    defaultValues: { projectTypes: [], ...linkValues },
+  } = useForm<QuoteValues>({
+    resolver: zodResolver(quoteSchema),
+    defaultValues: linkValues,
   });
   const values = watch();
 
@@ -1238,12 +1173,11 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
     const draft = loadInquiryDraft();
     if (draft) {
       const restoredValues = {
-        projectTypes: [],
         ...draft.values,
         ...linkValuesRef.current,
         // Never restore the honeypot — a stored value would look like a bot.
-        hp: "",
-      } as InquiryValues;
+        company_fax: "",
+      } as QuoteValues;
       reset(restoredValues);
       const steps = WIZARD_STEPS.filter((s) => !initialSkippedRef.current.includes(s.id));
       const firstOpen = steps.findIndex((s) => stepIssue(s, restoredValues));
@@ -1265,9 +1199,9 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
   // in the full step list, review being one past the end.
   useEffect(() => {
     if (!draftLoaded || status === "success") return;
-    // hp is dropped, never persisted — a stored honeypot value would come
+    // The honeypot is dropped, never persisted — a stored honeypot value would come
     // back looking like a bot filled the form.
-    const persisted: Partial<InquiryValues> = { ...values, hp: undefined };
+    const persisted: Partial<QuoteValues> = { ...values, company_fax: undefined };
     // src arrives with the link, not from the visitor — on its own it isn't a draft.
     if (isDraftEmpty({ ...persisted, src: undefined } as Record<string, unknown>)) return;
     const index = stepId === "review" ? WIZARD_STEPS.length : WIZARD_STEPS.findIndex((s) => s.id === stepId);
@@ -1294,7 +1228,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
 
   const startOver = () => {
     clearDraft(INQUIRY_DRAFT_KEY);
-    reset({ projectTypes: [], ...linkValuesRef.current });
+    reset(linkValuesRef.current);
     setRestored(false);
     setEditingId(null);
     goTo("contact", -1);
@@ -1305,7 +1239,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
   const currentIssue = isReview ? null : stepIssue(current, values);
   const canContinue = !currentIssue;
 
-  const displayName = displayNameOf(values.fullName);
+  const displayName = displayNameOf(values.name);
   const title = displayName ? (current.titleWithName?.(displayName) ?? current.title) : current.title;
 
   /** An optional screen that's still empty — the primary action is "move
@@ -1322,13 +1256,13 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
 
   /** Rewrites the answer to the form it will actually be sent in, so the
    * review screen shows what we got rather than what was typed. Only the
-   * website needs it today (bare domain → https://bare-domain). */
+   * URL fields need it (bare domain → https://bare-domain). */
   const normalizeAnswer = (id: InquiryFieldId) => {
-    if (id !== "website") return;
-    const typed = getValues("website");
-    if (!typed) return;
+    if (!URL_FIELDS.has(id)) return;
+    const typed = getValues(id);
+    if (typeof typed !== "string" || !typed) return;
     const normalized = normalizeWebsite(typed);
-    if (normalized !== typed) setValue("website", normalized, { shouldValidate: false });
+    if (normalized !== typed) setValue(id, normalized, { shouldValidate: false });
   };
 
   const nextAfter = (id: InquiryStepId): InquiryStepId | "review" => {
@@ -1346,11 +1280,14 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
     goTo(visibleSteps[stepIndex - 1].id, -1);
   };
 
-  /** A single-choice pick is the whole answer, so the step moves on by
-   * itself — after a beat, so the selection visibly lands first. Clicks
-   * and keyboard (Enter/Space on the pill) take the same path. */
+  /** On a one-question screen a pick is the whole answer, so the step moves
+   * on by itself — after a beat, so the selection visibly lands first.
+   * Clicks and keyboard (Enter/Space on the pill) take the same path.
+   * Picking the selected option of an optional question clears it. */
   const pickChoice = (id: InquiryFieldId, option: string) => {
-    setValue(id, option as never, { shouldValidate: true });
+    const clearing = INQUIRY_FIELDS[id].optional && getValues(id) === option;
+    setValue(id, (clearing ? undefined : option) as never, { shouldValidate: true });
+    if (clearing || current.fields.length > 1) return;
     if (advanceTimer.current) clearTimeout(advanceTimer.current);
     const from = current.id;
     const to = nextAfter(from);
@@ -1366,7 +1303,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
    * lost if they were still blank — Previous leads back to them, and the
    * review screen flags them before Send. */
   const changeSelection = () => {
-    const reopened = WIZARD_STEPS.find((s) => skipped.includes(s.id))?.id ?? "projectTypes";
+    const reopened = WIZARD_STEPS.find((s) => skipped.includes(s.id))?.id ?? "service";
     setSkipped([]);
     goTo(reopened, stepId === "contact" ? 1 : -1);
   };
@@ -1416,23 +1353,21 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
     if (next) document.getElementById(`${next}-wiz`)?.focus();
     else goNext();
   };
-  const toggleMulti = (option: string) => {
-    const list = getValues("projectTypes") ?? [];
-    const next = list.includes(option) ? list.filter((x) => x !== option) : [...list, option];
-    setValue("projectTypes", next, { shouldValidate: true });
-  };
-
-  const onSubmit = async (values: InquiryValues) => {
+  const onSubmit = async (values: QuoteValues) => {
     setStatus("idle");
+    setErrorMsg(null);
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, turnstileToken: botToken.current }),
+        body: JSON.stringify({ ...values, utm: readUtm(), turnstileToken: botToken.current }),
       });
       if (!res.ok) {
+        // A 500 means neither the database nor the backup email took the
+        // lead: no reason worth showing, just the direct channels. A 4xx
+        // carries its own reason (bot check, rate limit, a bad field).
         const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error ?? "");
+        throw new Error(res.status < 500 ? (data?.error ?? "") : "");
       }
       setStatus("success");
       trackEvent("contact_submit", { tab: "inquiry", src: values.src ?? null });
@@ -1455,7 +1390,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
    * failure opens that answer's inline editor instead of throwing the
    * visitor back into the wizard — the offending cell is already on screen,
    * flagged in magenta. */
-  const onInvalid = (formErrors: FieldErrors<InquiryValues>) => {
+  const onInvalid = (formErrors: FieldErrors<QuoteValues>) => {
     const firstKey = Object.keys(formErrors)[0] as InquiryFieldId;
     setStepId("review");
     if (firstKey in INQUIRY_FIELDS) openEditor(firstKey);
@@ -1479,43 +1414,41 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
       {/* Which CTA brought the visitor here — rides along to the email. */}
       <input {...register("src")} type="hidden" />
       {/* Honeypot — hidden from sighted and AT users, real visitors never fill it. */}
-      <input
-        {...register("hp")}
-        type="text"
-        tabIndex={-1}
-        autoComplete="off"
-        aria-hidden="true"
-        className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
-      />
+      <div aria-hidden="true" className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">
+        <label>
+          Fax
+          <input {...register("company_fax")} type="text" tabIndex={-1} autoComplete="off" />
+        </label>
+      </div>
 
       {status === "success" ? (
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-3 text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue text-white">
             <Check className="h-6 w-6" strokeWidth={2.5} />
           </span>
-          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Inquiry sent.</h2>
-          <p className="max-w-xs text-sm text-ink-soft">
-            We reply within 12 hours with next steps and a proposal.
-          </p>
+          <h2 className="max-w-sm text-2xl font-extrabold tracking-tight text-ink">
+            Got it. You&rsquo;ll have a fixed quote in your inbox within 24 hours.
+          </h2>
+          <AuditNudge />
         </div>
       ) : !isReview ? (
         <>
           {showSelection && (
             <SelectionCard
               selection={values.selection}
-              details={prefill?.details ? values.projectDetails : undefined}
+              details={prefill?.details ? values.details : undefined}
               onChange={changeSelection}
             />
           )}
           <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wide text-ink-soft">
+            <span className="text-xs font-bold uppercase tracking-wide text-ink-soft">
               Step {stepIndex + 1} of {visibleSteps.length + 1}
               {current.optional && " · optional"}
             </span>
             {/* Restoring silently would read as a bug ("why is my name
                already here?"), so say it happened and offer the escape hatch. */}
             {restored && (
-              <span className="flex items-center gap-2 text-[0.7rem] font-semibold text-ink-soft">
+              <span className="flex items-center gap-2 text-xs font-semibold text-ink-soft">
                 <span className="text-blue">Draft restored</span>
                 <button
                   type="button"
@@ -1552,7 +1485,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                 <div className={cn("flex flex-col", multiField ? "gap-3" : "gap-0")}>
                   {current.fields.map((id, i) => {
                     const field = INQUIRY_FIELDS[id];
-                    if (field.kind === "text" || field.kind === "email" || field.kind === "tel") {
+                    if (field.kind === "text" || field.kind === "email" || field.kind === "url") {
                       return (
                         <FloatingInput
                           key={id}
@@ -1580,15 +1513,20 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                       );
                     }
                     return (
-                      <div key={id} role="group" aria-label={field.label} className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                        {field.options?.map((opt) => (
-                          <OptionPill
-                            key={opt}
-                            label={opt}
-                            selected={field.kind === "multi" ? values.projectTypes?.includes(opt) ?? false : values[id] === opt}
-                            onClick={() => (field.kind === "multi" ? toggleMulti(opt) : pickChoice(id, opt))}
-                          />
-                        ))}
+                      <div key={id} role="group" aria-label={field.label}>
+                        {multiField && (
+                          <p className="mb-2 text-xs font-bold uppercase tracking-[0.08em] text-ink-soft">{field.label}</p>
+                        )}
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          {field.options?.map((opt) => (
+                            <OptionPill
+                              key={opt.value}
+                              label={opt.label}
+                              selected={values[id] === opt.value}
+                              onClick={() => pickChoice(id, opt.value)}
+                            />
+                          ))}
+                        </div>
                       </div>
                     );
                   })}
@@ -1641,7 +1579,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
       ) : (
         <div className="relative z-10 flex min-h-0 flex-1 flex-col justify-center">
           <div className="shrink-0">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wide text-ink-soft">
+            <span className="text-xs font-bold uppercase tracking-wide text-ink-soft">
               Step {visibleSteps.length + 1} of {visibleSteps.length + 1}
             </span>
             <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-ink sm:text-[1.7rem]">
@@ -1652,7 +1590,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
 
           {values.selection && (
             <p className="mt-3 truncate rounded-xl border border-blue/30 bg-blue/10 px-3 py-2 text-[0.75rem] font-semibold text-ink">
-              <span className="mr-1.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-blue">Selection</span>
+              <span className="mr-1.5 text-xs font-bold uppercase tracking-[0.08em] text-blue">Selection</span>
               {values.selection.split("\n").join(" · ")}
             </p>
           )}
@@ -1683,13 +1621,13 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                       className="col-span-full rounded-xl border border-blue/40 bg-white/[0.09] px-3 py-2.5"
                     >
                       <div className="flex items-center justify-between gap-3">
-                        <span className="text-[0.6rem] font-bold uppercase tracking-[0.08em] text-blue">
+                        <span className="text-xs font-bold uppercase tracking-[0.08em] text-blue">
                           {f.label}
                         </span>
                         <button
                           type="button"
                           onClick={() => closeEditor(true)}
-                          className="inline-flex items-center gap-1 rounded-full bg-blue/20 px-2.5 py-1 text-[0.65rem] font-bold text-ink transition-colors hover:bg-blue/35"
+                          className="inline-flex items-center gap-1 rounded-full bg-blue/20 px-2.5 py-1 text-xs font-bold text-ink transition-colors hover:bg-blue/35"
                         >
                           <Check className="h-3 w-3" strokeWidth={3} />
                           Done
@@ -1697,7 +1635,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                       </div>
 
                       <div className="mt-2">
-                        {(f.kind === "text" || f.kind === "email" || f.kind === "tel") && (
+                        {(f.kind === "text" || f.kind === "email" || f.kind === "url") && (
                           <input
                             {...register(id)}
                             type={f.kind}
@@ -1706,7 +1644,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                             autoComplete={f.autoComplete ?? "on"}
                             placeholder={f.placeholder}
                             onKeyDown={handleEditorKeyDown}
-                            className="focus-no-outline w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-soft/40 focus:border-blue"
+                            className="focus-no-outline w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-base font-semibold text-ink outline-none placeholder:font-normal sm:text-sm placeholder:text-ink-soft/40 focus:border-blue"
                           />
                         )}
 
@@ -1717,7 +1655,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                             autoFocus
                             aria-label={f.label}
                             placeholder={f.placeholder}
-                            className="focus-no-outline w-full resize-none rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm font-medium leading-relaxed text-ink outline-none placeholder:font-normal placeholder:text-ink-soft/40 focus:border-blue"
+                            className="focus-no-outline w-full resize-none rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-base font-medium leading-relaxed text-ink sm:text-sm outline-none placeholder:font-normal placeholder:text-ink-soft/40 focus:border-blue"
                           />
                         )}
 
@@ -1725,11 +1663,11 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                             {f.options?.map((opt) => (
                               <ReviewPill
-                                key={opt}
-                                label={opt}
-                                selected={values[id] === opt}
+                                key={opt.value}
+                                label={opt.label}
+                                selected={values[id] === opt.value}
                                 onClick={() => {
-                                  setValue(id, opt as never, { shouldValidate: true });
+                                  setValue(id, opt.value as never, { shouldValidate: true });
                                   // Single-answer question — picking *is* the
                                   // whole edit, so no separate confirm step.
                                   closeEditor(true);
@@ -1739,22 +1677,10 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                           </div>
                         )}
 
-                        {f.kind === "multi" && (
-                          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                            {f.options?.map((opt) => (
-                              <ReviewPill
-                                key={opt}
-                                label={opt}
-                                selected={values.projectTypes?.includes(opt) ?? false}
-                                onClick={() => toggleMulti(opt)}
-                              />
-                            ))}
-                          </div>
-                        )}
                       </div>
 
                       {fieldError && (
-                        <span className="mt-1.5 block text-[0.7rem] font-semibold text-magenta">{fieldError}</span>
+                        <span className="mt-1.5 block text-xs font-semibold text-magenta">{fieldError}</span>
                       )}
                     </div>
                   );
@@ -1775,7 +1701,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                       fieldError && "ring-1 ring-inset ring-magenta/60",
                     )}
                   >
-                    <span className="flex items-center gap-1.5 text-[0.6rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
+                    <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.08em] text-ink-soft">
                       {f.label}
                       <Pencil className="h-2.5 w-2.5 shrink-0 text-blue opacity-0 transition-opacity group-hover/cell:opacity-100 group-focus-visible/cell:opacity-100" />
                     </span>
@@ -1783,9 +1709,9 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                       className={cn(
                         "text-[0.82rem] font-semibold leading-snug",
                         fieldError ? "text-magenta" : "text-ink",
-                        // Multi-selects and the details textarea can run long;
+                        // The details textarea can run long;
                         // two clamped lines keep every cell the same height.
-                        f.kind === "textarea" || f.kind === "multi" ? "line-clamp-2" : "truncate",
+                        f.kind === "textarea" ? "line-clamp-2" : "truncate",
                       )}
                     >
                       {fieldError ?? displayValue(id, values)}
@@ -1802,10 +1728,11 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
               isSubmitting={isSubmitting}
               status={status}
               label="Send Inquiry"
-              successMsg="Inquiry sent — we reply within 12 hours."
-              errorMsg={errorMsg}
+              successMsg="Got it. Your quote is on its way."
+              errorMsg={errorMsg ?? <LeadFallback />}
               onStartOver={startOver}
             />
+            <AuditNudge className="mt-1" />
             <button
               type="button"
               onClick={() => goTo(visibleSteps[visibleSteps.length - 1].id, -1)}
@@ -1821,568 +1748,85 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
   );
 }
 
-type BookingStepId = "schedule" | "contact" | "prepare";
-
-interface BookingStep {
-  id: BookingStepId;
-  /** The schema fields this screen owns. */
-  fields: (keyof BookingValues)[];
-  title: string;
-  titleWithName?: (name: string) => string;
-  desc: string;
-}
-
-/** Calendar first: the slot is the thing a visitor came here for, so it's
- * the opening screen, and a call books on slot + name + email alone. The
- * qualifying questions follow as one optional screen the visitor can skip. */
-const BOOKING_STEPS: BookingStep[] = [
-  {
-    id: "schedule",
-    fields: ["slotUtc", "preferredDate", "preferredTime", "timeZone"],
-    title: "Pick a time for your free audit call.",
-    // Kept to one line at the card's width — the zone picker sits inside the
-    // scheduler, so this line doesn't have to explain it.
-    desc: `30 min · ${AVAILABILITY.callsCompact}`,
-  },
-  {
-    id: "contact",
-    fields: ["fullName", "email"],
-    title: "Who are we meeting?",
-    desc: "Your invite and audit notes land in this inbox.",
-  },
-  {
-    id: "prepare",
-    fields: ["website", "role", "auditFocus", "challenge", "budget", "timeline"],
-    title: "Help us prepare.",
-    titleWithName: (n) => `Help us prepare, ${n}.`,
-    desc: "All optional. Answer what's useful, or skip straight to booking.",
-  },
-];
-
-/** The "Help us prepare" questions, rendered as compact pill rows so all of
- * them fit on one screen. Single-answer rows toggle off on a second click —
- * nothing here is required, so an answer has to be retractable. */
-const PREPARE_QUESTIONS: {
-  field: "role" | "auditFocus" | "challenge" | "budget" | "timeline";
-  label: string;
-  options: readonly string[];
-  multi?: boolean;
-}[] = [
-  { field: "role", label: "Your role", options: ROLE_OPTIONS },
-  { field: "auditFocus", label: "What should we look at?", options: AUDIT_FOCUS_OPTIONS, multi: true },
-  { field: "challenge", label: "Biggest challenge", options: CHALLENGE_OPTIONS },
-  { field: "budget", label: "Budget", options: BUDGET_OPTIONS },
-  { field: "timeline", label: "When could you start?", options: TIMELINE_OPTIONS },
-];
-
-/** Same contract as `stepIssue` for the inquiry wizard: the first message to
- * show for this screen, or null when it can move on. Optional fields pass
- * when empty because their schemas allow it. */
-function bookingStepIssue(step: BookingStep, values: BookingValues): string | null {
-  for (const field of step.fields) {
-    const schema = bookingFieldSchemas[field as keyof typeof bookingFieldSchemas];
-    if (!schema) continue;
-    const result = schema.safeParse(values[field]);
-    if (!result.success) return result.error.issues[0]?.message ?? "Check this answer.";
-  }
-  return null;
-}
-
-function bookingFieldIssue(field: keyof BookingValues, values: BookingValues): string | null {
-  const v = values[field];
-  if (typeof v !== "string" || !v.trim()) return null;
-  const result = bookingFieldSchemas[field].safeParse(v);
-  return result.success ? null : (result.error.issues[0]?.message ?? "Check this answer.");
-}
-
-/** The first screen that still needs an answer — where a restored draft
- * resumes, so a reload never lands past a slot that has since expired. */
-function firstOpenBookingStep(values: BookingValues): number {
-  const index = BOOKING_STEPS.findIndex((s) => bookingStepIssue(s, values));
-  return index < 0 ? BOOKING_STEPS.length - 1 : index;
-}
-
-function BookingPanel({ src }: { src?: string }) {
-  const botToken = useRef<string | null>(null);
-  const [botReset, setBotReset] = useState(0);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
-  const [draftLoaded, setDraftLoaded] = useState(false);
-  const [restored, setRestored] = useState(false);
-  const [step, setStep] = useState(0);
-  const [direction, setDirection] = useState(1);
-  /** Off on mount (and on a restored draft) so the browser never auto-scrolls
-   * the page to the field on load — flips on once the visitor actually
-   * advances a step. */
-  const [autoFocusStep, setAutoFocusStep] = useState(false);
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    setValue,
-    getValues,
-    formState: { errors, isSubmitting },
-  } = useForm<BookingValues>({
-    resolver: zodResolver(bookingSchema),
-    defaultValues: { auditFocus: [], src },
-  });
-  const values = watch();
-
-  // Same draft behaviour as the inquiry wizard — a half-filled call request
-  // survives a reload. Drafts from the older twelve-question flow carry the
-  // same field names, so they restore as-is; only the step index changed
-  // meaning, which is why it's clamped to the first unanswered screen.
-  useEffect(() => {
-    const draft = readDraft<BookingValues>(BOOKING_DRAFT_KEY);
-    if (draft && !isDraftEmpty(draft.values as Record<string, unknown>)) {
-      const restoredValues = { ...draft.values, hp: "" } as BookingValues;
-      // The link the visitor just followed outranks the one in the draft.
-      restoredValues.src = src ?? cleanSrc(restoredValues.src);
-      if (!Array.isArray(restoredValues.auditFocus)) restoredValues.auditFocus = [];
-      // A slot that has since passed can't be booked. The instant is the one
-      // field worth testing — the date/time strings are only its local
-      // rendering, so they go with it.
-      const saved = restoredValues.slotUtc ? Date.parse(restoredValues.slotUtc) : NaN;
-      if (Number.isNaN(saved) || saved < Date.now()) {
-        restoredValues.slotUtc = "";
-        restoredValues.preferredDate = "";
-        restoredValues.preferredTime = "";
-      }
-      reset(restoredValues);
-      const savedStep = typeof draft.step === "number" ? draft.step : 0;
-      setStep(Math.max(0, Math.min(savedStep, firstOpenBookingStep(restoredValues))));
-      setRestored(true);
-    }
-    setDraftLoaded(true);
-  }, [reset, src]);
-
-  useEffect(() => {
-    if (!draftLoaded || status === "success") return;
-    const persisted: Partial<BookingValues> = { ...values, hp: undefined };
-    // timeZone is auto-detected and src comes with the link — neither is
-    // something the visitor typed, so on their own they aren't a draft.
-    const typed = { ...persisted, timeZone: undefined, src: undefined };
-    if (isDraftEmpty(typed as Record<string, unknown>)) return;
-    const timer = setTimeout(() => saveDraft(BOOKING_DRAFT_KEY, persisted, step), 400);
-    return () => clearTimeout(timer);
-  }, [values, step, draftLoaded, status]);
-
-  useEffect(() => {
-    if (!draftLoaded) return;
-    // Only as a default — a restored draft may hold a zone the visitor picked
-    // by hand, and auto-detect must not stomp on that.
-    if (getValues("timeZone")) return;
-    setValue("timeZone", detectTimeZone(), { shouldValidate: false });
-  }, [setValue, getValues, draftLoaded]);
-
-  const current = BOOKING_STEPS[step];
-
-  useEffect(() => {
-    if (status === "success") return;
-    trackEvent("contact_step", { tab: "booking", step: step + 1, stepName: BOOKING_STEPS[step].id });
-  }, [step, status]);
-  const currentIssue = bookingStepIssue(current, values);
-  const canContinue = !currentIssue;
-  const isLast = step === BOOKING_STEPS.length - 1;
-
-  const displayName = displayNameOf(values.fullName);
-  const title = displayName ? (current.titleWithName?.(displayName) ?? current.title) : current.title;
-
-  const startOver = () => {
-    clearDraft(BOOKING_DRAFT_KEY);
-    reset({ auditFocus: [], src: getValues("src") });
-    setRestored(false);
-    setDirection(-1);
-    setStep(0);
-  };
-
-  const normalizeSite = () => {
-    const typed = getValues("website");
-    if (!typed) return;
-    const normalized = normalizeWebsite(typed);
-    if (normalized !== typed) setValue("website", normalized, { shouldValidate: false });
-  };
-
-  const goTo = (index: number) => {
-    setDirection(index > step ? 1 : -1);
-    setAutoFocusStep(true);
-    setStep(index);
-  };
-  const goNext = () => {
-    if (!canContinue || isLast) return;
-    goTo(step + 1);
-  };
-  const goBack = () => {
-    if (step > 0) goTo(step - 1);
-  };
-  /** Enter on name jumps to email; Enter on the last field of a screen
-   * moves on. The prepare screen never submits on Enter — booking is an
-   * explicit click. */
-  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    if (current.id === "contact" && e.currentTarget.name === "fullName") {
-      document.getElementById("email-wiz")?.focus();
-      return;
-    }
-    if (current.id === "prepare") normalizeSite();
-    else goNext();
-  };
-  const pick = (field: (typeof PREPARE_QUESTIONS)[number]["field"], option: string, multi?: boolean) => {
-    if (multi) {
-      const list = (getValues("auditFocus") as string[] | undefined) ?? [];
-      setValue("auditFocus", list.includes(option) ? list.filter((x) => x !== option) : [...list, option], {
-        shouldValidate: true,
-      });
-      return;
-    }
-    setValue(field as "role", getValues(field as "role") === option ? "" : option, { shouldValidate: true });
-  };
-
-  const onSubmit = async (values: BookingValues) => {
-    setStatus("idle");
-    try {
-      const res = await fetch("/api/book", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...values,
-          website: values.website ? normalizeWebsite(values.website) : "",
-          turnstileToken: botToken.current,
-        }),
-      });
-      if (!res.ok) {
-        const data = (await res.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(data?.error ?? "");
-      }
-      setStatus("success");
-      trackEvent("contact_submit", { tab: "booking", src: values.src ?? null });
-      clearDraft(BOOKING_DRAFT_KEY);
-      setRestored(false);
-      reset({ auditFocus: [] });
-    } catch (error) {
-      setErrorMsg(error instanceof Error && error.message ? error.message : null);
-      setStatus("error");
-    } finally {
-      // Turnstile tokens are single-use: fetch a fresh one for a retry.
-      setBotReset((n) => n + 1);
-    }
-  };
-
-  /** A rejected field reopens the screen it lives on rather than failing
-   * silently on the last one. */
-  const onInvalid = (formErrors: FieldErrors<BookingValues>) => {
-    const firstKey = Object.keys(formErrors)[0];
-    const failing = BOOKING_STEPS.findIndex((s) => (s.fields as string[]).includes(firstKey));
-    if (failing >= 0 && failing !== step) goTo(failing);
-  };
-
-  /** Skip means skip: whatever was half-picked on the prepare screen is
-   * cleared before booking, so the email never carries answers the visitor
-   * chose not to give. */
-  const skipAndBook = () => {
-    setValue("website", "");
-    setValue("role", "");
-    setValue("auditFocus", []);
-    setValue("challenge", "");
-    setValue("budget", "");
-    setValue("timeline", "");
-    void handleSubmit(onSubmit, onInvalid)();
-  };
-
-  const slotLabel =
-    values.preferredDate && values.preferredTime
-      ? `${formatDateKeyLong(values.preferredDate)} · ${formatTimeKey(values.preferredTime)}`
-      : null;
-
+/** "Prefer to talk? Book a free 30-min audit →" — under the quote form's
+ * Send button and on its success screen. Opens the Cal.com popup. */
+function AuditNudge({ className }: { className?: string }) {
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit, onInvalid)}
-      noValidate
-      className="relative flex h-full min-h-[26rem] flex-col"
-    >
-      <WizardAmbience />
-      {/* Which CTA brought the visitor here — rides along to the email. */}
-      <input {...register("src")} type="hidden" />
-      {/* Honeypot — hidden from sighted and AT users. */}
-      <input
-        {...register("hp")}
-        type="text"
-        tabIndex={-1}
-        autoComplete="off"
-        aria-hidden="true"
-        className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
-      />
-
-      {status === "success" ? (
-        <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-3 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue text-white">
-            <Check className="h-6 w-6" strokeWidth={2.5} />
-          </span>
-          <h2 className="text-2xl font-extrabold tracking-tight text-ink">Free audit call (30 min) requested.</h2>
-          <p className="max-w-xs text-sm text-ink-soft">
-            We reply within 12 hours to confirm your slot and send a Google Meet link.
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="relative z-10 flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-            <span className="text-[0.7rem] font-bold uppercase tracking-wide text-ink-soft">
-              Step {step + 1} of {BOOKING_STEPS.length}
-              {isLast && " · optional"}
-            </span>
-            {restored && (
-              <span className="flex items-center gap-2 text-[0.7rem] font-semibold text-ink-soft">
-                <span className="text-blue">Draft restored</span>
-                <button
-                  type="button"
-                  onClick={startOver}
-                  className="underline decoration-ink-soft/40 underline-offset-2 transition-colors hover:text-ink"
-                >
-                  Start over
-                </button>
-              </span>
-            )}
-          </div>
-
-          {/* The slot rides along once it's picked: it's the one thing the
-             visitor is really confirming, so it stays in view (and
-             changeable) on every later screen instead of on a review page. */}
-          {step > 0 && slotLabel && (
-            <div className="relative z-10 mt-3 flex shrink-0 items-center justify-between gap-3 rounded-2xl border border-blue/40 bg-blue/10 px-4 py-2.5">
-              <div className="min-w-0">
-                <p className="text-[0.6rem] font-bold uppercase tracking-[0.08em] text-blue">
-                  Free audit call (30 min)
-                </p>
-                <p className="truncate text-[0.9rem] font-extrabold tracking-tight text-ink">{slotLabel}</p>
-                {values.timeZone && (
-                  <p className="truncate text-[0.7rem] font-semibold text-ink-soft">
-                    {values.timeZone.replace(/_/g, " ")} ({zoneOffsetLabel(values.timeZone)})
-                  </p>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => goTo(0)}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue/25 px-3 py-1.5 text-[0.7rem] font-bold text-ink transition-colors hover:bg-blue/40"
-              >
-                <Pencil className="h-3 w-3" />
-                Change
-              </button>
-            </div>
-          )}
-
-          {/* overflow-x-hidden is load-bearing, not decoration: `overflow-y:
-             auto` alone makes the x axis compute to `auto` as well, and the
-             step entrance slides in from x:+28 — so a horizontal scrollbar
-             flashed across the panel on every question change (and on first
-             paint, which is where it was most visible). */}
-          <div data-lenis-prevent className="relative z-10 flex-1 overflow-y-auto overflow-x-hidden">
-            <AnimatePresence mode="wait" custom={direction}>
-              <motion.div
-                key={step}
-                custom={direction}
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                className={cn(
-                  "flex flex-col gap-6 py-6",
-                  // The schedule and prepare screens carry several controls
-                  // at once: they keep a tighter rhythm and grow downward
-                  // from the top (centering a screen taller than the pane
-                  // pushes its headline up under the step counter) while the
-                  // parent scrolls them.
-                  current.id === "contact" ? "h-full justify-center sm:gap-10 sm:py-10" : "justify-start",
-                )}
-              >
-                <div>
-                  <h2
-                    className={cn(
-                      "font-extrabold leading-[1.12] tracking-tight text-ink",
-                      current.id === "contact" ? "text-[1.9rem] sm:text-[2.35rem]" : "text-[1.5rem] sm:text-[1.8rem]",
-                    )}
-                  >
-                    {title}
-                  </h2>
-                  <p className="mt-2 max-w-md text-sm leading-relaxed text-ink-soft sm:text-base">{current.desc}</p>
-                </div>
-
-                {current.id === "schedule" && (
-                  <SchedulePicker
-                    // A fixed fallback, never detectTimeZone() during render:
-                    // the server runs in UTC, so detecting here made the
-                    // server and browser disagree on first paint (React
-                    // #418). The effect above swaps in the visitor's own
-                    // zone right after mount.
-                    timeZone={values.timeZone || OFFICE_TIME_ZONE}
-                    onTimeZoneChange={(tz) => {
-                      setValue("timeZone", tz, { shouldValidate: true });
-                      // Same instant, new zone — so what the visitor "sees"
-                      // has to be restated, or later screens would quote the
-                      // slot's old wall-clock reading against the new zone.
-                      const iso = getValues("slotUtc");
-                      if (!iso) return;
-                      const instant = new Date(iso);
-                      if (Number.isNaN(instant.getTime())) return;
-                      setValue("preferredDate", zonedDateKey(instant, tz), { shouldValidate: true });
-                      setValue("preferredTime", zonedTimeKey(instant, tz), { shouldValidate: true });
-                    }}
-                    slotUtc={values.slotUtc ?? ""}
-                    // The instant is what's booked; the date/time strings are
-                    // the visitor's own reading of it, kept alongside so the
-                    // summary and the emails can quote what they saw.
-                    onSelect={({ slotUtc, dateKey, timeKey }) => {
-                      setValue("slotUtc", slotUtc, { shouldValidate: true });
-                      setValue("preferredDate", dateKey, { shouldValidate: true });
-                      setValue("preferredTime", timeKey, { shouldValidate: true });
-                    }}
-                  />
-                )}
-
-                {current.id === "contact" && (
-                  <div className="flex flex-col gap-3">
-                    <FloatingInput
-                      registration={register("fullName")}
-                      type="text"
-                      label="Your name"
-                      placeholder="Your name"
-                      error={bookingFieldIssue("fullName", values) ?? errors.fullName?.message}
-                      autoFocus={autoFocusStep}
-                      autoComplete="name"
-                      onKeyDown={handleEnter}
-                      compact
-                    />
-                    <FloatingInput
-                      registration={register("email")}
-                      type="email"
-                      label="Work email"
-                      placeholder="you@company.com"
-                      error={bookingFieldIssue("email", values) ?? errors.email?.message}
-                      autoComplete="email"
-                      onKeyDown={handleEnter}
-                      compact
-                    />
-                  </div>
-                )}
-
-                {current.id === "prepare" && (
-                  <div className="flex flex-col gap-4">
-                    <div>
-                      <p className="mb-1.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
-                        Site to audit
-                      </p>
-                      <FloatingInput
-                        registration={register("website", { onBlur: normalizeSite })}
-                        type="text"
-                        label="Site to audit"
-                        placeholder="acme.com"
-                        error={bookingFieldIssue("website", values) ?? errors.website?.message}
-                        autoComplete="url"
-                        onKeyDown={handleEnter}
-                        compact
-                      />
-                    </div>
-                    {PREPARE_QUESTIONS.map((q) => (
-                      <div key={q.field} role="group" aria-label={q.label}>
-                        <p className="mb-1.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-ink-soft">
-                          {q.label}
-                          {q.multi && <span className="ml-1 normal-case tracking-normal">· pick any</span>}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {q.options.map((opt) => {
-                            const v = values[q.field];
-                            const selected = Array.isArray(v) ? v.includes(opt) : v === opt;
-                            return (
-                              <ReviewPill
-                                key={opt}
-                                label={opt}
-                                selected={selected}
-                                onClick={() => pick(q.field, opt, q.multi)}
-                              />
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {isLast ? (
-            <div className="relative z-10 flex shrink-0 flex-col gap-1 pt-2">
-              <Turnstile onToken={(t) => (botToken.current = t)} resetSignal={botReset} />
-              <SubmitRow
-                isSubmitting={isSubmitting}
-                status={status}
-                label="Book call"
-                successMsg="Request sent — we'll confirm your slot shortly."
-                errorMsg={errorMsg}
-              />
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={goBack}
-                  className="focus-no-outline inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:text-ink focus-visible:text-ink"
-                >
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                  Previous
-                </button>
-                <button
-                  type="button"
-                  onClick={skipAndBook}
-                  disabled={isSubmitting}
-                  className="focus-no-outline rounded-full px-2 py-1.5 text-xs font-semibold text-ink underline decoration-ink-soft/40 underline-offset-4 transition-colors hover:decoration-ink focus-visible:decoration-ink disabled:opacity-50"
-                >
-                  Skip &amp; book
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="relative z-10 flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={goBack}
-                disabled={step === 0}
-                className={cn("btn-outline group min-w-[10.5rem]", step === 0 && "invisible")}
-              >
-                <ChevronLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-0.5" />
-                Previous
-              </button>
-              <button
-                type="button"
-                onClick={goNext}
-                disabled={!canContinue}
-                className={cn(
-                  // Exclusive, never stacked — .btn-outline's `background`
-                  // shorthand would wipe .btn-brand's gradient.
-                  !canContinue ? "btn-outline" : "btn-brand",
-                  "group min-w-[10.5rem]",
-                  !canContinue && "cursor-not-allowed",
-                )}
-              >
-                Continue
-                <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-              </button>
-            </div>
-          )}
-        </>
+    <CalLink
+      onClick={() => trackEvent("cta_click", { cta: "book", src: "contact-quote" })}
+      className={cn(
+        "focus-no-outline mx-auto flex w-fit items-center gap-1 rounded-full px-2 py-1 text-sm font-semibold text-ink-soft underline decoration-ink-soft/40 underline-offset-4 transition-colors hover:text-ink focus-visible:text-ink",
+        className,
       )}
-    </form>
+    >
+      Prefer to talk? Book a free 30-min audit &rarr;
+    </CalLink>
   );
 }
 
-function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
+const WHATSAPP_DIGITS = WHATSAPP_NUMBER.replace(/[^\d]/g, "");
+const QUICK_WHATSAPP_HREF = `https://wa.me/${WHATSAPP_DIGITS}?text=Hi%20Adib%2C%20quick%20question%3A`;
+const QUICK_EMAIL_HREF = `mailto:${CONTACT_EMAIL}?subject=Quick%20question`;
+
+/** Shown only when the quote reached neither the database nor the backup
+ * inbox: the visitor gets both direct channels instead of a dead end. */
+function LeadFallback() {
+  const link = "underline underline-offset-2 hover:text-ink";
+  return (
+    <>
+      Something went wrong. Please email{" "}
+      <a href={`mailto:${CONTACT_EMAIL}`} className={link}>
+        {CONTACT_EMAIL}
+      </a>{" "}
+      or{" "}
+      <a href={QUICK_WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" className={link}>
+        WhatsApp us
+      </a>
+      .
+    </>
+  );
+}
+
+/** The audit-call tab. Booking itself happens in the Cal.com popup. */
+function AuditPanel() {
+  const reduced = useReducedMotion();
+  return (
+    <div className="relative flex h-full min-h-[26rem] flex-col">
+      <WizardAmbience />
+      <motion.div
+        initial={reduced ? false : { opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: DURATIONS.quick, ease: EASE }}
+        className="relative z-10 flex flex-1 flex-col justify-center gap-8 py-6 sm:py-10"
+      >
+        <div>
+          <h2 className="text-[1.9rem] font-extrabold leading-[1.12] tracking-tight text-ink sm:text-[2.35rem]">
+            Pick a time for your free audit call.
+          </h2>
+          <p className="mt-3 max-w-md text-base leading-relaxed text-ink-soft">
+            30 minutes, free, no obligation. Choose a slot and the Google Meet invite lands in your inbox.
+          </p>
+        </div>
+        <CalLink
+          onClick={() => trackEvent("cta_click", { cta: "book", src: "contact-audit-tab" })}
+          className="btn-brand group w-fit"
+        >
+          <Calendar className="h-4 w-4" aria-hidden="true" />
+          {ctas.book.label}
+          <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+        </CalLink>
+      </motion.div>
+    </div>
+  );
+}
+
+function QuickChatPanel() {
   /** Which channel's value was last copied — cleared on a timer so both cards
    * share one "Copied" state without fighting each other. */
   const [copied, setCopied] = useState<"whatsapp" | "email" | null>(null);
   const reduced = useReducedMotion();
-  const pathname = usePathname();
-  const waRaw = formatPhone(footer.contact.whatsapp);
-  const email = footer.contact.email;
+  const waRaw = formatPhone(WHATSAPP_NUMBER);
+  const email = CONTACT_EMAIL;
 
   const copy = async (key: "whatsapp" | "email", value: string) => {
     try {
@@ -2418,11 +1862,11 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
           blurb="Fastest way to get a reply"
           badge="Fast reply"
           actionLabel="Open WhatsApp"
-          href={whatsappHref(siteGreeting(pathname))}
+          href={QUICK_WHATSAPP_HREF}
           onOpen={() => trackEvent("quick_question_click", { channel: "whatsapp" })}
           value={waRaw}
           copied={copied === "whatsapp"}
-          onCopy={() => copy("whatsapp", footer.contact.whatsapp)}
+          onCopy={() => copy("whatsapp", WHATSAPP_NUMBER)}
           copyAria="Copy WhatsApp number"
         />
         <ChannelCard
@@ -2433,7 +1877,7 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
           blurb="Best for detailed enquiries"
           badge="Best for details"
           actionLabel="Compose Email"
-          href={`mailto:${email}`}
+          href={QUICK_EMAIL_HREF}
           onOpen={() => trackEvent("quick_question_click", { channel: "email" })}
           value={email}
           copied={copied === "email"}
@@ -2442,25 +1886,16 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
         />
       </div>
 
-      {/* Response-time strip — sets the expectation the channel cards imply. */}
-      <motion.div
+      {/* Response-time line — sets the expectation the channel cards imply. */}
+      <motion.p
         {...rise(3)}
-        className="grid grid-cols-1 gap-4 rounded-2xl border border-white/12 bg-white/[0.05] p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] backdrop-blur-md sm:grid-cols-2 sm:divide-x sm:divide-white/12"
+        className="flex items-center gap-3 rounded-2xl border border-white/12 bg-white/[0.05] p-4 text-sm font-semibold text-ink shadow-[inset_0_1px_0_0_rgba(255,255,255,0.1)] backdrop-blur-md"
       >
-        <div className="flex items-center gap-3">
-          <Clock className="h-8 w-8 shrink-0 text-blue" strokeWidth={1.75} aria-hidden="true" />
-          <div className="flex flex-col">
-            <span className="text-xs font-semibold text-ink-soft">We reply</span>
-            <span className="font-avenir text-lg font-extrabold leading-tight text-blue">within 12 hours</span>
-          </div>
-        </div>
-        <div className="flex flex-col gap-0.5 sm:pl-4">
-          <span className="text-xs font-semibold text-ink-soft">Replies come</span>
-          <span className="font-avenir text-2xl font-extrabold leading-tight text-ink">7 days a week</span>
-        </div>
-      </motion.div>
+        <Clock className="h-5 w-5 shrink-0 text-blue" strokeWidth={1.75} aria-hidden="true" />
+        Usually replies within a few hours (GMT+6).
+      </motion.p>
 
-      {/* Fallback rail — routes the undecided visitor into the booking tab. */}
+      {/* Fallback rail — routes the undecided visitor to the audit call. */}
       <motion.div
         {...rise(4)}
         className="mt-auto flex flex-col items-start gap-3 rounded-2xl border border-white/12 bg-gradient-to-r from-blue/20 via-white/[0.06] to-magenta/20 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -2469,18 +1904,14 @@ function QuickChatPanel({ onBookCall }: { onBookCall: () => void }) {
           Still not sure? <span className="font-semibold text-ink">Book a free audit call</span> and let&rsquo;s
           discuss your goals.
         </p>
-        <button
-          type="button"
-          onClick={() => {
-            trackEvent("cta_click", { cta: "book", src: "contact-quick-question" });
-            onBookCall();
-          }}
+        <CalLink
+          onClick={() => trackEvent("cta_click", { cta: "book", src: "contact-quick-question" })}
           className="btn-brand btn-sm group shrink-0"
         >
           <Calendar className="h-4 w-4" aria-hidden="true" />
           {ctas.book.label}
           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
-        </button>
+        </CalLink>
       </motion.div>
     </div>
   );
@@ -2556,7 +1987,7 @@ function ChannelCard({
           <div className="flex items-start justify-between gap-2">
             <span className="font-avenir text-base font-bold leading-tight text-ink">{label}</span>
             <span
-              className="shrink-0 rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase tracking-wider"
+              className="shrink-0 rounded-full px-2 py-0.5 text-xs font-bold uppercase tracking-wider"
               style={{ backgroundColor: `${accent}24`, color: accent }}
             >
               {badge}

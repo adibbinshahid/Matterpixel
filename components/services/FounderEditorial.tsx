@@ -117,7 +117,7 @@ export function FounderEditorial() {
                   viewport={{ once: true, amount: 0.2 }}
                   transition={{ duration: 0.45, delay: i * 0.05, ease: EASE }}
                 >
-                  <dt className="font-mono text-[0.625rem] uppercase tracking-[0.16em] text-ink/35">
+                  <dt className="font-mono text-xs uppercase tracking-[0.16em] text-ink/35">
                     {a.label}
                   </dt>
                   <dd className="mt-1 text-sm font-bold leading-tight text-ink">

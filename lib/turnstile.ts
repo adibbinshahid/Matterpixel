@@ -12,8 +12,9 @@ export function tokenFrom(body: unknown): string | undefined {
 /**
  * Server half of the Turnstile check. Returns true when the token is
  * valid — or when TURNSTILE_SECRET_KEY isn't configured, so the forms keep
- * working until the keys are added. Fails closed on a network error once
- * the check is switched on.
+ * working until the keys are added. Fails open on a network error: a
+ * Cloudflare outage must not turn away real leads (the honeypot and rate
+ * limit still stand). An explicit "this token is bad" still rejects.
  */
 export async function verifyTurnstile(token: string | undefined, ip: string): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
@@ -29,6 +30,6 @@ export async function verifyTurnstile(token: string | undefined, ip: string): Pr
     return data.success === true;
   } catch (error) {
     logger.error("turnstile.unreachable", { ip, error: error instanceof Error ? error.message : String(error) });
-    return false;
+    return true;
   }
 }

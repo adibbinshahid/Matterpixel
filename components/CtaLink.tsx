@@ -4,6 +4,7 @@ import type { ComponentProps } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
+import { CalLink } from "@/components/CalLink";
 import { ctas, ctaHref, type CtaKind } from "@/content/siteConfig";
 import { sourceFor, trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,9 @@ export const TEXT_LINK =
  * (`className` carries any per-surface modifier such as `btn-on-magenta`);
  * `text` is the secondary text link; `inline` is a link inside running
  * copy, styled entirely by `className`.
+ *
+ * `book` opens the Cal.com audit popup (a real cal.com link underneath);
+ * `quote` goes to the /contact form.
  *
  * `section` names where the CTA sits. With the page it becomes the link's
  * `src` (e.g. `services-stack`), which the contact hub carries through to
@@ -52,18 +56,31 @@ export function CtaLink({
     if (!e.defaultPrevented) trackEvent("cta_click", { cta, src });
   };
 
-  if (variant !== "primary") {
+  const classes = cn(variant === "primary" ? "btn-brand group" : variant === "text" && TEXT_LINK, className);
+  const content = (
+    <>
+      {text}
+      {variant === "primary" && (
+        <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+      )}
+    </>
+  );
+
+  if (cta === "book") {
+    // Drop next/link's routing props; the rest are plain anchor attributes.
+    /* eslint-disable @typescript-eslint/no-unused-vars */
+    const { prefetch, replace, scroll, shallow, passHref, legacyBehavior, locale, onNavigate, ...anchorProps } = rest;
+    /* eslint-enable @typescript-eslint/no-unused-vars */
     return (
-      <Link href={href} onClick={handleClick} className={cn(variant === "text" && TEXT_LINK, className)} {...rest}>
-        {text}
-      </Link>
+      <CalLink onClick={handleClick} className={classes} {...(anchorProps as ComponentProps<"a">)}>
+        {content}
+      </CalLink>
     );
   }
 
   return (
-    <Link href={href} onClick={handleClick} className={cn("btn-brand group", className)} {...rest}>
-      {text}
-      <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+    <Link href={href} onClick={handleClick} className={classes} {...rest}>
+      {content}
     </Link>
   );
 }

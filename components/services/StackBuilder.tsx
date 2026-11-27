@@ -98,7 +98,7 @@ function StackCard({
       type="button"
       aria-pressed={selected}
       onClick={(e) => onToggle(e.currentTarget)}
-      className={`group relative flex h-full w-full flex-col rounded-2xl border p-5 text-left transition-[border-color,background-color,box-shadow] duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${
+      className={`group relative flex h-full w-full flex-col rounded-2xl border p-4 text-left transition-[border-color,background-color,box-shadow,scale] duration-300 active:scale-[0.98] sm:p-5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue ${
         selected
           ? "border-blue bg-blue/[0.06] shadow-[0_0_0_1px_var(--blue),0_14px_32px_-18px_rgba(44,75,255,0.6)]"
           : "border-line bg-white hover:border-blue/50"
@@ -106,7 +106,7 @@ function StackCard({
     >
       <span className="flex items-start justify-between gap-3">
         <span
-          className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300 ${
+          className={`flex h-9 w-9 items-center justify-center rounded-full transition-colors duration-300 sm:h-10 sm:w-10 ${
             selected ? "bg-blue text-white" : "bg-blue/10 text-blue"
           }`}
         >
@@ -121,11 +121,11 @@ function StackCard({
           <Check className="h-3.5 w-3.5" strokeWidth={3} />
         </span>
       </span>
-      <span className="mt-4 text-base font-bold tracking-tight text-ink">{item.name}</span>
-      <span className="mt-1 flex-1 text-sm leading-snug text-ink-soft">{item.benefit}</span>
-      <span className="mt-4 font-avenir text-sm font-extrabold text-blue">
+      <span className="mt-3 text-[0.9375rem] font-bold leading-tight tracking-tight text-ink sm:mt-4 sm:text-base">{item.name}</span>
+      <span className="mt-1 flex-1 text-[0.8125rem] leading-snug text-ink-soft sm:text-sm">{item.benefit}</span>
+      <span className="mt-3 font-avenir text-sm font-extrabold text-blue sm:mt-4">
         {formatItemPrice(item)}
-        {item.monthly && <span className="ml-1 font-sans text-xs font-semibold text-ink-soft">· {item.monthly.note}</span>}
+        {item.monthly && <span className="block font-sans text-xs font-semibold text-ink-soft sm:ml-1 sm:inline">· {item.monthly.note}</span>}
       </span>
     </button>
   );
@@ -269,8 +269,10 @@ export function StackBuilder() {
     <div>
       <SectionHeading eyebrow="Need more than one?" title="Build your own stack." />
 
-      <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" aria-label="Services to add to your stack">
+      <div className="mt-6 grid gap-6 sm:mt-10 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        {/* Two-up from the smallest phone: eleven full-width cards ran four
+            screens long. */}
+        <ul className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-3" aria-label="Services to add to your stack">
           {stackItems.map((item) => (
             <li key={item.id} data-reveal="block">
               <StackCard id={item.id} selected={ids.includes(item.id)} onToggle={(from) => toggle(item.id, from)} />
@@ -282,11 +284,11 @@ export function StackBuilder() {
           ref={asideRef}
           data-reveal="block"
           aria-label="Your stack"
-          className="panel-dark sticky bottom-3 z-20 -mx-2 rounded-[24px] p-4 sm:p-5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] sm:mx-0 lg:bottom-auto lg:top-28 lg:p-6"
+          className="panel-dark sticky bottom-[calc(var(--sticky-cta-h)+0.5rem)] z-20 -mx-2 rounded-[24px] p-4 sm:p-5 shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)] sm:mx-0 lg:bottom-auto lg:top-28 lg:p-6"
         >
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.14em] text-ink-soft">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-soft">
                 Your stack · {count} {count === 1 ? "item" : "items"}
               </p>
               {/* The visible total tweens between values; screen readers get
@@ -340,7 +342,15 @@ export function StackBuilder() {
             className={`mt-3 w-full justify-center lg:mt-4 ${count === 0 ? "pointer-events-none opacity-50" : ""}`}
             tabIndex={count === 0 ? -1 : undefined}
           />
-          <CtaLink section="stack" cta="book" variant="text" className="w-full justify-center text-sm text-ink" />
+          {/* Phones: the collapsed sheet is just total + quote, so it covers
+              as little of the cards as possible; the call link comes back
+              when the sheet is opened. */}
+          <CtaLink
+            section="stack"
+            cta="book"
+            variant="text"
+            className={`w-full justify-center text-sm text-ink ${sheetOpen ? "" : "max-lg:hidden"}`}
+          />
         </aside>
       </div>
     </div>

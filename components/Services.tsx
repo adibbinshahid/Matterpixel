@@ -20,9 +20,12 @@ function ServiceCard({ service }: { service: ServiceListing }) {
     <RevealItem className="h-full">
       <Link
         href={service.href}
-        className="glass-card glass-card-blue-hover hover-lift group flex h-full flex-col rounded-[var(--mp-radius-md)] border border-line/60 p-8 transition-colors duration-300 hover:border-blue"
+        className="glass-card glass-card-blue-hover grid-box hover-lift group flex h-full flex-col rounded-[var(--mp-radius-md)] p-5 transition-[color,border-color,scale] duration-300 active:scale-[0.985] sm:p-8"
       >
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-blue/10 text-blue transition-colors duration-300 group-hover:bg-white/20 group-hover:text-white">
+        {/* Phones: icon and name share a row, so six services read as a
+            tight list rather than six screen-tall panels. */}
+        <div className="flex items-center gap-4 sm:block">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue/10 text-blue transition-colors duration-300 group-hover:bg-white/20 group-hover:text-white sm:h-12 sm:w-12">
           <Icon
             className="h-5 w-5 group-hover:[animation:service-icon-loop_1.4s_ease-in-out_infinite]"
             strokeWidth={1.75}
@@ -30,18 +33,19 @@ function ServiceCard({ service }: { service: ServiceListing }) {
           />
         </span>
 
-        <h3 className="mt-6 text-h3 text-h3-strong text-ink transition-colors duration-300 group-hover:text-white">{service.title}</h3>
+        <h3 className="text-h3 text-h3-strong text-ink transition-colors duration-300 group-hover:text-white sm:mt-6">{service.title}</h3>
+        </div>
         <p className="mt-3 max-w-md flex-1 text-sm leading-relaxed text-ink-soft transition-colors duration-300 group-hover:text-white/80">
           {service.shortDesc}
         </p>
 
-        <div className="mt-6 flex items-center justify-between gap-3">
+        <div className="mt-4 flex items-center justify-between gap-3 sm:mt-6">
           <span className="inline-flex items-center gap-2 rounded-full border border-blue bg-blue px-3.5 py-1.5 transition-colors duration-300 group-hover:border-transparent group-hover:bg-white/20">
             {service.startingPrice === null ? (
               <span className="text-sm font-bold tracking-tight text-white">Custom quote</span>
             ) : (
               <>
-                <span className="text-[0.7rem] font-medium uppercase tracking-[0.08em] text-white/80">Starting at</span>
+                <span className="text-xs font-medium uppercase tracking-[0.08em] text-white/80">Starting at</span>
                 <span className="text-sm font-bold tracking-tight text-white">${service.startingPrice.toLocaleString()}</span>
               </>
             )}
@@ -85,7 +89,7 @@ export function Services({
         )}
 
         <RevealGroup
-          className={`grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-8 ${showHeading ? "mt-20 md:mt-28" : ""}`}
+          className={`grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 lg:gap-8 ${showHeading ? "mt-20 md:mt-28" : ""}`}
         >
           {serviceLineup.map((service) => (
             <ServiceCard key={service.key} service={service} />

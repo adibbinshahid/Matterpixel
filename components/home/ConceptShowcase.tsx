@@ -336,7 +336,7 @@ export function ConceptShowcase({ builds }: { builds: ConceptBuild[] }) {
 
 /**
  * Below md: the four builds as a 2×2 grid of thumbnail cards — the build's
- * real phone capture, its name and category, and its Lighthouse score —
+ * desktop capture, its name and category, and its Lighthouse score —
  * each opening the case study. No viewer: at this width it would crowd
  * the section past one screen.
  */
@@ -351,13 +351,15 @@ function ThumbGrid({ builds }: { builds: ConceptBuild[] }) {
             href={`/projects/${b.slug}`}
             className="group block overflow-hidden rounded-2xl border border-line bg-paper shadow-[0_18px_40px_-26px_rgba(11,12,14,0.45)] transition-[border-color,translate] duration-300 hover:-translate-y-0.5 hover:border-[var(--blue-ink)]"
           >
-            <span className="relative block aspect-[5/4] overflow-hidden bg-[#0f0f13]">
+            {/* The desktop capture at its own 16:10, uncropped: the build as
+                its homepage actually looks, not a phone shot cut to fit. */}
+            <span className="relative block aspect-[16/10] overflow-hidden bg-[#0f0f13]">
               <Image
-                src={b.mobile}
-                alt={`${b.name} on a phone`}
+                src={b.thumb}
+                alt={`${b.name} homepage`}
                 fill
                 loading="lazy"
-                sizes="(min-width: 640px) 180px, 50vw"
+                sizes="(min-width: 640px) 360px, 100vw"
                 className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-[1.04]"
               />
               <span className="absolute right-2 top-2 flex items-center gap-1 rounded-full bg-white/90 px-2 py-1 shadow-sm backdrop-blur">

@@ -30,17 +30,17 @@ export function WhiteLabel() {
           </h2>
           <p
             data-reveal="lede"
-            className="mt-5 max-w-[52ch] text-base leading-relaxed text-ink-soft max-md:text-[1.1875rem] max-md:font-semibold max-md:text-white md:text-lg"
+            className="mt-4 max-w-[52ch] text-[0.9375rem] font-normal leading-relaxed text-ink-soft max-md:text-white/85 md:mt-5 md:text-lg"
           >
             {whiteLabel.body}
           </p>
         </div>
 
         <div data-reveal="block">
-          <ul className="flex flex-col gap-3.5">
+          <ul className="flex flex-col gap-2.5 sm:gap-3.5">
             {whiteLabel.bullets.map((b) => (
-              <li key={b} className="flex items-start gap-3 text-base font-semibold text-ink sm:text-lg">
-                <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-magenta">
+              <li key={b} className="flex items-start gap-3 text-[0.9375rem] font-medium text-ink sm:text-lg sm:font-semibold">
+                <span className="mt-px flex h-5 w-5 shrink-0 sm:mt-0.5 sm:h-6 sm:w-6 items-center justify-center rounded-full bg-white text-magenta">
                   <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
                 </span>
                 {b}
@@ -50,20 +50,21 @@ export function WhiteLabel() {
           {/* Agencies talk to Adib directly — no form. Both links open with
               the same short template pre-typed. On magenta the magenta
               primary would vanish: the pill inverts to white. */}
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          {/* Phones: the two channels side by side, equal width. */}
+          <div className="mt-6 grid grid-cols-2 gap-2.5 sm:mt-8 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
             <PartnerLink
               channel="whatsapp"
               href={ctas.partner.whatsapp.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-brand btn-on-magenta group w-fit"
+              className="btn-brand btn-on-magenta group w-full max-sm:px-3 sm:w-fit"
             >
-              <SiWhatsapp className="h-4 w-4" aria-hidden="true" />
+              <SiWhatsapp className="h-4 w-4 shrink-0" aria-hidden="true" />
               {ctas.partner.whatsapp.label}
-              <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              <ArrowUpRight className="h-4 w-4 max-sm:hidden transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
             </PartnerLink>
-            <PartnerLink channel="email" href={ctas.partner.email.href} className="btn-outline group w-fit">
-              <Mail className="h-4 w-4" aria-hidden="true" />
+            <PartnerLink channel="email" href={ctas.partner.email.href} className="btn-outline wl-email group w-full max-sm:px-3 sm:w-fit">
+              <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
               {ctas.partner.email.label}
             </PartnerLink>
           </div>

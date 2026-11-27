@@ -6,7 +6,8 @@ import remarkGfm from "remark-gfm";
 import { ArrowLeft } from "lucide-react";
 import { Reveal, RevealGroup, RevealItem } from "@/components/Reveal";
 import { formatPostMeta, getAllPosts, getPostBySlug, slugifyHeading } from "@/lib/posts";
-import { brand, siteUrl } from "@/content/siteConfig";
+import { brand, ctas, siteUrl } from "@/content/siteConfig";
+import { CalLink } from "@/components/CalLink";
 import { LightPage } from "@/components/LightPage";
 import { PageHero } from "@/components/PageHero";
 import { InsightCard } from "@/components/InsightCard";
@@ -39,6 +40,10 @@ const mdxComponents = {
   li: (props: React.ComponentProps<"li">) => <li className="leading-relaxed" {...props} />,
   // Sources open in a new tab; internal links stay in place.
   a: ({ href = "", ...props }: React.ComponentProps<"a">) => {
+    // Audit-call links in posts open the Cal.com popup like every other one.
+    if (href === ctas.book.href) {
+      return <CalLink className="font-semibold text-blue underline-offset-4 hover:underline" {...props} />;
+    }
     const external = /^https?:\/\//.test(href);
     return (
       <a

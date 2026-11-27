@@ -5,6 +5,7 @@ import { useReveal } from "@/lib/useReveal";
 import { Hl } from "@/components/home/Hl";
 import { CtaLink } from "@/components/CtaLink";
 import type { CtaKind } from "@/content/siteConfig";
+import type { ServiceSlug } from "@/lib/schema";
 import { easeOutExpo, markCells, prefersReducedMotion, rng } from "@/lib/pixels";
 
 const COLS = 30;
@@ -189,6 +190,7 @@ export function ClosingCta({
   lede = <>Book a free audit and we&rsquo;ll show you exactly what&rsquo;s holding your growth back.</>,
   note,
   lead = "book",
+  service,
 }: {
   eyebrow?: string;
   title?: ReactNode;
@@ -197,18 +199,24 @@ export function ClosingCta({
   note?: ReactNode;
   /** Which action is the solid button; the other sits beside it as text. */
   lead?: CtaKind;
+  /** Pre-picks the quote form's service (`/contact?service=…`). */
+  service?: ServiceSlug;
 } = {}) {
   const sectionRef = useRef<HTMLElement>(null);
   useReveal(sectionRef);
   const second: CtaKind = lead === "book" ? "quote" : "book";
+  // Not on phones: there the sticky bottom bar already carries the same
+  // actions on every page, so a closing band would only repeat it before
+  // the footer.
   return (
-    <section ref={sectionRef} data-nav-scrim="light" aria-labelledby="closing-title" className="relative overflow-hidden">
+    <section ref={sectionRef} data-nav-scrim="light" aria-labelledby="closing-title" className="relative overflow-hidden max-md:hidden">
       <div className="home-shell relative py-16 md:py-24 lg:py-36">
-        {/* Copy left, M right at every width. On phones the CTA row drops
-            under both columns so the buttons keep their full width; from
-            sm it stays under the copy and the M spans both rows. */}
-        <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-center gap-x-4 gap-y-6 sm:gap-x-8 lg:gap-x-12">
-          <div className="relative col-start-1 row-start-1 max-w-[34rem] self-end">
+        {/* From sm: copy left, the M right spanning both rows. Phones: the
+            M sits above as a compact mark and the copy takes the full
+            width (side by side, it squeezed the headline into a third of
+            the screen). */}
+        <div className="grid grid-cols-1 items-center gap-x-4 gap-y-6 sm:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] sm:gap-x-8 lg:gap-x-12">
+          <div className="relative col-start-1 row-start-2 max-w-[34rem] self-end sm:row-start-1">
             <p
               data-reveal="eyebrow"
               className="flex items-center gap-2.5 text-xs font-semibold uppercase tracking-[0.16em] text-ink-soft"
@@ -219,23 +227,23 @@ export function ClosingCta({
             <h2
               id="closing-title"
               data-reveal="title"
-              className="mt-3 text-balance text-[clamp(1.625rem,0.9rem+3.8vw,5rem)] font-bold leading-[1.02] tracking-[-0.035em] text-white [text-shadow:0_2px_30px_rgba(10,11,16,0.6)] sm:mt-4"
+              className="mt-3 text-balance text-[clamp(2rem,0.9rem+3.8vw,5rem)] font-bold leading-[1.02] tracking-[-0.035em] text-white [text-shadow:0_2px_30px_rgba(10,11,16,0.6)] sm:mt-4"
             >
               {title}
             </h2>
-            <p data-reveal="lede" className="mt-3 max-w-[38ch] text-sm leading-relaxed text-white/80 sm:mt-6 sm:text-lg">
+            <p data-reveal="lede" className="mt-3 max-w-[38ch] text-base leading-relaxed text-white/80 sm:mt-6 sm:text-lg">
               {lede}
             </p>
           </div>
 
-          <div className="pointer-events-none col-start-2 row-start-1 w-full sm:row-span-2 sm:self-center lg:px-8">
+          <div className="pointer-events-none col-start-1 row-start-1 w-28 sm:col-start-2 sm:row-span-2 sm:w-full sm:self-center lg:px-8">
             <PixelMark />
           </div>
 
-          <div className="col-span-2 row-start-2 sm:col-span-1 sm:col-start-1 sm:self-start">
+          <div className="col-start-1 row-start-3 sm:row-start-2 sm:self-start">
             <div data-reveal="block" className="flex flex-wrap items-center gap-x-6 gap-y-3 sm:mt-3">
-              <CtaLink section="closing" cta={lead} className="w-fit" />
-              <CtaLink section="closing" cta={second} variant="text" className="text-white" />
+              <CtaLink section="closing" cta={lead} params={{ service }} className="w-fit" />
+              <CtaLink section="closing" cta={second} params={{ service }} variant="text" className="text-white" />
             </div>
             {note && (
               <p data-reveal="lede" className="mt-6 max-w-[42ch] text-sm leading-relaxed text-white/55">

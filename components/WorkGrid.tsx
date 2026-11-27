@@ -126,7 +126,7 @@ function CardWell({ project, index }: { project: WorkCard; index: number }) {
       />
       {/* Says "this moves" before anyone hovers to find out — the only cue a
           poster frame cannot give on its own. */}
-      <span className="pointer-events-none absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,19,0.72)] px-2.5 py-1 font-mono text-[11px] tracking-tight text-[#f5f3ee] backdrop-blur-sm">
+      <span className="pointer-events-none absolute left-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,19,0.72)] px-2.5 py-1 font-mono text-xs tracking-tight text-[#f5f3ee] backdrop-blur-sm">
         <Play className="h-3 w-3" aria-hidden="true" />
         {lead.duration ?? "film"}
       </span>
@@ -196,7 +196,7 @@ function ProjectCard({ project, index, reduced }: { project: WorkCard; index: nu
         } as React.CSSProperties
       }
       className={cn(
-        "project-card group relative flex w-full flex-col rounded-[1.25rem] border border-line bg-paper p-3 shadow-[var(--shadow-resting)] will-change-[translate]",
+        "project-card grid-box group relative flex w-full flex-col rounded-[1.25rem] p-3 will-change-[translate]",
         "sm:w-[calc((100%-1.25rem)/2)] lg:w-[calc((100%-2.5rem)/3)]",
       )}
     >
@@ -234,7 +234,7 @@ function ProjectCard({ project, index, reduced }: { project: WorkCard; index: nu
             spans the card. */}
         <div className="flex flex-1 flex-col items-start gap-4 lg:flex-row">
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] font-bold uppercase leading-none tracking-[0.1em] text-[var(--accent)]">
+            <p className="text-xs font-bold uppercase leading-none tracking-[0.1em] text-[var(--accent)]">
               {project.sector}
               {project.medium === "website" && " · Concept build"}
             </p>
@@ -378,8 +378,12 @@ export function WorkGrid({ cards, lanes }: { cards: WorkCard[]; lanes: Lane[] })
 
   return (
     <div>
+      {/* Phones: one swipeable row that pins under the nav (and rides up
+          into its space when the nav tucks away), so the filter is always a
+          thumb away in a lane that runs a dozen screens. */}
+      <div className="z-30 -mx-6 bg-[color-mix(in_srgb,var(--paper)_82%,transparent)] py-2 backdrop-blur-xl transition-[top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] max-sm:sticky max-sm:top-[var(--nav-offset)] sm:mx-0 sm:bg-transparent sm:py-0 sm:backdrop-blur-none">
       <div
-        className="flex flex-wrap gap-2"
+        className="no-scrollbar flex gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain px-6 sm:flex-wrap sm:overflow-visible sm:px-0"
         role="tablist"
         aria-label="Filter builds by medium"
       >
@@ -393,7 +397,9 @@ export function WorkGrid({ cards, lanes }: { cards: WorkCard[]; lanes: Lane[] })
               role="tab"
               aria-selected={isActive}
               onClick={() => selectFilter(f.id)}
-              className="relative inline-flex min-h-11 items-center gap-2 rounded-full px-5 py-2 text-sm transition-colors duration-300"
+              // The active filter sits above its neighbours, so their black grid-box
+              // glow never paints over the blue pill.
+              className={`relative inline-flex min-h-11 shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-5 py-2 text-sm transition-[color,scale] duration-300 active:scale-[0.97] ${isActive ? "z-10" : "z-0"}`}
             >
               {/* Shared-layout pill: one element that travels between tabs
                   rather than four that cross-fade, so the selection reads as
@@ -418,11 +424,12 @@ export function WorkGrid({ cards, lanes }: { cards: WorkCard[]; lanes: Lane[] })
                 {count}
               </span>
               {!isActive && (
-                <span className="absolute inset-0 rounded-full border border-line transition-colors duration-300 hover:border-blue" />
+                <span className="grid-box absolute inset-0 rounded-full transition-colors duration-300" />
               )}
             </button>
           );
         })}
+      </div>
       </div>
 
       {/* Four builds and the empty notice are ~800px apart in height, so a
@@ -435,7 +442,7 @@ export function WorkGrid({ cards, lanes }: { cards: WorkCard[]; lanes: Lane[] })
           the box must not clip, or it would cut off the cards' hover lift
           and their resting shadow. */}
       <motion.div
-        className="mt-10"
+        className="mt-6 sm:mt-10"
         style={{ overflow: switching ? "hidden" : "visible" }}
         animate={{ height: laneHeight ?? "auto" }}
         transition={switching && !reduced ? { duration: 0.4, ease: EASE } : { duration: 0 }}

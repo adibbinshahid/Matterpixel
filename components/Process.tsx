@@ -221,7 +221,7 @@ export function Process() {
                 className="group relative flex min-w-11 flex-col items-center gap-1 outline-none"
               >
                 <span
-                  className={`text-[0.6rem] font-semibold uppercase tracking-[0.15em] transition-colors duration-300 ${
+                  className={`text-xs font-semibold uppercase tracking-[0.15em] transition-colors duration-300 ${
                     isActive ? "text-ink" : "text-ink-soft/70 group-hover:text-ink-soft"
                   }`}
                 >

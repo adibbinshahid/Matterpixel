@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { PixelPager } from "@/components/ui/PixelPager";
 import {
   ArrowUpRight,
   ChevronLeft,
@@ -142,10 +143,23 @@ export function WhoWeWorkFor() {
   // users swipe; mouse users in a narrow window need the buttons).
   const rowRef = useRef<HTMLUListElement>(null);
   const [edge, setEdge] = useState({ start: true, end: false });
+  const [at, setAt] = useState(0);
   const onRowScroll = () => {
     const row = rowRef.current;
     if (!row) return;
     setEdge({ start: row.scrollLeft < 8, end: row.scrollLeft + row.clientWidth > row.scrollWidth - 8 });
+    const card = row.firstElementChild as HTMLElement | null;
+    if (!card) return;
+    // The last card can't scroll to the start edge, so the end of the row
+    // counts as the last card.
+    const atEnd = row.scrollLeft + row.clientWidth > row.scrollWidth - 8;
+    setAt(atEnd ? row.children.length - 1 : Math.round(row.scrollLeft / (card.offsetWidth + 12)));
+  };
+  const goTo = (i: number) => {
+    const row = rowRef.current;
+    const card = row?.children[i] as HTMLElement | undefined;
+    if (!row || !card) return;
+    row.scrollTo({ left: row.scrollLeft + card.getBoundingClientRect().left - row.getBoundingClientRect().left - 24, behavior: "smooth" });
   };
   const step = (dir: 1 | -1) => {
     const row = rowRef.current;
@@ -172,13 +186,13 @@ export function WhoWeWorkFor() {
           ref={rowRef}
           onScroll={onRowScroll}
           data-hscroll
-          className="no-scrollbar -mx-6 mt-6 flex snap-x snap-mandatory scroll-px-6 gap-3 overflow-x-auto px-6 pb-1 sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 md:mt-8 lg:grid-cols-3 xl:mt-10 xl:auto-rows-[clamp(210px,26svh,300px)] xl:grid-cols-4 xl:gap-4"
+          className="no-scrollbar -mx-6 mt-0 flex snap-x snap-mandatory scroll-px-6 gap-3 overflow-x-auto overflow-y-hidden overscroll-x-contain px-6 pb-7 pt-6 max-sm:-mb-6 sm:mx-0 sm:mt-6 sm:pt-0 sm:grid sm:grid-cols-2 sm:gap-3 sm:overflow-visible sm:px-0 sm:pb-0 md:mt-8 lg:grid-cols-3 xl:mt-10 xl:auto-rows-[clamp(210px,26svh,300px)] xl:grid-cols-4 xl:gap-4"
         >
           {INDUSTRIES.map((ind, i) => (
             <li
               key={ind.label}
               data-reveal="block"
-              className={`bento-tile group relative isolate flex flex-col overflow-hidden rounded-[20px] border border-white/10 p-5 max-sm:min-h-[240px] max-sm:w-[80vw] max-sm:max-w-[320px] max-sm:shrink-0 max-sm:snap-start max-sm:pt-[4.75rem] sm:p-5 xl:justify-start xl:rounded-[22px] xl:p-7 xl:pt-[4.5rem] ${ind.span}`}
+              className={`bento-tile group relative isolate flex flex-col overflow-hidden rounded-[20px] grid-stroke p-5 max-sm:min-h-[240px] max-sm:w-[80vw] max-sm:max-w-[320px] max-sm:shrink-0 max-sm:snap-start max-sm:pt-[4.75rem] sm:p-5 xl:justify-start xl:rounded-[22px] xl:p-7 xl:pt-[4.5rem] ${ind.span}`}
             >
               <Image
                 src={ind.image}
@@ -201,7 +215,7 @@ export function WhoWeWorkFor() {
                 </span>
                 {ind.label}
                 {ind.tag && (
-                  <span className="rounded-full border border-white/30 px-2.5 py-1 text-[0.6875rem] font-bold uppercase leading-none tracking-[0.12em] text-white/90">
+                  <span className="rounded-full border border-white/30 px-2.5 py-1 text-xs font-bold uppercase leading-none tracking-[0.12em] text-white/90">
                     {ind.tag}
                   </span>
                 )}
@@ -240,14 +254,23 @@ export function WhoWeWorkFor() {
             </li>
           ))}
         </ul>
-        <div className="mt-4 flex items-center justify-end gap-2 sm:hidden">
+        <div className="mt-3 flex items-center justify-between gap-2 sm:hidden">
+          <PixelPager
+            count={INDUSTRIES.length}
+            index={at}
+            onSelect={goTo}
+            controls="industries-list"
+            itemLabel="industry"
+          />
+          {/* Touch swipes; the arrows are for a mouse in a narrow window. */}
+          <div className="flex gap-2 pointer-coarse:hidden">
           <button
             type="button"
             aria-controls="industries-list"
             aria-label="Previous industry"
             disabled={edge.start}
             onClick={() => step(-1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white transition-[opacity,border-color] hover:border-white/40 disabled:opacity-30"
+            className="grid-box flex h-11 w-11 items-center justify-center rounded-full text-white transition-[opacity,border-color] disabled:opacity-30"
           >
             <ChevronLeft className="h-5 w-5" aria-hidden="true" />
           </button>
@@ -257,10 +280,11 @@ export function WhoWeWorkFor() {
             aria-label="Next industry"
             disabled={edge.end}
             onClick={() => step(1)}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white transition-[opacity,border-color] hover:border-white/40 disabled:opacity-30"
+            className="grid-box flex h-11 w-11 items-center justify-center rounded-full text-white transition-[opacity,border-color] disabled:opacity-30"
           >
             <ChevronRight className="h-5 w-5" aria-hidden="true" />
           </button>
+          </div>
         </div>
       </div>
     </PixelSection>

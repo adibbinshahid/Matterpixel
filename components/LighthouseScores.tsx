@@ -212,16 +212,17 @@ function ScoreBoxes({ scores }: { scores: Scores }) {
           <div
             key={c.key}
             style={{ "--band": bandColor(score) } as React.CSSProperties}
-            className="project-card-score flex flex-col items-center justify-center rounded-[var(--mp-radius-sm)] border border-line bg-paper px-2 py-3 text-center"
+            className="project-card-score flex flex-col-reverse items-center justify-end rounded-[var(--mp-radius-sm)] border border-line bg-paper px-1 py-2.5 text-center sm:flex-col sm:justify-center sm:px-2 sm:py-3"
           >
-            {/* nowrap, not a wrap-tolerant label: "Best Practices" is the
-                only category that breaks, and letting it break made the
-                bottom row of every 2x2 taller than the top one, so no two
-                scores in a card sat on the same baseline. */}
-            <dt className="whitespace-nowrap text-[10px] font-medium leading-none tracking-tight text-ink-soft">
+            {/* sm+: nowrap, not a wrap-tolerant label — "Best Practices" is
+                the only category that breaks, and letting it break made the
+                bottom row of every 2x2 taller than the top one. Phones: the
+                score sits on top (column-reverse), so the four numerals share
+                one baseline and a two-line label only extends downward. */}
+            <dt className="mt-1 text-xs font-medium leading-tight tracking-tight text-ink-soft sm:mt-0 sm:whitespace-nowrap sm:leading-none">
               {c.label}
             </dt>
-            <dd className="m-0 mt-1 text-2xl font-extrabold leading-none tabular-nums tracking-tight text-[var(--band)]">
+            <dd className="m-0 text-xl font-extrabold leading-none tabular-nums tracking-tight text-[var(--band)] sm:mt-1 sm:text-2xl">
               {score}
             </dd>
           </div>
@@ -250,7 +251,9 @@ export function LighthouseScores({
       className={cn(
         size === "lg"
           ? "flex items-start justify-between gap-3 sm:justify-start sm:gap-12"
-          : "grid grid-cols-2 gap-2",
+          : // Phones: one row of four, score over name, so a card's audit is
+            // a single strip instead of a 2x2 block taller than its copy.
+            "grid grid-cols-4 gap-1.5 sm:grid-cols-2 sm:gap-2",
         className,
       )}
     >

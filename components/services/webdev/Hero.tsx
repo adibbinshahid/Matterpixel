@@ -16,7 +16,7 @@ export function Hero({ service }: { service: Service }) {
     >
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <CtaLink section="hero" cta="book" />
-        <CtaLink section="hero" cta="quote" variant="text" className="text-ink" />
+        <CtaLink section="hero" cta="quote" params={{ service: "website" }} variant="text" className="text-ink" />
       </div>
       <p className="mt-4 text-sm text-ink-soft">{service.processNote}</p>
       <Link

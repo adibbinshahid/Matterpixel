@@ -4,10 +4,12 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
+import { CalInit } from "@/components/CalInit";
 import { MotionConfig } from "motion/react";
 import { SmoothScrollProvider } from "@/components/SmoothScrollProvider";
 import { Nav } from "@/components/Nav";
 import { Footer } from "@/components/Footer";
+import { MobileStickyCta } from "@/components/home/MobileStickyCta";
 import { PageReveal } from "@/components/PageReveal";
 import { RouteTransition } from "@/components/RouteTransition";
 import { siteUrl, brand, WHATSAPP_NUMBER } from "@/content/siteConfig";
@@ -69,6 +71,9 @@ export const metadata: Metadata = {
     apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   manifest: "/site.webmanifest",
+  // Added to a phone's home screen, the site opens full-screen like an
+  // app, under a status bar that blends into the dark nav.
+  appleWebApp: { capable: true, title: "Matterpixel", statusBarStyle: "black-translucent" },
   // Google Search Console ownership check (HTML-tag method). Set the token
   // as GOOGLE_SITE_VERIFICATION in Vercel; absent, no tag is rendered.
   ...(process.env.GOOGLE_SITE_VERIFICATION
@@ -91,6 +96,12 @@ export const viewport: Viewport = {
   themeColor: "#0b0c0e",
   width: "device-width",
   initialScale: 1,
+  // Paint under the notch / home indicator; fixed chrome pads itself back
+  // out with env(safe-area-inset-*) (zero without this).
+  viewportFit: "cover",
+  // Android: the software keyboard shrinks the layout viewport, so
+  // dvh-sized and bottom-pinned UI moves above it instead of under it.
+  interactiveWidget: "resizes-content",
 };
 
 const organizationJsonLd = {
@@ -188,9 +199,11 @@ export default function RootLayout({
               </PageReveal>
             </main>
             <Footer />
+            <MobileStickyCta />
           </SmoothScrollProvider>
         </MotionConfig>
         <Analytics />
+        <CalInit />
       </body>
     </html>
   );

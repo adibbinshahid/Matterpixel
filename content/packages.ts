@@ -14,7 +14,7 @@
  * as 6 mid-count; `unit` sits beside it, `label` under it. */
 export type Stat = { value: number; decimals?: number; unit: string; label: string };
 
-import { BUDGET_OPTIONS, type PROJECT_TYPE_OPTIONS } from "@/lib/schema";
+import { BUDGET_OPTIONS, isServiceSlug, serviceLabel, type PROJECT_TYPE_OPTIONS, type ServiceSlug } from "@/lib/schema";
 
 type ProjectType = (typeof PROJECT_TYPE_OPTIONS)[number];
 
@@ -349,7 +349,7 @@ export function formatEstimate(e: StackEstimate) {
  * picked a package isn't asked a question the package already answers. */
 export function budgetForPrice(price: number): (typeof BUDGET_OPTIONS)[number] {
   if (price < 500) return BUDGET_OPTIONS[0];
-  if (price < 2000) return BUDGET_OPTIONS[1];
+  if (price < 1500) return BUDGET_OPTIONS[1];
   if (price < 5000) return BUDGET_OPTIONS[2];
   return BUDGET_OPTIONS[3];
 }
@@ -360,29 +360,43 @@ export type InquiryPrefill = {
   /** "Your selection" card: a heading line, then detail lines. Sent with
    * the inquiry as one plain-text block. */
   selection?: string;
-  projectTypes?: string[];
-  budget?: string;
+  service?: ServiceSlug;
+  budget?: (typeof BUDGET_OPTIONS)[number];
   details?: string;
+};
+
+/** The quote form's service for a package's or stack item's kind of work. */
+const SERVICE_FOR_PROJECT_TYPE: Record<ProjectType, ServiceSlug> = {
+  "New website": "website",
+  "Website redesign": "website",
+  "Web app": "web-app",
+  "Business software": "web-app",
+  "AI automation": "ai-automation",
+  "Branding & identity": "brand-visuals",
+  "AI visuals & video": "brand-visuals",
+  "SEO & marketing": "other",
+  "Something else": "other",
 };
 
 /**
  * The inquiry pre-fill for /contact. Built from params only, on the server,
  * so a shared link carries the whole request. Text is capped at the
- * inquiry schema's 2000-character limits.
+ * quote schema's limits (2000 for the selection, 3000 for details).
  */
 export function buildInquiryPrefill(params: {
   packageSlug?: string;
   stack?: string;
   details?: string;
+  service?: string;
 }): InquiryPrefill | undefined {
   const prefill: InquiryPrefill = {};
   const selection: string[] = [];
-  const types = new Set<string>();
+  const types: ProjectType[] = [];
 
   const pkg = getProblemPackage(params.packageSlug);
   if (pkg) {
     selection.push(`${pkg.name} package`, `From ${usd(pkg.priceFrom)} · fixed quote · ${pkg.timeline}`);
-    pkg.projectTypes.forEach((t) => types.add(t));
+    types.push(...pkg.projectTypes);
     prefill.budget = budgetForPrice(pkg.priceFrom);
   }
 
@@ -394,14 +408,22 @@ export function buildInquiryPrefill(params: {
     if (e.bundle) summary.push(BUNDLE_NOTE.toLowerCase());
     if (!selection.length) selection.push("Your stack");
     selection.push(e.items.map((i) => i.name).join(", "), `Estimate: ${summary.filter(Boolean).join(" · ")}`);
-    e.items.forEach((i) => i.projectType && types.add(i.projectType));
+    e.items.forEach((i) => i.projectType && types.push(i.projectType));
+  }
+
+  // An explicit `?service=` beats whatever a package or stack implies.
+  const service = isServiceSlug(params.service) ? params.service : types[0] && SERVICE_FOR_PROJECT_TYPE[types[0]];
+  if (service) {
+    prefill.service = service;
+    // A bare service link still gets the "Your selection" card, so the
+    // skipped question stays visible and changeable.
+    if (!selection.length) selection.push(serviceLabel(service));
   }
 
   if (selection.length) prefill.selection = selection.join("\n").slice(0, 2000);
-  if (types.size) prefill.projectTypes = [...types];
 
   const details = params.details?.trim();
-  if (details) prefill.details = details.slice(0, 2000);
+  if (details) prefill.details = details.slice(0, 3000);
 
   return Object.keys(prefill).length ? prefill : undefined;
 }

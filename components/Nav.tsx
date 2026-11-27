@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from "react"
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { ArrowUpRight, Mail } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import { Logo } from "@/components/Logo";
-import { nav } from "@/content/siteConfig";
+import { brand, nav, siteGreeting, whatsappHref } from "@/content/siteConfig";
 import { CtaLink } from "@/components/CtaLink";
 import { EASE } from "@/lib/utils";
 
@@ -65,12 +66,32 @@ export function Nav() {
   // visitor has scrolled a deliberate amount, for legibility over busy
   // content further down the page.
   const SCROLL_THRESHOLD = 120;
+  // Below lg the bar steps out of the way while reading (scrolling down)
+  // and comes straight back the moment the visitor scrolls up, the way a
+  // native app's toolbar does. A few px of hysteresis stops it flickering
+  // on a slow drag; it never hides near the top or while the menu is open.
+  const [tucked, setTucked] = useState(false);
+  const openRef = useRef(open);
+  openRef.current = open;
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > SCROLL_THRESHOLD);
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > SCROLL_THRESHOLD);
+      const dy = y - last;
+      if (Math.abs(dy) < 6) return;
+      setTucked(!openRef.current && dy > 0 && y > 160);
+      last = y;
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+  // Published for anything pinned under the bar (sticky filter rows), so it
+  // can ride up into the space the bar leaves instead of leaving a gap.
+  useEffect(() => {
+    document.documentElement.toggleAttribute("data-nav-tucked", tucked && !open);
+  }, [tucked, open]);
 
   // rootMargin shrinks the observed root to a thin band at the very top of
   // the viewport, roughly where the nav itself sits, so this reflects what's
@@ -109,15 +130,23 @@ export function Nav() {
     return () => io.disconnect();
   }, [pathname]);
 
-  const navTheme = overDarkHero ? "dark" : "light";
+  // The open menu is the night ground, so the bar reads light-on-dark.
+  const dark = overDarkHero || open;
+  const navTheme = dark ? "dark" : "light";
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50">
+    <header
+      className={`nav-header fixed inset-x-0 top-0 z-50 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+        tucked && !open ? "max-lg:-translate-y-full" : ""
+      }`}
+    >
       <nav
         data-nav-theme={navTheme}
-        // Phones: above the menu's backdrop, so the bar and its close button
-        // stay sharp while the page behind is dimmed.
-        className="nav-bar relative flex h-16 w-full items-center justify-between px-4 transition-colors duration-500 max-md:z-[95] sm:h-[4.992rem] sm:px-8"
+        // Phones: above the menu, so the bar and its close button stay sharp
+        // while the menu assembles behind them. Height includes the notch
+        // inset: the bar paints up under the status bar and its contents
+        // start below it.
+        className="nav-bar relative flex h-[calc(4rem+env(safe-area-inset-top))] w-full items-center justify-between px-4 pt-[env(safe-area-inset-top)] transition-colors duration-500 max-lg:z-[95] sm:h-[calc(4.992rem+env(safe-area-inset-top))] sm:px-8"
       >
         {/* Apple-glass bar — genuinely translucent (real backdrop-filter,
            not the opaque --glass-bg-strong material used elsewhere): blur +
@@ -140,13 +169,22 @@ export function Nav() {
         >
           <div className="nav-grain" />
         </div>
+        {/* Reading progress: a hairline along the bar's lower edge, blue
+           running into magenta. Driven by a CSS scroll timeline (no JS);
+           browsers without one simply never show it. */}
+        <div aria-hidden="true" className="nav-progress pointer-events-none absolute inset-x-0 bottom-0 h-px" />
 
         <Link href="/" className="relative flex min-h-11 items-center">
           {/* The full-size lockup renders ~240px wide — 61% of a 393px phone
              viewport — inside a bar that also has to hold the menu button.
              The smaller height below `sm` (~156px wide) leaves the bar
              breathing room and lets it shrink to h-16 with it. */}
-          <Logo forceLight={overDarkHero} priority imgId="nav-logo-mark" imgClassName="h-11 w-auto sm:h-[4.224rem]" />
+          {/* Below lg the bar is always dark (see .nav-bar in globals.css),
+              so the light lockup is fixed there; from lg it follows the
+              section behind the bar. CSS picks which one shows, so the
+              first server-rendered paint is already right. */}
+          <Logo forceLight priority className="lg:hidden" imgClassName="h-11 w-auto sm:h-[4.224rem]" />
+          <Logo forceLight={dark} imgId="nav-logo-mark" className="max-lg:hidden" imgClassName="h-11 w-auto sm:h-[4.224rem]" />
         </Link>
 
         {/* Absolutely centered on the bar itself, not `justify-between`'s
@@ -197,12 +235,17 @@ export function Nav() {
             ref={toggleRef}
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="nav-menu-btn hover-lift flex h-11 w-11 items-center justify-center rounded-full lg:hidden"
+            className="nav-menu-btn hover-lift flex h-11 w-11 items-center justify-center rounded-full active:scale-95 lg:hidden"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
             aria-controls="mobile-menu"
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {/* Two square-capped bars that fold into an X, rather than an
+               icon swap: the control visibly becomes its own opposite. */}
+            <span aria-hidden="true" className="nav-burger" data-open={open || undefined}>
+              <span />
+              <span />
+            </span>
           </button>
         </div>
       </nav>
@@ -212,18 +255,26 @@ export function Nav() {
   );
 }
 
+/** Menu open/close curve and timings. Opening is an expo-out curtain
+ * (fast start, long soft landing); closing is shorter and ease-in, so the
+ * page comes back the moment it is asked for. */
+const OPEN_EASE = [0.16, 1, 0.3, 1] as const;
+const CLOSE_EASE = [0.7, 0, 0.84, 0] as const;
+const OPEN_S = 0.42;
+const CLOSE_S = 0.24;
+
 /**
- * Compact glassmorphic dropdown anchored under the nav pill — not a
- * full-screen takeover. Backdrop dimmer + click-outside close, panel
- * itself is real frosted glass (translucent white, heavy backdrop-blur/
- * saturate, layered top-sheen + ambient shadow) rather than the nav
- * pill's own opaque --glass-bg tokens, since the ask here is specifically
- * "super glassmorphism" — content behind should actually show through.
+ * Phones and tablets: a full-screen takeover on the night ground. The
+ * panel drops in as a curtain from under the bar (a clip-path wipe, no
+ * layout work) while the links rise into place one after another, set
+ * large and left-aligned; closing lifts the curtain back in ~0.24s.
+ * Book, WhatsApp and email sit at the bottom, inside thumb reach, above
+ * the home indicator.
  *
- * A modal while open: Escape and a tap on the backdrop close it, Tab stays
- * inside it (the toggle, which reads "Close menu", counts as inside), and
- * focus goes back to the toggle when it closes. Below 768px the backdrop is
- * the page's dark ground at 70% with a blur, so the panel reads on its own.
+ * A modal while open: Escape closes it, Tab stays inside it (the toggle,
+ * which reads "Close menu", counts as inside), and focus goes back to the
+ * toggle when it closes. Reduced motion: the panel and links appear
+ * without travel (MotionConfig reducedMotion="user").
  */
 function MobileMenu({
   open,
@@ -234,9 +285,9 @@ function MobileMenu({
   onClose: () => void;
   toggleRef: RefObject<HTMLButtonElement | null>;
 }) {
+  const pathname = usePathname();
   const panelRef = useRef<HTMLDivElement>(null);
   const wasOpen = useRef(false);
-
   useEffect(() => {
     if (!open) {
       if (wasOpen.current) toggleRef.current?.focus({ preventScroll: true });
@@ -248,7 +299,6 @@ function MobileMenu({
       ...(toggleRef.current ? [toggleRef.current] : []),
       ...(panelRef.current?.querySelectorAll<HTMLElement>("a[href], button:not([disabled])") ?? []),
     ];
-    const first = requestAnimationFrame(() => focusables()[1]?.focus({ preventScroll: true }));
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
@@ -265,77 +315,113 @@ function MobileMenu({
       els[next].focus();
     };
     document.addEventListener("keydown", onKey);
-    return () => {
-      cancelAnimationFrame(first);
-      document.removeEventListener("keydown", onKey);
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose, toggleRef]);
+
+  // Links ride up into their line boxes just behind the curtain's edge;
+  // on close they don't animate out — the curtain takes them with it.
+  const rise = (i: number) => ({
+    initial: { y: "105%" },
+    animate: { y: "0%", transition: { duration: 0.5, delay: 0.06 + i * 0.035, ease: OPEN_EASE } },
+  });
+  const fade = (i: number) => ({
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.4, delay: 0.06 + i * 0.035, ease: OPEN_EASE } },
+  });
 
   return (
     <AnimatePresence>
       {open && (
-        <>
-          <motion.div
-            className="fixed inset-0 z-[85] bg-ink/20 max-md:bg-[#0b0c0e]/70 max-md:backdrop-blur-md lg:hidden"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25, ease: EASE }}
-            onClick={onClose}
+        <motion.div
+          ref={panelRef}
+          id="mobile-menu"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Site menu"
+          className="fixed inset-0 z-[90] bg-[#0b0c0e] lg:hidden"
+          initial={{ clipPath: "inset(0% 0% 100% 0%)" }}
+          animate={{ clipPath: "inset(0% 0% 0% 0%)", transition: { duration: OPEN_S, ease: OPEN_EASE } }}
+          exit={{ clipPath: "inset(0% 0% 100% 0%)", transition: { duration: CLOSE_S, ease: CLOSE_EASE } }}
+        >
+          {/* Light pools: blue low-left, magenta high-right. */}
+          <div aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-blue/25 blur-[120px]" />
+            <div className="absolute -right-20 top-24 h-64 w-64 rounded-full bg-magenta/20 blur-[120px]" />
+          </div>
+          {/* The curtain's leading edge: a blue-to-magenta hairline that
+              lands with the panel. */}
+          <div
             aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-[linear-gradient(90deg,var(--blue),var(--magenta))]"
           />
-          <motion.div
-            // Anchored just under the bar, which is h-16 (4rem) below `sm`
-            // and h-[4.992rem] above it — the panel is `lg:hidden`, so it
-            // has to track both of those, not just the desktop height.
-            ref={panelRef}
-            id="mobile-menu"
-            className="fixed inset-x-4 top-[5.25rem] z-[90] overflow-hidden rounded-[2rem] border border-white/50 sm:top-[6.25rem] lg:hidden"
-            style={{
-              background: "linear-gradient(165deg, rgba(255,255,255,0.75), rgba(255,255,255,0.45))",
-              backdropFilter: "blur(28px) saturate(180%)",
-              WebkitBackdropFilter: "blur(28px) saturate(180%)",
-              boxShadow:
-                "inset 0 1px 1px 0 rgba(255,255,255,0.8), inset 0 -1px 2px 0 rgba(0,0,0,0.06), 0 24px 60px -20px rgba(0,0,0,0.35), 0 8px 24px -12px rgba(0,0,0,0.25)",
-            }}
-            initial={{ opacity: 0, y: -16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.96 }}
-            transition={{ duration: 0.35, ease: EASE }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Site menu"
-          >
-            <ul className="flex flex-col p-3">
-              {nav.links.map((l, i) => (
-                <motion.li
-                  key={l.href}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: 0.06 + i * 0.04, ease: EASE }}
-                >
-                  <Link
-                    href={l.href}
-                    onClick={onClose}
-                    className="hover-lift font-avenir group flex items-center justify-between rounded-2xl px-4 py-3.5 text-base text-ink transition-colors duration-300 hover:bg-white/50"
-                  >
-                    {l.label}
-                    <ArrowRight className="h-4 w-4 text-ink-soft transition-transform duration-300 group-hover:translate-x-1" />
-                  </Link>
-                </motion.li>
-              ))}
-            </ul>
-            <div className="px-3 pb-3">
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: 0.06 + nav.links.length * 0.04, ease: EASE }}
-              >
+
+          {/* Content — scrolls on its own if a short landscape screen can't
+             hold it, without dragging the page behind. */}
+          <div className="relative flex h-full flex-col overflow-y-auto overscroll-contain px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[calc(4rem+env(safe-area-inset-top)+2rem)] sm:px-8 sm:pt-[calc(4.992rem+env(safe-area-inset-top)+2.5rem)]">
+            <nav aria-label="Site">
+              <ul className="flex flex-col">
+                {nav.links.map((l, i) => {
+                  const active = isActive(pathname, l.href);
+                  return (
+                    <li key={l.href} className="overflow-hidden border-b border-white/10">
+                      <motion.div {...rise(i)}>
+                        <Link
+                          href={l.href}
+                          onClick={onClose}
+                          aria-current={active ? "page" : undefined}
+                          className={`group flex min-h-16 items-center gap-3 py-3 text-[clamp(2rem,9vw,2.75rem)] font-bold leading-none tracking-[-0.03em] transition-[color,translate] duration-150 active:translate-x-1 ${
+                            active ? "text-white" : "text-white/70 active:text-white"
+                          }`}
+                        >
+                          {/* The current page carries the brand's square
+                             magenta pixel; the rest leave its slot empty so
+                             every label starts on one line. */}
+                          <span
+                            aria-hidden="true"
+                            className={`h-2.5 w-2.5 shrink-0 ${active ? "bg-magenta" : "bg-white/0"}`}
+                          />
+                          <span className="flex-1">{l.label}</span>
+                          <ArrowUpRight
+                            aria-hidden="true"
+                            className={`h-6 w-6 shrink-0 ${active ? "text-magenta" : "text-white/30"}`}
+                          />
+                        </Link>
+                      </motion.div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </nav>
+
+            {/* Thumb zone. */}
+            <div className="mt-auto pt-10">
+              <motion.div {...fade(nav.links.length)}>
                 <CtaLink section="nav-mobile" cta="book" onClick={onClose} className="btn-block" />
               </motion.div>
+              <motion.div {...fade(nav.links.length + 1)} className="mt-3 grid grid-cols-2 gap-3">
+                <a
+                  href={whatsappHref(siteGreeting(pathname))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.06] text-sm font-semibold text-white transition-[scale,background-color] duration-150 active:scale-[0.97] active:bg-white/10"
+                >
+                  <SiWhatsapp className="h-4 w-4 text-[#25D366]" aria-hidden="true" />
+                  WhatsApp
+                </a>
+                <a
+                  href={`mailto:${brand.email}`}
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.06] text-sm font-semibold text-white transition-[scale,background-color] duration-150 active:scale-[0.97] active:bg-white/10"
+                >
+                  <Mail className="h-4 w-4 text-[var(--blue-ink)]" aria-hidden="true" />
+                  Email
+                </a>
+              </motion.div>
+              <motion.p {...fade(nav.links.length + 2)} className="mt-4 text-center text-[0.8125rem] text-white/50">
+                {brand.replyPromise}
+              </motion.p>
             </div>
-          </motion.div>
-        </>
+          </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

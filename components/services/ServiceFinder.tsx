@@ -46,7 +46,10 @@ export function ServiceFinder({ firstSection = false }: { firstSection?: boolean
         <ProblemPicker packages={problemPackages} proofs={getPackageProofs()} firstSection={firstSection} />
       </div>
 
-      <div data-nav-light="" className="home-light home-section relative isolate overflow-hidden">
+      {/* overflow-clip, not -hidden: it trims the Aurora the same way but
+          isn't a scroll container, so the stack summary's position: sticky
+          still pins to the viewport. */}
+      <div data-nav-light="" className="home-light home-section relative isolate overflow-clip">
         <Aurora />
         <div className="home-shell">
           <StackBuilder />

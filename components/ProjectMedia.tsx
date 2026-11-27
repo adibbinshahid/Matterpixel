@@ -47,14 +47,14 @@ export function SpecStrip({
   className?: string;
 }) {
   return (
-    <dl className={cn("grid grid-cols-2 gap-1.5", className)}>
+    <dl className={cn("grid grid-cols-4 gap-1.5 sm:grid-cols-2", className)}>
       {specs.map((s) => (
         <div
           key={s.label}
           style={{ "--band": "var(--accent)" } as React.CSSProperties}
-          className="project-card-score flex flex-col items-center justify-center rounded-[var(--mp-radius-sm)] border border-line bg-paper px-2 py-3 text-center"
+          className="project-card-score flex flex-col-reverse items-center justify-end rounded-[var(--mp-radius-sm)] border border-line bg-paper px-1 py-2.5 text-center sm:flex-col sm:justify-center sm:px-2 sm:py-3"
         >
-          <dt className="whitespace-nowrap text-[10px] font-medium leading-none tracking-tight text-ink-soft">
+          <dt className="mt-1 text-xs font-medium leading-tight tracking-tight text-ink-soft sm:mt-0 sm:whitespace-nowrap sm:leading-none">
             {s.label}
           </dt>
           {/* Sized by content, not fixed: a box holds "15" and it holds
@@ -65,8 +65,8 @@ export function SpecStrip({
               breaking the row. */}
           <dd
             className={cn(
-              "m-0 mt-1 font-extrabold leading-tight tracking-tight text-[var(--band)]",
-              s.value.length > 7 ? "text-[13px]" : "text-lg",
+              "m-0 font-extrabold leading-tight tracking-tight text-[var(--band)] sm:mt-1",
+              s.value.length > 7 ? "text-[13px]" : "text-base sm:text-lg",
             )}
           >
             {s.value}
@@ -240,7 +240,7 @@ export function MediaTile({
           <span
             className={cn(
               "media-tile-badge inline-flex items-center gap-1.5 rounded-full bg-[rgba(15,15,19,0.72)] font-mono tracking-tight text-[#f5f3ee] backdrop-blur-sm",
-              compact ? "px-2 py-0.5 text-[10px]" : "px-2.5 py-1 text-[11px]",
+              compact ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-xs",
             )}
           >
             {playing ? (
@@ -527,7 +527,7 @@ export function MediaGallery({
                   {items.length > 1 && (
                     <motion.div
                       ref={stripRef}
-                      className="flex w-full shrink-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                      className="flex w-full shrink-0 gap-2 overflow-x-auto overflow-y-hidden overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                       initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}

@@ -10,7 +10,12 @@
 export const siteUrl = "https://www.matterpixel.com";
 
 /** The one WhatsApp number every WhatsApp link on the site dials. */
-export const WHATSAPP_NUMBER = "+8801707555755";
+export const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP
+  ? `+${process.env.NEXT_PUBLIC_WHATSAPP.replace(/[^\d]/g, "")}`
+  : "+8801707555755";
+
+/** The inbox quick questions go to. */
+export const CONTACT_EMAIL = process.env.NEXT_PUBLIC_CONTACT_EMAIL || "adib@matterpixel.com";
 
 export const brand = {
   name: "matterpixel",
@@ -41,10 +46,10 @@ const PARTNER_TEMPLATE =
 
 /**
  * Every conversion CTA on the site. Two labels only — a visitor either
- * books the free audit call or asks for a fixed quote — and both land on
- * the /contact hub's matching tab. Components read the label and href from
- * here; never hard-code either. Swap `book.href` for an external scheduler
- * (e.g. a Calendly link) and every booking CTA follows.
+ * books the free audit call or asks for a fixed quote. Booking opens the
+ * Cal.com popup (components/CalLink, link in lib/cal); the quote lands on
+ * the /contact form. Components read the label from here; never hard-code
+ * it.
  *
  * The booking label is the one standard wording everywhere, founder
  * sections included — never reword it per section. `partner` is the
@@ -53,6 +58,7 @@ const PARTNER_TEMPLATE =
 export const ctas = {
   book: {
     label: "Book a free audit call",
+    /** The contact hub's audit tab. CTAs open Cal.com instead (CtaLink). */
     href: "/contact?tab=booking",
   },
   quote: {

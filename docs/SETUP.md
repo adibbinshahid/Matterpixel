@@ -1,8 +1,8 @@
 # Account setup
 
-Three optional services the site is already wired for. Each one switches on
-the moment its keys exist in Vercel and stays off (with the site working
-normally) until then. After adding or changing any variable, redeploy:
+The services the site is wired for. Turnstile and Search Console stay off
+(with the site working normally) until their keys exist in Vercel. The
+quote form needs Supabase or Resend to keep leads. After adding or changing any variable, redeploy:
 Vercel → Deployments → latest → ⋯ → Redeploy.
 
 Vercel variables live at: Vercel → project **matterpixel** → Settings →
@@ -27,47 +27,45 @@ almost never see it; Cloudflare only shows a checkbox when unsure.
    - `TURNSTILE_SECRET_KEY` = the Secret Key
 7. Redeploy.
 
-Check: open the contact page, send a test inquiry. It should go through as
+Check: open the contact page, send a test quote. It should go through as
 before. In Cloudflare → Turnstile you'll see the widget's traffic graph.
 
 ---
 
-## 2. Google Calendar — no double bookings (about 8 minutes)
+## 2. Quote form — Supabase, backup email, n8n
 
-Hides times you're already busy in the booking calendar, and puts every
-booking request on your calendar straight away so nobody else can take it.
-Only busy/free times are read; event titles and details never reach the site.
+Every quote is saved to Supabase first, then copied to email, then sent to
+n8n. Each step runs on its own, so a quote is kept as long as Supabase or
+the email works (app/api/quote/route.ts). Variables are listed in
+`.env.example`.
 
-1. Go to <https://console.cloud.google.com> with the Google account whose
-   calendar you use. Top bar → project picker → **New project** → name it
-   `matterpixel-booking` → Create, then select it.
-2. Menu → **APIs & Services** → **Library** → search **Google Calendar API**
-   → **Enable**.
-3. Menu → **IAM & Admin** → **Service Accounts** → **Create service account**.
-   Name `booking`. Skip the optional role and user steps → Done.
-4. Click the new service account → **Keys** tab → **Add key** → **Create new
-   key** → **JSON** → Create. A `.json` file downloads. Keep it private.
-5. Copy the service account's email (looks like
-   `booking@matterpixel-booking.iam.gserviceaccount.com`).
-6. Open <https://calendar.google.com> → ⚙ Settings → under *Settings for my
-   calendars* click your calendar → **Share with specific people or groups**
-   → **Add people** → paste the service account email → permission
-   **Make changes to events** → Send.
-7. In Vercel add (values come from the downloaded JSON file):
-   - `GOOGLE_SERVICE_ACCOUNT_EMAIL` = `client_email`
-   - `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` = `private_key` — the whole value,
-     from `-----BEGIN PRIVATE KEY-----` to `-----END PRIVATE KEY-----\n`,
-     pasted exactly as it appears (the `\n` sequences are fine)
-   - `GOOGLE_CALENDAR_ID` = your Gmail address (the calendar you shared)
-8. Redeploy, then delete the downloaded JSON file from your computer.
+1. Supabase → SQL Editor → paste and run `docs/supabase-inbound.sql`.
+2. Supabase → Project Settings → API Keys → copy the project URL and a
+   **secret** key (`sb_secret_…`) into `SUPABASE_URL` and
+   `SUPABASE_SECRET_KEY`. Never put the secret key in a `NEXT_PUBLIC_`
+   variable.
+3. Resend: verify the sending domain in `LEAD_BACKUP_FROM`, then set
+   `RESEND_API_KEY`, `LEAD_BACKUP_TO` and `LEAD_BACKUP_FROM`.
+4. n8n (optional): set `QUOTE_WEBHOOK_URL` and `QUOTE_WEBHOOK_SECRET`. The
+   webhook receives `event: "quote.created"` with the secret in the
+   `x-pixelscout-secret` header. n8n should reject calls without it.
+5. Redeploy.
 
-Check: put a test event in your calendar for a bookable slot (e.g. Saturday
-8 PM Dhaka time). Reload the contact page → Book a free audit call → that
-slot should be gone.
+Check: send a test quote. A row appears in `inbound`, and a
+"[Lead backup]" email arrives. A failed step shows up in Vercel logs as
+`quote.step1_supabase_failed`, `quote.step2_email_failed` or
+`quote.step3_webhook_failed`.
+
+## 3. Free audit call — Cal.com
+
+Every audit CTA opens a Cal.com popup for `NEXT_PUBLIC_CAL_LINK`
+(default `matterpixel/audit`). Without JavaScript it links straight to
+`https://cal.com/matterpixel/audit`. Create that event type in Cal.com
+(30 min, Google Meet), then set the variable if the link is different.
 
 ---
 
-## 3. Google Search Console
+## 4. Google Search Console
 
 1. <https://search.google.com/search-console> → **Add property** → choose
    **URL prefix** → `https://www.matterpixel.com/` → Continue.

@@ -98,35 +98,47 @@
    text on dark glass), just re-tinted: dark text on light glass. Scoped to
    `.nav-bar` so it only overrides the nav's own tokens, not --glass-*
    elsewhere on the page. */
-.nav-bar[data-nav-theme="light"] {
-  /* macOS-style light glass — genuinely see-through, not a light tint.
-     White still masks backdrop color more than dark does at equal alpha,
-     so this stays lower than it looks like it "should" be relative to the
-     dark theme's 0.38/0.62, and leans on a heavier saturate boost to keep
-     blurred color actually showing through instead of washing to white. */
-  --nav-bar-bg: rgba(255, 255, 255, 0.16);
-  --nav-bar-bg-scrolled: rgba(255, 255, 255, 0.4);
-  --nav-bar-blur: blur(18px) saturate(240%);
-  --nav-bar-blur-scrolled: blur(26px) saturate(250%);
-  --nav-bar-border: rgba(22, 22, 28, 0.07);
-  --nav-grain-opacity: 0.025;
-  --nav-bar-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
-    0 8px 32px -12px rgba(22, 22, 28, 0.18);
-  --nav-pill-bg: rgba(22, 22, 28, 0.06);
-  --nav-pill-shadow:
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 2px 0 rgba(0, 0, 0, 0.06),
-    0 4px 14px -4px rgba(22, 22, 28, 0.14);
-  --nav-text: var(--ink-soft);
-  --nav-text-hover: var(--ink);
-  --nav-text-shadow: none;
-  /* .nav-glass's specular rim (app/globals.css, ::before/::after) is a
-     bright-white highlight tuned for a dark pane — stacked on an already-
-     light bg it was the main reason this theme read as a flat, milky-solid
-     panel instead of translucent glass. Dimmed way down here. */
-  --nav-glass-highlight-1: rgba(255, 255, 255, 0.35);
-  --nav-glass-highlight-2: rgba(255, 255, 255, 0.1);
+/* The light theme only exists on desktop. Below lg the bar is always the
+   dark glass, denser, with the light logo: one fixed rule, so the logo can
+   never land dark-on-dark when the section detection lags a fast phone
+   scroll. */
+@media (min-width: 1024px) {
+  .nav-bar[data-nav-theme="light"] {
+    /* macOS-style light glass — genuinely see-through, not a light tint.
+       White still masks backdrop color more than dark does at equal alpha,
+       so this stays lower than it looks like it "should" be relative to the
+       dark theme's 0.38/0.62, and leans on a heavier saturate boost to keep
+       blurred color actually showing through instead of washing to white. */
+    --nav-bar-bg: rgba(255, 255, 255, 0.16);
+    --nav-bar-bg-scrolled: rgba(255, 255, 255, 0.4);
+    --nav-bar-blur: blur(18px) saturate(240%);
+    --nav-bar-blur-scrolled: blur(26px) saturate(250%);
+    --nav-bar-border: rgba(22, 22, 28, 0.07);
+    --nav-grain-opacity: 0.025;
+    --nav-bar-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+      0 8px 32px -12px rgba(22, 22, 28, 0.18);
+    --nav-pill-bg: rgba(22, 22, 28, 0.06);
+    --nav-pill-shadow:
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+      inset 0 -1px 2px 0 rgba(0, 0, 0, 0.06),
+      0 4px 14px -4px rgba(22, 22, 28, 0.14);
+    --nav-text: var(--ink-soft);
+    --nav-text-hover: var(--ink);
+    --nav-text-shadow: none;
+    /* .nav-glass's specular rim (app/globals.css, ::before/::after) is a
+       bright-white highlight tuned for a dark pane — stacked on an already-
+       light bg it was the main reason this theme read as a flat, milky-solid
+       panel instead of translucent glass. Dimmed way down here. */
+    --nav-glass-highlight-1: rgba(255, 255, 255, 0.35);
+    --nav-glass-highlight-2: rgba(255, 255, 255, 0.1);
+  }
+}
+@media (max-width: 1023px) {
+  .nav-bar {
+    --nav-bar-bg: rgba(10, 10, 14, 0.72);
+    --nav-bar-bg-scrolled: rgba(10, 10, 14, 0.82);
+  }
 }
 
 @supports (color: color(display-p3 1 1 1)) {
@@ -311,24 +323,77 @@
   animation: mp-load-fade 0.4s ease-out 0.1s both;
 }
 
-* {
-  border-color: var(--line);
-  /* Light↔dark switch, site-wide: quick and low-key, not a showcase
-     animation — every surface (backgrounds, text, borders, icons) fades
-     together instead of hard-cutting. Elements with their own Tailwind
-     transition utility (e.g. `transition-transform`) keep that instead —
-     a single-class selector always wins over this bare `*` one, so hover
-     effects are unaffected. Reduced-motion already zeroes this out (see
-     the `prefers-reduced-motion` block below). */
-  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
-  transition-duration: 0.2s;
-  transition-timing-function: ease-out;
+/* Site-wide defaults, in `@layer base` so they really are defaults: any
+   Tailwind utility on an element (border-white/10, transition-transform…)
+   overrides them. Unlayered, this bare `*` rule outranked every utility —
+   cascade layers beat specificity — so every authored border colour on
+   the site rendered as var(--line), and per-element transition utilities
+   were ignored. */
+@layer base {
+  * {
+    border-color: var(--line);
+    /* Light↔dark switch, site-wide: quick and low-key, not a showcase
+       animation — every surface (backgrounds, text, borders, icons) fades
+       together instead of hard-cutting. Elements with their own transition
+       utility or class keep that instead. Reduced-motion already zeroes
+       this out (see the `prefers-reduced-motion` block below). */
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out;
+  }
 }
 
 html {
   background: var(--paper);
   color-scheme: light;
   overflow-x: hidden;
+  /* Phones: no grey flash over every tapped link (every control below has
+     its own :active state instead), and no font inflation in landscape. */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* ── Touch platform layer ────────────────────────────────────────────────
+   Hover rules in this file are gated behind (hover: hover) and
+   (pointer: fine), so a tap never leaves a card lifted; touch gets its
+   feedback from :active instead, on press, not on release. Kept in
+   `@layer base` so any Tailwind utility (touch-pan-x, select-text…) on a
+   specific element still wins. */
+@layer base {
+  a,
+  button,
+  summary,
+  label,
+  [role="button"],
+  [role="tab"] {
+    /* No double-tap-zoom wait, so `click` fires the moment the finger lifts. */
+    touch-action: manipulation;
+  }
+
+  button,
+  summary,
+  [role="button"],
+  [role="tab"] {
+    /* A control's label is not content: a long-press must not select it
+       or open the iOS callout. Body copy stays selectable. */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Pill buttons are often <a>, so they opt out of selection by class. */
+.btn-brand,
+.btn-primary,
+.btn-line,
+.btn-outline,
+.btn-secondary,
+.btn-on-brand,
+.btn-on-magenta {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 body {
@@ -437,7 +502,6 @@ body {
 .glass-card-blue-hover {
   transition: background 0.35s var(--ease-site), box-shadow 0.35s var(--ease-site);
 }
-.glass-card-blue-hover:hover,
 .glass-card-blue-hover:focus-visible {
   background: var(--blue);
   box-shadow:
@@ -446,6 +510,17 @@ body {
     inset 0 0 60px rgba(255, 255, 255, 0.04),
     0 10px 20px -10px rgba(44, 75, 255, 0.35),
     0 40px 80px -28px rgba(44, 75, 255, 0.5);
+}
+@media (hover: hover) and (pointer: fine) {
+  .glass-card-blue-hover:hover {
+    background: var(--blue);
+    box-shadow:
+      inset 0 1.5px 1px rgba(255, 255, 255, 0.35),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.2),
+      inset 0 0 60px rgba(255, 255, 255, 0.04),
+      0 10px 20px -10px rgba(44, 75, 255, 0.35),
+      0 40px 80px -28px rgba(44, 75, 255, 0.5);
+  }
 }
 
 /* Engagement-model pricing cards: hover swaps a white glass card for a
@@ -552,29 +627,45 @@ body {
     box-shadow 420ms var(--ease-site),
     border-color 420ms var(--ease-site);
 }
-.project-card:hover,
-.project-card:focus-within {
+.project-card:has(:focus-visible) {
   translate: 0 -7px;
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
   box-shadow:
     0 28px 60px -26px color-mix(in srgb, var(--accent) 45%, transparent),
     0 10px 24px -14px rgba(22, 22, 28, 0.2);
 }
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover {
+    translate: 0 -7px;
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    box-shadow:
+      0 28px 60px -26px color-mix(in srgb, var(--accent) 45%, transparent),
+      0 10px 24px -14px rgba(22, 22, 28, 0.2);
+  }
+}
 
 .project-card-shot {
   transition: scale 900ms var(--ease-site);
 }
-.project-card:hover .project-card-shot,
-.project-card:focus-within .project-card-shot {
+.project-card:has(:focus-visible) .project-card-shot {
   scale: 1.045;
+}
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover .project-card-shot {
+    scale: 1.045;
+  }
 }
 
 .project-card-veil {
   transition: opacity 500ms var(--ease-site);
 }
-.project-card:hover .project-card-veil,
-.project-card:focus-within .project-card-veil {
+.project-card:has(:focus-visible) .project-card-veil {
   opacity: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover .project-card-veil {
+    opacity: 0;
+  }
 }
 
 /* One pass of light across the capture, the way a sheet of glass catches a
@@ -587,9 +678,11 @@ body {
 .project-card-rake {
   transition: none;
 }
-.project-card:hover .project-card-rake {
-  translate: 400% 0;
-  transition: translate 1000ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover .project-card-rake {
+    translate: 400% 0;
+    transition: translate 1000ms cubic-bezier(0.16, 1, 0.3, 1) 120ms;
+  }
 }
 
 /* Founder portrait: the same rake. Pointer devices get it on hover, like
@@ -624,17 +717,24 @@ body {
   background-size: 0% 1.5px;
   transition: background-size 600ms var(--ease-site);
 }
-.project-card:hover .project-card-rule,
-.project-card:focus-within .project-card-rule {
+.project-card:has(:focus-visible) .project-card-rule {
   background-size: 100% 1.5px;
   transition-delay: 60ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover .project-card-rule {
+    background-size: 100% 1.5px;
+    transition-delay: 60ms;
+  }
 }
 
 .project-card-arrow {
   transition: translate 420ms var(--ease-site);
 }
-.project-card:hover .project-card-arrow {
-  translate: 6px 0;
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover .project-card-arrow {
+    translate: 6px 0;
+  }
 }
 
 /* Last beat, and the one that makes the whole move read as the audit
@@ -646,28 +746,51 @@ body {
     background-color 500ms var(--ease-site),
     box-shadow 500ms var(--ease-site);
 }
-.project-card:hover .project-card-score,
-.project-card:focus-within .project-card-score {
+.project-card:has(:focus-visible) .project-card-score {
   translate: 0 -3px;
   border-color: color-mix(in srgb, var(--band) 48%, transparent);
   background-color: color-mix(in srgb, var(--band) 5%, var(--paper));
   box-shadow: 0 12px 24px -16px var(--band);
 }
-.project-card:hover .project-card-score:nth-child(1),
-.project-card:focus-within .project-card-score:nth-child(1) {
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover .project-card-score {
+    translate: 0 -3px;
+    border-color: color-mix(in srgb, var(--band) 48%, transparent);
+    background-color: color-mix(in srgb, var(--band) 5%, var(--paper));
+    box-shadow: 0 12px 24px -16px var(--band);
+  }
+}
+.project-card:has(:focus-visible) .project-card-score:nth-child(1) {
   transition-delay: 90ms;
 }
-.project-card:hover .project-card-score:nth-child(2),
-.project-card:focus-within .project-card-score:nth-child(2) {
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover .project-card-score:nth-child(1) {
+    transition-delay: 90ms;
+  }
+}
+.project-card:has(:focus-visible) .project-card-score:nth-child(2) {
   transition-delay: 150ms;
 }
-.project-card:hover .project-card-score:nth-child(3),
-.project-card:focus-within .project-card-score:nth-child(3) {
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover .project-card-score:nth-child(2) {
+    transition-delay: 150ms;
+  }
+}
+.project-card:has(:focus-visible) .project-card-score:nth-child(3) {
   transition-delay: 210ms;
 }
-.project-card:hover .project-card-score:nth-child(4),
-.project-card:focus-within .project-card-score:nth-child(4) {
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover .project-card-score:nth-child(3) {
+    transition-delay: 210ms;
+  }
+}
+.project-card:has(:focus-visible) .project-card-score:nth-child(4) {
   transition-delay: 270ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  .project-card:hover .project-card-score:nth-child(4) {
+    transition-delay: 270ms;
+  }
 }
 
 /* ── Media tiles (the AI lanes) ──────────────────────────────────────────
@@ -686,13 +809,21 @@ body {
     box-shadow 420ms var(--ease-site),
     border-color 420ms var(--ease-site);
 }
-.media-tile:hover,
 .media-tile:focus-visible {
   translate: 0 -5px;
   border-color: color-mix(in srgb, var(--accent, var(--blue)) 45%, transparent);
   box-shadow:
     0 28px 60px -26px color-mix(in srgb, var(--accent, var(--blue)) 50%, transparent),
     0 10px 24px -14px rgba(22, 22, 28, 0.24);
+}
+@media (hover: hover) and (pointer: fine) {
+  .media-tile:hover {
+    translate: 0 -5px;
+    border-color: color-mix(in srgb, var(--accent, var(--blue)) 45%, transparent);
+    box-shadow:
+      0 28px 60px -26px color-mix(in srgb, var(--accent, var(--blue)) 50%, transparent),
+      0 10px 24px -14px rgba(22, 22, 28, 0.24);
+  }
 }
 
 /* Slower and shallower than the website card's 1.045: a generated frame is
@@ -702,9 +833,13 @@ body {
 .media-tile-shot {
   transition: scale 900ms var(--ease-site);
 }
-.media-tile:hover .media-tile-shot,
 .media-tile:focus-visible .media-tile-shot {
   scale: 1.03;
+}
+@media (hover: hover) and (pointer: fine) {
+  .media-tile:hover .media-tile-shot {
+    scale: 1.03;
+  }
 }
 
 /* The poster travels WITH the video underneath it — without this the still
@@ -715,17 +850,25 @@ body {
     opacity 500ms var(--ease-site),
     scale 900ms var(--ease-site);
 }
-.media-tile:hover .media-tile-poster,
 .media-tile:focus-visible .media-tile-poster {
   scale: 1.03;
+}
+@media (hover: hover) and (pointer: fine) {
+  .media-tile:hover .media-tile-poster {
+    scale: 1.03;
+  }
 }
 
 .media-tile-veil {
   transition: opacity 500ms var(--ease-site);
 }
-.media-tile:hover .media-tile-veil,
 .media-tile:focus-visible .media-tile-veil {
   opacity: 0;
+}
+@media (hover: hover) and (pointer: fine) {
+  .media-tile:hover .media-tile-veil {
+    opacity: 0;
+  }
 }
 
 /* Duration comes from the asset, inline, so the bar finishes exactly when
@@ -742,11 +885,17 @@ body {
 .media-tile-transport {
   scale: 0 1;
 }
-.media-tile:hover .media-tile-transport,
 .media-tile:focus-visible .media-tile-transport {
   animation-name: media-transport;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
+}
+@media (hover: hover) and (pointer: fine) {
+  .media-tile:hover .media-tile-transport {
+    animation-name: media-transport;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
 }
 
 .media-tile-badge,
@@ -757,13 +906,28 @@ body {
     opacity 420ms var(--ease-site),
     translate 420ms var(--ease-site);
 }
-.media-tile:hover .media-tile-badge,
 .media-tile:focus-visible .media-tile-badge,
-.media-tile:hover .media-tile-expand,
 .media-tile:focus-visible .media-tile-expand {
   opacity: 1;
   translate: 0 0;
   transition-delay: 80ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  .media-tile:hover .media-tile-badge,
+  .media-tile:hover .media-tile-expand {
+    opacity: 1;
+    translate: 0 0;
+    transition-delay: 80ms;
+  }
+}
+
+/* Touch screens have no hover to reveal these, so they show at rest. */
+@media (hover: none) {
+  .media-tile-badge,
+  .media-tile-expand {
+    opacity: 1;
+    translate: 0 0;
+  }
 }
 
 /* A clip that never plays has to say so at rest, or the tile is a still
@@ -850,9 +1014,11 @@ body {
 .nav-glass-hover::after {
   background: radial-gradient(50% 140% at 85% 150%, rgba(255, 255, 255, 0.2), transparent 60%);
 }
-.nav-glass-hover:hover::before,
-.nav-glass-hover:hover::after {
-  opacity: 1;
+@media (hover: hover) and (pointer: fine) {
+  .nav-glass-hover:hover::before,
+  .nav-glass-hover:hover::after {
+    opacity: 1;
+  }
 }
 
 /* Neon gradient ring for the "active" (centered) service card — a crisp
@@ -1116,17 +1282,30 @@ html.lenis body {
     border-color 0.3s var(--ease-site),
     color 0.3s var(--ease-site);
 }
-.btn-brand:hover,
-.btn-line:hover,
-.btn-primary:hover,
-.btn-outline:hover {
-  transform: translateY(-2px) scale(1.035);
+@media (hover: hover) and (pointer: fine) {
+  .btn-brand:hover,
+  .btn-line:hover,
+  .btn-primary:hover,
+  .btn-outline:hover {
+    transform: translateY(-2px) scale(1.035);
+  }
 }
+/* Touch: press sinks (feedback on finger-down, not release). Pointer:
+   the press settles back out of the hover lift. */
 .btn-brand:active,
 .btn-line:active,
 .btn-primary:active,
 .btn-outline:active {
-  transform: translateY(0) scale(1.01);
+  transform: scale(0.97);
+  transition-duration: 90ms;
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-brand:active,
+  .btn-line:active,
+  .btn-primary:active,
+  .btn-outline:active {
+    transform: translateY(0) scale(1.01);
+  }
 }
 .btn-brand:disabled,
 .btn-line:disabled,
@@ -1169,11 +1348,153 @@ html.lenis body {
   color: #fff;
   background-color: #e0157a;
 }
-.btn-brand:hover,
-.btn-primary:hover,
-.nav-menu-btn:hover {
-  background-color: #c7106b;
-  box-shadow: 0 14px 30px -12px rgba(224, 21, 122, 0.55);
+
+/* Menu toggle: two square-capped bars (the brand's pixels stretched into
+   strokes) that fold into an X. Transform-only, so it never reflows. */
+.nav-burger {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 12px;
+}
+.nav-burger > span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  transition:
+    translate 320ms var(--ease-site),
+    rotate 320ms var(--ease-site),
+    width 320ms var(--ease-site);
+}
+.nav-burger > span:first-child {
+  top: 1px;
+}
+.nav-burger > span:last-child {
+  bottom: 1px;
+  width: 66%;
+}
+.nav-burger[data-open] > span:first-child {
+  translate: 0 4px;
+  rotate: 45deg;
+}
+.nav-burger[data-open] > span:last-child {
+  width: 100%;
+  translate: 0 -4px;
+  rotate: -45deg;
+}
+
+/* Reading progress under the nav bar — a CSS scroll timeline, no JS. Hidden
+   unless the browser can drive it. */
+.nav-progress {
+  display: none;
+}
+@supports (animation-timeline: scroll()) {
+  .nav-progress {
+    display: block;
+    background: linear-gradient(to right, var(--blue), var(--magenta));
+    transform-origin: left center;
+    animation: nav-progress linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+@keyframes nav-progress {
+  from { scale: 0 1; }
+  to { scale: 1 1; }
+}
+
+/* Story chapter bar (components/home/StoryChapters.tsx). It takes the nav
+   bar's place: while the bar is shown (top of page, scrolling up) the
+   chapter stays out of the way; once the bar tucks away on scroll-down, a
+   slim frosted strip slides down in its place with the chapter pill
+   centred on it, so content scrolls under a bar rather than under a
+   floating chip. Steps aside while the site menu is open. */
+.story-chapters {
+  top: calc(env(safe-area-inset-top, 0px) + 0.5rem);
+  opacity: 0;
+  translate: 0 -0.75rem;
+  pointer-events: none;
+  transition:
+    opacity 260ms var(--ease-site),
+    translate 420ms var(--ease-site);
+}
+.story-chapters::before {
+  content: "";
+  position: absolute;
+  inset: calc(-0.5rem - env(safe-area-inset-top, 0px)) 0 -0.5rem;
+  background: rgba(11, 12, 14, 0.72);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.8);
+}
+:root[data-nav-tucked] .story-chapters:has(button) {
+  opacity: 1;
+  translate: 0 0;
+}
+:root[data-nav-tucked] .story-chapters:has(button) > * {
+  pointer-events: auto;
+}
+:root:has(#mobile-menu) .story-chapters {
+  opacity: 0;
+}
+
+/* Phone hero headline: as large as the phone allows. --hero-mid (the
+   "websites and / AI systems" lines) is the smaller of
+     · width fit: "websites and" is 5.76em wide, so (100vw − 2×24px gutter)
+       ÷ 5.95 fills the line with a hair to spare, and
+     · height fit: everything else in the first screen (nav, subline, the
+       two CTA lines, pills, stats band) needs ~30rem; the headline is
+       4.24 × --hero-mid tall (2 lines at 1.0 + 3 at 0.69 × 1.08).
+   --hero-small is scaled so "that win customers" (8.33em) fills the same
+   width as "websites and". */
+@media (max-width: 767px) {
+  :root {
+    --hero-mid: clamp(2rem, min(calc((100vw - 3rem) / 5.95), calc((100svh - 30rem) / 4.24)), 4.75rem);
+    --hero-small: calc(var(--hero-mid) * 0.69);
+  }
+}
+
+/* Phones: fixed height of the one-row stats band under the hero
+   (components/Stats.tsx). The hero fills 100svh minus this, so the two
+   together are exactly the first screen. */
+:root {
+  --phone-stats-h: 5.5rem;
+}
+
+/* Height of the phone's sticky bottom bar (components/home/MobileStickyCta:
+   10px top pad + 48px pill + max(10px, home-indicator inset)). Anything
+   pinned to the bottom on phones sits above it; the footer pads by it.
+   Zero from md up and on /contact, where the bar isn't rendered. */
+:root {
+  --sticky-cta-h: calc(3.625rem + max(0.625rem, env(safe-area-inset-bottom, 0px)));
+}
+@media (min-width: 768px) {
+  :root { --sticky-cta-h: 0px; }
+}
+:root:not(:has(.mobile-sticky-cta)) {
+  --sticky-cta-h: env(safe-area-inset-bottom, 0px);
+}
+
+/* Height of the fixed nav bar including the notch inset; zero while it is
+   tucked away on phones. Anything sticky under the bar reads this. */
+:root {
+  --nav-offset: calc(4rem + env(safe-area-inset-top, 0px));
+}
+@media (min-width: 640px) {
+  :root { --nav-offset: calc(4.992rem + env(safe-area-inset-top, 0px)); }
+}
+@media (max-width: 1023px) {
+  :root[data-nav-tucked] { --nav-offset: env(safe-area-inset-top, 0px); }
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn-brand:hover,
+  .btn-primary:hover,
+  .nav-menu-btn:hover {
+    background-color: #c7106b;
+    box-shadow: 0 14px 30px -12px rgba(224, 21, 122, 0.55);
+  }
 }
 /* Primary sitting on a magenta or blue panel: white pill, the panel's own
    hue as the label — same pill, figure and ground swapped. Panels declare
@@ -1184,11 +1505,13 @@ html.lenis body {
   background-color: #fff;
   box-shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.35);
 }
-.btn-on-brand:hover,
-.btn-on-magenta:hover {
-  color: var(--btn-on-brand-hover-fg, #b00e5c);
-  background-color: #fff;
-  box-shadow: 0 14px 30px -12px rgba(120, 0, 50, 0.45);
+@media (hover: hover) and (pointer: fine) {
+  .btn-on-brand:hover,
+  .btn-on-magenta:hover {
+    color: var(--btn-on-brand-hover-fg, #b00e5c);
+    background-color: #fff;
+    box-shadow: 0 14px 30px -12px rgba(120, 0, 50, 0.45);
+  }
 }
 .on-magenta {
   --btn-on-brand-fg: #d4126f;
@@ -1209,12 +1532,14 @@ html.lenis body {
   backdrop-filter: blur(14px) saturate(160%);
   -webkit-backdrop-filter: blur(14px) saturate(160%);
 }
-.btn-line:hover,
-.btn-outline:hover {
-  color: #fff;
-  background-color: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: none;
+@media (hover: hover) and (pointer: fine) {
+  .btn-line:hover,
+  .btn-outline:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: none;
+  }
 }
 
 /* Text-only tertiary — inline links styled as an action, no pill. Not part
@@ -1228,8 +1553,10 @@ html.lenis body {
   color: var(--ink);
   transition: transform 0.3s var(--ease-site);
 }
-.btn-secondary:hover {
-  transform: translateY(-1px) scale(1.05);
+@media (hover: hover) and (pointer: fine) {
+  .btn-secondary:hover {
+    transform: translateY(-1px) scale(1.05);
+  }
 }
 .btn-secondary:active {
   transform: translateY(0) scale(1.02);
@@ -1245,9 +1572,11 @@ html.lenis body {
 .hover-lift {
   transition: transform 0.3s var(--ease-site), box-shadow 0.3s var(--ease-site);
 }
-.hover-lift:hover {
-  transform: translateY(-2px) scale(1.035);
-  box-shadow: var(--shadow-lifted);
+@media (hover: hover) and (pointer: fine) {
+  .hover-lift:hover {
+    transform: translateY(-2px) scale(1.035);
+    box-shadow: var(--shadow-lifted);
+  }
 }
 .hover-lift:active {
   transform: translateY(0) scale(1.01);
@@ -1314,9 +1643,11 @@ html.lenis body {
     padding: 2rem;
   }
 }
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lifted);
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lifted);
+  }
 }
 
 /* ── Homepage world: "Built pixel by pixel" ────────────────────────────
@@ -1641,8 +1972,10 @@ canvas[hidden] {
   background: #0b0c0e;
   color: #fff;
 }
-.home-magenta .hover\:text-blue:hover {
-  color: var(--ink);
+@media (hover: hover) and (pointer: fine) {
+  .home-magenta .hover\:text-blue:hover {
+    color: var(--ink);
+  }
 }
 
 /* Headline keywords (components/home/Hl.tsx). */
@@ -1712,11 +2045,13 @@ canvas[hidden] {
   background-color: rgba(255, 255, 255, 0.6);
   border-color: var(--line);
 }
-.home-light .btn-line:hover,
-.home-light .btn-outline:hover {
-  color: var(--ink);
-  background-color: #fff;
-  border-color: var(--ink);
+@media (hover: hover) and (pointer: fine) {
+  .home-light .btn-line:hover,
+  .home-light .btn-outline:hover {
+    color: var(--ink);
+    background-color: #fff;
+    border-color: var(--ink);
+  }
 }
 
 /* Inner-page tone seam (components/PageSeam.tsx): where a light or blue
@@ -1959,9 +2294,13 @@ canvas[hidden] {
 .insight-card {
   transition: border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.insight-card:hover,
 .insight-card:focus-visible {
   border-color: color-mix(in srgb, var(--blue) 55%, var(--line));
+}
+@media (hover: hover) and (pointer: fine) {
+  .insight-card:hover {
+    border-color: color-mix(in srgb, var(--blue) 55%, var(--line));
+  }
 }
 .insight-card-seam {
   position: absolute;
@@ -1972,9 +2311,13 @@ canvas[hidden] {
   background: linear-gradient(90deg, var(--blue), #8f9dff 50%, var(--magenta));
   transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.insight-card:hover .insight-card-seam,
 .insight-card:focus-visible .insight-card-seam {
   transform: scaleX(1);
+}
+@media (hover: hover) and (pointer: fine) {
+  .insight-card:hover .insight-card-seam {
+    transform: scaleX(1);
+  }
 }
 .insight-card-meter {
   position: absolute;
@@ -1989,13 +2332,21 @@ canvas[hidden] {
   background: var(--line);
   transition: background-color 0.25s ease;
 }
-.insight-card:hover .insight-card-meter > span:nth-child(odd),
 .insight-card:focus-visible .insight-card-meter > span:nth-child(odd) {
   background: var(--blue);
 }
-.insight-card:hover .insight-card-meter > span:nth-child(even),
+@media (hover: hover) and (pointer: fine) {
+  .insight-card:hover .insight-card-meter > span:nth-child(odd) {
+    background: var(--blue);
+  }
+}
 .insight-card:focus-visible .insight-card-meter > span:nth-child(even) {
   background: var(--magenta);
+}
+@media (hover: hover) and (pointer: fine) {
+  .insight-card:hover .insight-card-meter > span:nth-child(even) {
+    background: var(--magenta);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .insight-card-seam,
@@ -2021,9 +2372,12 @@ canvas[hidden] {
     animation: none;
   }
 
-  /* Section rhythm: tighter on phones so a section fits one screen. */
+  /* Section rhythm on phones: the DESIGN.md mobile step (72px). Phones
+     read the homepage as a story, one chapter after another, so sections
+     get room to breathe rather than being squeezed to fit one screen
+     (only the hero is held to the first screen there). */
   .home-section {
-    padding-block: clamp(40px, 6svh, 56px);
+    padding-block: 72px;
   }
 
   /* Every pill is at least a 44px tap target. */
@@ -2045,6 +2399,17 @@ canvas[hidden] {
   }
 }
 
+/* Agency strip, phones: the email pill becomes solid brand blue so the
+   two channels read as a pair of equal buttons, not a button and a ghost. */
+@media (max-width: 639px) {
+  .btn-outline.wl-email {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+    box-shadow: 0 10px 28px -12px rgba(44, 75, 255, 0.75);
+  }
+}
+
 /* Invisible 44px tap area around a link whose visible box is shorter (a
    one-line text link set in running copy or a tile). The pseudo-element
    only extends the hit area; the link's own box and layout don't move. */
@@ -2061,5 +2426,103 @@ canvas[hidden] {
     height: 44px;
     min-width: 44px;
     transform: translateY(-50%);
+  }
+}
+
+/* Problem chips, phones: the "more this way" arrow nudges right every few
+   seconds, a small reminder that the row continues. Still under reduced
+   motion. */
+@keyframes problem-more-nudge {
+  0%, 70%, 100% { translate: 0 0; }
+  80% { translate: 4px 0; }
+  90% { translate: 0 0; }
+}
+.problem-more {
+  animation: problem-more-nudge 2.6s var(--ease-site) 1.2s infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .problem-more { animation: none; }
+}
+
+/* ── Boxes on the dark grid ──────────────────────────────────────────────
+   Every unselected button or box that sits directly on the drifting grid
+   (not nested inside a card): a solid night-raised fill, a 1px stroke in
+   exactly the grid's own line colour (.drift-grid --grid-line), and a pure
+   black glow — solid at the edge, fading out — that knocks the grid lines
+   back around it, so
+   the box reads as set into the grid rather than floating over it.
+   Selected / hover / focus states keep their own colours: they're written
+   with more specific selectors, which win over these single classes.
+   `.grid-stroke` is the photo-tile version: stroke and glow, fill left to
+   the photograph. */
+:root {
+  --grid-box-fill: #141518;
+  --grid-box-stroke: rgba(255, 255, 255, 0.085);
+  /* Pure black, solid right against the edge and fading outward: a tight
+     opaque ring, a mid falloff, and a wide soft tail. The grid lines vanish
+     where they meet the box, so the box stands clear of the grid. */
+  --grid-box-glow:
+    0 0 4px 3px #000,
+    0 0 18px 8px rgba(0, 0, 0, 0.9),
+    0 0 44px 14px rgba(0, 0, 0, 0.55);
+}
+.grid-box {
+  background-color: var(--grid-box-fill);
+  border: 1px solid var(--grid-box-stroke);
+  box-shadow: var(--grid-box-glow);
+}
+.grid-stroke {
+  border: 1px solid var(--grid-box-stroke);
+  box-shadow: var(--grid-box-glow);
+}
+/* Phones only: for boxes that are a swipe card on a phone but an open,
+   unboxed column on wider screens (the pricing models). */
+@media (max-width: 767px) {
+  .grid-box-phone {
+    background-color: var(--grid-box-fill);
+    border: 1px solid var(--grid-box-stroke);
+    box-shadow: var(--grid-box-glow);
+  }
+}
+/* Hover / keyboard focus on a grid box: the stroke brightens (pointer
+   devices only for hover, so a tap never leaves it lit). */
+@media (hover: hover) and (pointer: fine) {
+  .grid-box:is(a, button):hover {
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+}
+.grid-box:is(a, button):focus-visible,
+.grid-box-phone:focus-visible {
+  border-color: var(--blue-ink);
+}
+/* A grid box that isn't itself a link but holds them (the sitemap groups):
+   its stroke turns blue under the pointer, as it did before. */
+@media (hover: hover) and (pointer: fine) {
+  .grid-box-lift:hover {
+    border-color: var(--blue);
+  }
+}
+/* Capability cards (components/Services.tsx) are glass cards set on the
+   grid: at rest they take the grid-box fill as a solid, opaque panel — the
+   glass gradient, blur and specular shine come back only with the blue
+   hover state. */
+.glass-card.grid-box {
+  background-image: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.glass-card.grid-box::before,
+.glass-card.grid-box::after {
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-site);
+}
+.glass-card.grid-box:focus-visible::before,
+.glass-card.grid-box:focus-visible::after {
+  opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .glass-card.grid-box:hover::before,
+  .glass-card.grid-box:hover::after {
+    opacity: 1;
   }
 }

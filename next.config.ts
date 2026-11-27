@@ -5,21 +5,23 @@ const isDev = process.env.NODE_ENV !== "production";
 /**
  * Content Security Policy. Everything the site loads is self-hosted (fonts
  * via next/font, media under /public) except Vercel Analytics and the
- * Cloudflare Turnstile bot check on the forms. Scripts keep
+ * Cloudflare Turnstile bot check on the quote form, and the Cal.com embed
+ * (app.cal.com) for the audit-call popup. Scripts keep
  * 'unsafe-inline' because Next's hydration payload and the JSON-LD blocks
  * are inline, and a per-request nonce would force every page to render
  * dynamically. Dev adds 'unsafe-eval' for React Refresh.
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://va.vercel-scripts.com https://challenges.cloudflare.com`,
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""} https://va.vercel-scripts.com https://challenges.cloudflare.com https://app.cal.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "media-src 'self' blob:",
   "font-src 'self' data:",
-  `connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://challenges.cloudflare.com${isDev ? " ws: wss:" : ""}`,
-  // Cloudflare Turnstile (the forms' bot check) runs in an iframe.
-  "frame-src https://challenges.cloudflare.com",
+  `connect-src 'self' https://va.vercel-scripts.com https://vitals.vercel-insights.com https://challenges.cloudflare.com https://app.cal.com${isDev ? " ws: wss:" : ""}`,
+  // Cloudflare Turnstile (the quote form's bot check) and the Cal.com
+  // audit-call popup both run in iframes.
+  "frame-src https://challenges.cloudflare.com https://app.cal.com https://cal.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",

@@ -3,7 +3,7 @@
   "short_name": "Matterpixel",
   "description": "Founder-led studio building fast websites, web apps and AI automation.",
   "start_url": "/",
-  "display": "browser",
+  "display": "standalone",
   "background_color": "#0b0c0e",
   "theme_color": "#0b0c0e",
   "icons": [

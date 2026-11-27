@@ -15,11 +15,11 @@ export const metadata: Metadata = pageMetadata({
 export default async function ContactPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; package?: string; stack?: string; details?: string; src?: string }>;
+  searchParams: Promise<{ tab?: string; package?: string; stack?: string; details?: string; src?: string; service?: string }>;
 }) {
-  const { tab, package: packageSlug, stack, details, src } = await searchParams;
+  const { tab, package: packageSlug, stack, details, src, service } = await searchParams;
   // Links from the service finder arrive with what the visitor already
   // chose; it lands in the inquiry's project details.
-  const prefill = buildInquiryPrefill({ packageSlug, stack, details });
+  const prefill = buildInquiryPrefill({ packageSlug, stack, details, service });
   return <ContactSplit initialTab={tab} prefill={prefill} src={cleanSrc(src)} />;
 }

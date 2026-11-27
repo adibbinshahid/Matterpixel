@@ -15,18 +15,18 @@ export function ComparisonCard() {
   return (
     <div className="mx-auto w-full max-w-md overflow-hidden rounded-2xl border-2 border-blue bg-paper shadow-lifted">
       <div className="flex items-center justify-between bg-blue px-4 py-2.5">
-        <span className="text-[0.6875rem] font-bold uppercase tracking-[0.1em] text-white">Why us?</span>
+        <span className="text-xs font-bold uppercase tracking-[0.1em] text-white">Why us?</span>
       </div>
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="border-b border-line">
-            <th className="w-[34%] py-2 pl-4 pr-2 text-[0.625rem] font-bold uppercase tracking-[0.06em] text-ink/40">
+            <th className="w-[34%] py-2 pl-4 pr-2 text-xs font-bold uppercase tracking-[0.06em] text-ink/40">
               &nbsp;
             </th>
-            <th className="py-2 pr-2 text-[0.625rem] font-bold uppercase tracking-[0.06em] text-blue">
+            <th className="py-2 pr-2 text-xs font-bold uppercase tracking-[0.06em] text-blue">
               Matterpixel
             </th>
-            <th className="py-2 pr-4 text-[0.625rem] font-bold uppercase tracking-[0.06em] text-magenta/70">
+            <th className="py-2 pr-4 text-xs font-bold uppercase tracking-[0.06em] text-magenta/70">
               Typical
             </th>
           </tr>

@@ -107,7 +107,7 @@ export default function SitemapPage() {
           <RevealGroup className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {groups.map((group) => (
               <RevealItem key={group.title}>
-                <div className="flex h-full flex-col rounded-[20px] border border-line bg-paper-2 p-8 transition-colors duration-300 hover:border-blue">
+                <div className="grid-box grid-box-lift flex h-full flex-col rounded-[20px] p-8 transition-colors duration-300">
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="label-eyebrow">{group.title}</span>
                     <span className="text-xs tabular-nums text-ink-soft">

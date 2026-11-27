@@ -12,19 +12,27 @@ const hitsByIp = new Map<string, number[]>();
  * instance under a spray of unique IPs can't grow the map without bound. */
 const SWEEP_THRESHOLD = 5000;
 
+/** Longest window any caller uses; hits older than this are never read. */
+const MAX_WINDOW_MS = 60 * 60 * 1000;
+
 function sweep(now: number) {
   for (const [key, hits] of hitsByIp) {
-    if (!hits.some((t) => now - t < WINDOW_MS)) hitsByIp.delete(key);
+    if (!hits.some((t) => now - t < MAX_WINDOW_MS)) hitsByIp.delete(key);
   }
 }
 
-export function isRateLimited(ip: string): boolean {
+export type RateLimit = { windowMs: number; max: number };
+
+const DEFAULT_LIMIT: RateLimit = { windowMs: WINDOW_MS, max: MAX_REQUESTS_PER_WINDOW };
+
+/** Records a hit for `key` and says whether it is now over `limit`. */
+export function isRateLimited(key: string, limit: RateLimit = DEFAULT_LIMIT): boolean {
   const now = Date.now();
   if (hitsByIp.size > SWEEP_THRESHOLD) sweep(now);
-  const recentHits = (hitsByIp.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+  const recentHits = (hitsByIp.get(key) ?? []).filter((t) => now - t < limit.windowMs);
   recentHits.push(now);
-  hitsByIp.set(ip, recentHits);
-  return recentHits.length > MAX_REQUESTS_PER_WINDOW;
+  hitsByIp.set(key, recentHits);
+  return recentHits.length > limit.max;
 }
 
 export function getClientIp(request: Request): string {

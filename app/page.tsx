@@ -9,7 +9,7 @@ import { PixelSection } from "@/components/home/PixelSection";
 import { HomeFaq } from "@/components/home/HomeFaq";
 import { ClosingCta } from "@/components/home/ClosingCta";
 import { DriftGrid } from "@/components/home/DriftGrid";
-import { MobileStickyCta } from "@/components/home/MobileStickyCta";
+import { StoryChapters, type Chapter } from "@/components/home/StoryChapters";
 import { Process } from "@/components/Process";
 import { EngagementModels } from "@/components/EngagementModels";
 import { WhoWeWorkFor } from "@/components/WhoWeWorkFor";
@@ -25,10 +25,26 @@ export const metadata: Metadata = pageMetadata({
   path: "/",
 });
 
+/** The homepage's story on a phone, in reading order: the problem, proof
+ * it gets solved, the person who solves it, what it costs, how it runs,
+ * whether it fits your business, the agency route, and the questions
+ * left. Each anchor is an element inside that chapter's section. */
+const CHAPTERS: Chapter[] = [
+  { label: "The problem", anchor: '[aria-label="Start with the problem"]' },
+  { label: "The proof", anchor: "#concept-builds-title" },
+  { label: "The person", anchor: "#founder-strip-title" },
+  { label: "The price", anchor: "#engagement-title" },
+  { label: "The process", anchor: "#process-title" },
+  { label: "Your industry", anchor: "#industries-title" },
+  { label: "For agencies", anchor: "#white-label-title" },
+  { label: "Questions", anchor: "#faq-title" },
+];
+
 export default function Home() {
   return (
     <div className="home relative">
       <DriftGrid />
+      <StoryChapters chapters={CHAPTERS} />
       <Hero />
       <Stats />
 
@@ -45,7 +61,6 @@ export default function Home() {
       <WhiteLabel />
       <HomeFaq />
       <ClosingCta />
-      <MobileStickyCta />
     </div>
   );
 }

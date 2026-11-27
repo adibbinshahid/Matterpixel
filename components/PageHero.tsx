@@ -44,7 +44,7 @@ export function PageHero({
     <div className="flex flex-col items-start">
       <p
         className={cn(
-          "hero-rise inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[0.6875rem] font-bold uppercase tracking-[0.12em] backdrop-blur-xl sm:text-xs",
+          "hero-rise inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-[0.12em] backdrop-blur-xl",
           light && "border-line bg-white/70 text-ink",
           tone === "blue" && "border-white/25 bg-white/10 text-white",
           tone === "dark" && "border-white/10 bg-white/[0.06] text-white",

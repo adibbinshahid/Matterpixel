@@ -43,6 +43,17 @@ function CardBody({
   );
 }
 
+/** Phones: a contact channel as one compact square — glyph over a one-word
+ * label — so all three sit in a single row. */
+function ChipBody({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <span className="relative z-10 flex flex-col items-center gap-1.5 px-2 py-2.5">
+      <span className={iconPlate}>{children}</span>
+      <span className="text-xs font-semibold text-white/80">{label}</span>
+    </span>
+  );
+}
+
 /** Eyebrow with the brand dot in front — same mark the section labels use
  * elsewhere, at footer scale. */
 function Eyebrow({ children }: { children: string }) {
@@ -57,27 +68,34 @@ function Eyebrow({ children }: { children: string }) {
 export function Footer() {
 
   return (
-    <footer className="relative overflow-hidden bg-[#0b0c0e] pb-6 pt-10 text-white">
+    <footer className="relative overflow-hidden bg-[#0b0c0e] pb-[calc(var(--sticky-cta-h)+1rem)] pt-7 text-white md:pb-6 md:pt-10">
       {/* Magenta hairline capping the footer — the same brand rule that
          separates the CTA band above it, run edge to edge. */}
       <div className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,#6d1140,var(--magenta),#ff7ac0,var(--magenta),#6d1140)]" />
 
-      <div className="section-shell relative flex flex-col gap-7">
-        <div className="grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-[1.5fr_0.8fr_1.15fr]">
+      <div className="section-shell relative flex flex-col gap-4 md:gap-7">
+        {/* Phones get the compact footer: logo and tagline, the links as
+            one wrapped row, the three channels as one row of squares, and
+            the legal line. The long description and the column headings
+            are a wide-screen layout. */}
+        <div className="grid gap-x-10 gap-y-3 sm:grid-cols-2 md:gap-y-8 lg:grid-cols-[1.5fr_0.8fr_1.15fr]">
           {/* Brand */}
-          <div className="flex max-w-sm flex-col gap-3">
-            <Logo imgClassName="h-9 w-auto brightness-0 invert" sizes="200px" />
-            <p className="text-base leading-normal text-white/65 md:text-[13px] md:leading-relaxed">{footer.description}</p>
-            <p className="text-base leading-normal text-white/65 md:text-[13px] md:leading-relaxed">{brand.tagline}</p>
-            <p className="text-[13px] font-semibold text-white">
+          <div className="flex max-w-sm flex-col gap-1.5 md:gap-3">
+            <Logo imgClassName="h-8 w-auto brightness-0 invert md:h-9" sizes="200px" />
+            <p className="text-[13px] leading-relaxed text-white/65 max-md:hidden">{footer.description}</p>
+            <p className="text-[13px] leading-relaxed text-white/65">{brand.tagline}</p>
+            <p className="text-[13px] font-semibold text-white max-md:hidden">
               {footer.foundingLine}
             </p>
           </div>
 
           {/* Navigate */}
           <div className="flex flex-col gap-1.5">
-            <Eyebrow>Navigate</Eyebrow>
-            <div className="grid grid-cols-2 gap-x-6 md:flex md:flex-col">
+            <span className="max-md:hidden">
+              <Eyebrow>Navigate</Eyebrow>
+            </span>
+            {/* Phones: all five on one line, spread edge to edge. */}
+            <div className="-my-1 flex justify-between md:my-0 md:flex-col md:justify-start">
               {footer.links.map((l) => (
                 <Link
                   key={l.href}
@@ -85,7 +103,7 @@ export function Footer() {
                   // min-h-11 (44px) is the iOS tap minimum — the rows read
                   // compact because the gap is gone, not because the target
                   // shrank.
-                  className="group flex min-h-11 items-center justify-between gap-3 text-[13px] sm:max-w-[10rem]"
+                  className="group flex min-h-11 items-center justify-between gap-3 text-[13px] md:max-w-[10rem]"
                 >
                   {/* The label doesn't recolour — it is replaced. The muted
                      copy rises out of the row and the lit copy takes its
@@ -111,8 +129,27 @@ export function Footer() {
             </div>
           </div>
 
+          {/* Contact — phones: one row of three. */}
+          <div className="mt-1 grid grid-cols-3 gap-2 md:hidden">
+            <Spotlight href={`mailto:${footer.contact.email}`}>
+              <ChipBody label="Email">
+                <Mail className="h-4 w-4" />
+              </ChipBody>
+            </Spotlight>
+            <WhatsAppSpotlight>
+              <ChipBody label="WhatsApp">
+                <SiWhatsapp className="h-4 w-4" />
+              </ChipBody>
+            </WhatsAppSpotlight>
+            <Spotlight href={`https://t.me/${footer.contact.telegram}`} external>
+              <ChipBody label="Telegram">
+                <SiTelegram className="h-4 w-4" />
+              </ChipBody>
+            </Spotlight>
+          </div>
+
           {/* Contact */}
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 max-md:hidden">
             <Eyebrow>Contact</Eyebrow>
             <Spotlight href={`mailto:${footer.contact.email}`}>
               <CardBody title={footer.contact.email} sub="Send us an email">
@@ -135,13 +172,13 @@ export function Footer() {
         <div className="h-px w-full bg-white/10" />
 
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             {/* Mark in a lit disc — the wordmark already ran up top, so the
                baseline gets the icon alone. */}
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black ring-1 ring-white/10">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black ring-1 ring-white/10 max-md:hidden">
               <MarkImg className="h-3 w-auto brightness-0 invert" />
             </span>
-            <span className="text-[12px] text-white/50 md:text-[11px]">{footer.copyright}</span>
+            <span className="text-[12px] text-white/50 max-md:basis-full md:text-[11px]">{footer.copyright}</span>
 
             <span aria-hidden className="hidden h-4 w-px bg-white/12 sm:block" />
 
@@ -151,7 +188,7 @@ export function Footer() {
                scale: nothing moves but the light and the late arrow. */}
             <Link
               href="/sitemap"
-              className={`group relative flex min-h-11 items-center gap-2 rounded-lg md:min-h-9 border border-white/10 px-2.5 py-1.5 transition-[border-color,background-color] duration-700 ${EASE} hover:border-white/25 hover:bg-white/[0.04]`}
+              className={`group relative flex min-h-11 items-center gap-2 rounded-lg max-md:-ml-1 max-md:border-transparent max-md:px-1 md:min-h-9 border border-white/10 px-2.5 py-1.5 transition-[border-color,background-color] duration-700 ${EASE} hover:border-white/25 hover:bg-white/[0.04]`}
             >
               <Network
                 aria-hidden

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { siteUrl } from "@/content/siteConfig";
 import { logger } from "@/lib/logger";
-import { getClientIp, isRateLimited } from "@/lib/rate-limit";
+import { getClientIp, isRateLimited, type RateLimit } from "@/lib/rate-limit";
 
 /** Largest JSON body a form endpoint accepts. The biggest legitimate
  * payload (every field at its schema max) is well under this. */
@@ -33,11 +33,17 @@ type GuardResult =
   | { ok: false; response: NextResponse };
 
 /**
- * Shared front door for the public form endpoints: origin check, JSON-only,
- * size cap and per-IP throttling, in that order, so a rejected request
- * costs as little as possible. Returns the parsed body on success.
+ * Shared front door for public form endpoints: origin check, JSON-only and
+ * size cap, in that order, so a rejected request costs as little as
+ * possible. Returns the parsed body on success. Per-IP throttling runs here
+ * too unless `rateLimit` is false — then the caller throttles itself (the
+ * quote route does, after its honeypot check) with `isIpRateLimited`.
  */
-export async function guardFormRequest(request: Request, scope: string): Promise<GuardResult> {
+export async function guardFormRequest(
+  request: Request,
+  scope: string,
+  { rateLimit = true }: { rateLimit?: boolean } = {},
+): Promise<GuardResult> {
   const ip = getClientIp(request);
   const fail = (status: number, error: string, event: string): GuardResult => {
     logger.warn(`${scope}.${event}`, { ip });
@@ -52,7 +58,7 @@ export async function guardFormRequest(request: Request, scope: string): Promise
     return fail(415, "Unsupported request.", "bad_content_type");
   }
 
-  if (isRateLimited(`${scope}:${ip}`)) {
+  if (rateLimit && isRateLimited(`${scope}:${ip}`)) {
     return fail(429, "Too many requests. Please try again in a few minutes.", "rate_limited");
   }
 
@@ -76,8 +82,7 @@ export async function guardFormRequest(request: Request, scope: string): Promise
   return { ok: true, ip, body };
 }
 
-/** A second throttle keyed on the visitor's email, so one address can't be
- * hammered from many IPs. */
-export function isEmailRateLimited(scope: string, email: string): boolean {
-  return isRateLimited(`${scope}:email:${email.trim().toLowerCase()}`);
+/** Per-IP throttle with a caller-chosen window. */
+export function isIpRateLimited(scope: string, ip: string, limit: RateLimit): boolean {
+  return isRateLimited(`${scope}:${ip}`, limit);
 }

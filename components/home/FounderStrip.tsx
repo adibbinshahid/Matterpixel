@@ -174,13 +174,16 @@ export function FounderStrip() {
 
   return (
     <PixelSection seam tone="magenta" labelledBy="founder-strip-title" className="overflow-hidden">
-      <div ref={gridRef} className="grid grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] sm:grid-cols-2 lg:min-h-[640px]">
+      {/* Phones: portrait on top, statement full width under it. Side by side
+          at 402px the copy column was ~200px and the heading broke over four
+          lines. */}
+      <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:min-h-[640px]">
         {/* Portrait: edge to edge on the left half, no frame. */}
         <div
           ref={frameRef}
           onPointerMove={onMove}
           onPointerLeave={() => lightRef.current && (lightRef.current.style.opacity = "0")}
-          className="founder-frame relative min-h-full overflow-hidden bg-[#0b0c0e]"
+          className="founder-frame relative min-h-full overflow-hidden bg-[#0b0c0e] max-sm:aspect-[5/4]"
         >
           <div ref={imgRef} className="absolute -inset-y-12 inset-x-0 will-change-transform">
             {founder.photo && (
@@ -210,15 +213,15 @@ export function FounderStrip() {
             className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(0deg,rgba(11,12,14,0.85),transparent)]"
           />
           <p className="absolute bottom-3 left-3 right-3 text-white sm:bottom-8 sm:left-10 sm:right-6">
-            <span className="block text-sm font-bold tracking-tight sm:text-2xl lg:text-[1.75rem]">{founder.name}</span>
-            <span className="mt-1 block text-[10px] font-medium leading-snug text-white/80 sm:mt-1.5 sm:text-base lg:text-[1.0625rem]">
+            <span className="block text-base font-bold tracking-tight sm:text-2xl lg:text-[1.75rem]">{founder.name}</span>
+            <span className="mt-1 block text-xs font-medium leading-snug text-white/80 sm:mt-1.5 sm:text-base lg:text-[1.0625rem]">
               {founder.role} · {founder.roleScope}
             </span>
           </p>
         </div>
 
         {/* Statement */}
-        <div className="flex min-w-0 flex-col justify-center px-4 py-8 sm:px-10 sm:py-12 md:py-14 lg:py-20 lg:pl-16 lg:pr-[max(3rem,calc((100vw-1200px)/2))]">
+        <div className="flex min-w-0 flex-col justify-center px-6 pb-[72px] pt-8 sm:px-10 sm:py-12 md:py-14 lg:py-20 lg:pl-16 lg:pr-[max(3rem,calc((100vw-1200px)/2))]">
           <p
             data-reveal="eyebrow"
             className="flex items-center gap-2.5 text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-ink-soft md:text-xs"
@@ -229,13 +232,13 @@ export function FounderStrip() {
           <h2
             id="founder-strip-title"
             data-reveal="title"
-            className="mt-3 max-w-[18ch] text-balance text-[clamp(1.25rem,0.6rem+3.4vw,3.25rem)] sm:mt-4 font-bold leading-[1.06] tracking-[-0.025em] text-ink"
+            className="mt-3 max-w-[18ch] text-balance text-[clamp(2rem,0.6rem+3.4vw,3.25rem)] sm:mt-4 font-bold leading-[1.06] tracking-[-0.025em] text-ink"
           >
             You talk to the <Hl tone="magenta">founder</Hl>, never an account manager.
           </h2>
           <p
             data-reveal="lede"
-            className="mt-3 max-w-[46ch] text-sm leading-relaxed text-white sm:mt-6 sm:text-lg md:font-normal md:text-ink-soft max-md:font-semibold"
+            className="mt-3 max-w-[46ch] text-[0.9375rem] font-normal leading-relaxed text-white/85 sm:mt-6 sm:text-lg md:text-ink-soft"
           >
             One person owns the direction, keeps the work moving, and stays accountable for the result.
           </p>
@@ -246,7 +249,7 @@ export function FounderStrip() {
               {PROOF.map((p, i) => (
                 // dt before dd in the markup (valid <dl>), shown under it.
                 <div key={p.label} className="flex flex-col-reverse justify-end">
-                  <dt className="mt-1 text-[10px] font-medium leading-tight text-ink-soft sm:mt-2 sm:text-sm">{p.label}</dt>
+                  <dt className="mt-1 text-xs font-medium leading-tight text-ink-soft sm:mt-2 sm:text-sm">{p.label}</dt>
                   <dd className="text-[clamp(1.25rem,0.7rem+2.6vw,3rem)] font-bold leading-none tracking-[-0.025em] text-ink tabular-nums">
                     <span
                       ref={(el) => {

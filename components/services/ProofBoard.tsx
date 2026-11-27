@@ -79,7 +79,7 @@ function Metric({
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.5, delay: 0.2 + index * 0.06, ease: EASE }}
       >
-        <p className="font-mono text-[0.625rem] uppercase tracking-[0.18em] text-magenta">
+        <p className="font-mono text-xs uppercase tracking-[0.18em] text-magenta">
           {metric.unit}
         </p>
         <p className="mt-1 text-sm font-bold tracking-tight text-ink">
