@@ -129,10 +129,12 @@ export async function POST(request: Request) {
     logger.error("quote.step2_email_failed", { ip, inboundId, error: errorText(error) });
   }
 
-  // ── Step 3: n8n ───────────────────────────────────────────────────────
+  // ── Step 3: n8n (PixelScout Telegram alert) ───────────────────────────
+  // Never affects the visitor's response.
   try {
     await notifyWebhook(lead, meta, inboundId);
   } catch (error) {
+    console.error("[quote] n8n notify failed", error);
     logger.error("quote.step3_webhook_failed", { ip, inboundId, error: errorText(error) });
   }
 
@@ -227,27 +229,40 @@ async function sendBackupEmail(lead: Lead, meta: Meta, inboundId: string | null)
   if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 300)}`);
 }
 
-/** Tells n8n about the lead. Skipped when no webhook is configured. */
+/** Tells n8n (PixelScout) about the lead so it can send the Telegram
+ * alert. Skipped silently unless both the URL and the secret are set. */
 async function notifyWebhook(lead: Lead, meta: Meta, inboundId: string | null): Promise<void> {
   const url = process.env.QUOTE_WEBHOOK_URL;
-  if (!url) return;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-pixelscout-secret": process.env.QUOTE_WEBHOOK_SECRET ?? "",
-    },
-    body: JSON.stringify({
-      event: "quote.created",
-      inbound_id: inboundId,
-      ...lead,
-      source_page: meta.source_page,
-      utm: meta.utm,
-      country: meta.country,
-    }),
-    signal: AbortSignal.timeout(WEBHOOK_TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`Webhook ${res.status}`);
+  const secret = process.env.QUOTE_WEBHOOK_SECRET;
+  if (!url || !secret) return;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), WEBHOOK_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-pixelscout-secret": secret },
+      body: JSON.stringify({
+        event: "quote.created",
+        inbound_id: inboundId,
+        name: lead.name,
+        email: lead.email,
+        website: lead.website,
+        service: lead.service,
+        details: lead.details,
+        budget: lead.budget,
+        timeline: lead.timeline,
+        link: lead.link,
+        source_page: meta.source_page,
+        utm: meta.utm,
+        country: meta.country,
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) throw new Error(`Webhook ${res.status}`);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 /** `https://www.matterpixel.com/contact?tab=inquiry` → `/contact`. */
