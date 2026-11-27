@@ -30,7 +30,7 @@ import {
   quoteFieldSchemas,
   normalizeWebsite,
   isServiceSlug,
-  serviceLabel,
+  serviceLabels,
   BUDGET_OPTIONS,
   SERVICE_OPTIONS,
   TIMELINE_OPTIONS,
@@ -824,6 +824,9 @@ interface InquiryField {
   autoComplete?: string;
   optional?: boolean;
   options?: readonly Option[];
+  /** Choice that takes several picks: pills toggle, and the step waits for
+   * Continue instead of moving on by itself. */
+  multi?: boolean;
 }
 
 const asOptions = (list: readonly string[]): Option[] => list.map((v) => ({ value: v, label: v }));
@@ -835,6 +838,7 @@ const INQUIRY_FIELDS: Record<InquiryFieldId, InquiryField> = {
     id: "service",
     kind: "choice",
     label: "Service",
+    multi: true,
     options: SERVICE_OPTIONS.map((o) => ({ value: o.slug, label: o.label })),
   },
   details: {
@@ -937,7 +941,7 @@ const WIZARD_STEPS: WizardStep[] = [
     fields: ["service"],
     title: "What do you need?",
     titleWithName: (n) => `So ${n}, what are we building?`,
-    desc: "Pick the closest fit.",
+    desc: "Pick all that apply.",
   },
   {
     id: "scope",
@@ -976,6 +980,7 @@ const stepVariants: Variants = {
 function isFieldEmpty(id: InquiryFieldId, values: QuoteValues): boolean {
   const v = values[id];
   if (typeof v === "string") return v.trim().length === 0;
+  if (Array.isArray(v)) return v.length === 0;
   return v == null;
 }
 
@@ -1000,10 +1005,16 @@ function stepIssue(step: WizardStep, values: QuoteValues): string | null {
   return null;
 }
 
+/** Whether `option` is the answer, or one of the answers on a multi-pick. */
+function isPicked(value: unknown, option: string): boolean {
+  return Array.isArray(value) ? value.includes(option) : value === option;
+}
+
 function displayValue(id: InquiryFieldId, values: QuoteValues): string {
   const v = values[id];
+  if (Array.isArray(v)) return v.length ? serviceLabels(v) : "—";
   if (typeof v !== "string" || !v.trim()) return "—";
-  return id === "service" ? serviceLabel(v) : v;
+  return v;
 }
 
 /**
@@ -1018,7 +1029,11 @@ function sanitizeInquiryDraft(raw: Record<string, unknown>): Partial<QuoteValues
   return {
     name: str(raw.name),
     email: str(raw.email),
-    service: isServiceSlug(raw.service) ? raw.service : undefined,
+    // Older drafts held one slug; current ones hold a list.
+    service: (() => {
+      const list = (Array.isArray(raw.service) ? raw.service : [raw.service]).filter(isServiceSlug);
+      return list.length ? list : undefined;
+    })(),
     details: str(raw.details),
     budget: pick(raw.budget, BUDGET_OPTIONS),
     timeline: pick(raw.timeline, TIMELINE_OPTIONS),
@@ -1159,7 +1174,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
    * restored draft too: an explicit choice from the link beats an older
    * half-typed answer. */
   const linkValues: Partial<QuoteValues> = {
-    ...(prefill?.service ? { service: prefill.service } : {}),
+    ...(prefill?.service ? { service: [prefill.service] } : {}),
     ...(prefill?.budget ? { budget: prefill.budget } : {}),
     ...(prefill?.details ? { details: prefill.details } : {}),
     ...(prefill?.selection ? { selection: prefill.selection } : {}),
@@ -1304,11 +1319,24 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
     goTo(visibleSteps[stepIndex - 1].id, -1);
   };
 
+  /** Toggles one option of a multi-pick question, keeping the picks in the
+   * order the options are listed. Never advances — Continue does. */
+  const toggleMulti = (id: InquiryFieldId, option: string) => {
+    const current = getValues(id);
+    const picked = new Set<string>(Array.isArray(current) ? current : []);
+    if (picked.has(option)) picked.delete(option);
+    else picked.add(option);
+    const next = (INQUIRY_FIELDS[id].options ?? []).map((o) => o.value).filter((v) => picked.has(v));
+    setValue(id, next as never, { shouldValidate: true });
+  };
+
   /** On a one-question screen a pick is the whole answer, so the step moves
    * on by itself — after a beat, so the selection visibly lands first.
    * Clicks and keyboard (Enter/Space on the pill) take the same path.
-   * Picking the selected option of an optional question clears it. */
+   * Picking the selected option of an optional question clears it.
+   * Multi-pick questions toggle instead and wait for Continue. */
   const pickChoice = (id: InquiryFieldId, option: string) => {
+    if (INQUIRY_FIELDS[id].multi) return toggleMulti(id, option);
     const clearing = INQUIRY_FIELDS[id].optional && getValues(id) === option;
     setValue(id, (clearing ? undefined : option) as never, { shouldValidate: true });
     if (clearing || current.fields.length > 1) return;
@@ -1570,7 +1598,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                             <OptionPill
                               key={opt.value}
                               label={opt.label}
-                              selected={values[id] === opt.value}
+                              selected={isPicked(values[id], opt.value)}
                               onClick={() => pickChoice(id, opt.value)}
                             />
                           ))}
@@ -1713,8 +1741,11 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
                               <ReviewPill
                                 key={opt.value}
                                 label={opt.label}
-                                selected={values[id] === opt.value}
+                                selected={isPicked(values[id], opt.value)}
                                 onClick={() => {
+                                  // Multi-pick: toggle and keep the editor
+                                  // open — Done confirms.
+                                  if (f.multi) return toggleMulti(id, opt.value);
                                   setValue(id, opt.value as never, { shouldValidate: true });
                                   // Single-answer question — picking *is* the
                                   // whole edit, so no separate confirm step.
