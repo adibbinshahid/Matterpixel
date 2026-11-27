@@ -160,7 +160,15 @@ async function saveToSupabase(lead: Lead, meta: Meta): Promise<string> {
   // also needs the Authorization header.
   if (!key.startsWith("sb_")) headers.Authorization = `Bearer ${key}`;
 
-  const res = await fetch(`${url.replace(/\/+$/, "")}/rest/v1/inbound`, {
+  // Only the origin is used, so a pasted ".../rest/v1/" (as Supabase's Data
+  // API page shows it) works the same as the bare project URL.
+  let base: string;
+  try {
+    base = new URL(url.trim()).origin;
+  } catch {
+    throw new Error("SUPABASE_URL is not a valid URL");
+  }
+  const res = await fetch(`${base}/rest/v1/inbound`, {
     method: "POST",
     headers,
     body: JSON.stringify({ type: "quote", ...lead, ...meta, status: "new" }),
