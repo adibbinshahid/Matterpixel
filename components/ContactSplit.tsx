@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import { Turnstile } from "@/components/Turnstile";
+import { Turnstile, TURNSTILE_SITE_KEY } from "@/components/Turnstile";
 import { useRouter } from "next/navigation";
 import { useForm, type FieldErrors, type UseFormRegisterReturn } from "react-hook-form";
 import { cleanSrc, trackEvent } from "@/lib/analytics";
@@ -1107,7 +1107,30 @@ function WizardAmbience() {
 
 function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string }) {
   const botToken = useRef<string | null>(null);
+  const tokenWaiters = useRef<((token: string) => void)[]>([]);
   const honeypot = useRef<HTMLInputElement>(null);
+  const handleBotToken = (token: string | null) => {
+    botToken.current = token;
+    if (token) tokenWaiters.current.splice(0).forEach((resolve) => resolve(token));
+  };
+  /** Turnstile takes a few seconds to issue a token after the page loads,
+   * and again after every send (tokens are single-use). A click in that gap
+   * waits for the token, still showing "Sending…", instead of going out
+   * without one and failing the bot check. */
+  const waitForBotToken = (timeoutMs: number): Promise<string | null> => {
+    if (botToken.current || !TURNSTILE_SITE_KEY) return Promise.resolve(botToken.current);
+    return new Promise((resolve) => {
+      const waiter = (token: string) => {
+        clearTimeout(timer);
+        resolve(token);
+      };
+      const timer = setTimeout(() => {
+        tokenWaiters.current = tokenWaiters.current.filter((w) => w !== waiter);
+        resolve(null);
+      }, timeoutMs);
+      tokenWaiters.current.push(waiter);
+    });
+  };
   const [botReset, setBotReset] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -1358,6 +1381,9 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
     setStatus("idle");
     setErrorMsg(null);
     try {
+      const turnstileToken = await waitForBotToken(20_000);
+      // Single-use: never send the same token twice.
+      botToken.current = null;
       const res = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1365,7 +1391,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
           ...values,
           company_fax: honeypot.current?.value ?? "",
           utm: readUtm(),
-          turnstileToken: botToken.current,
+          turnstileToken,
         }),
       });
       if (!res.ok) {
@@ -1745,7 +1771,7 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
           </div>
 
           <div className="shrink-0">
-            <Turnstile onToken={(t) => (botToken.current = t)} resetSignal={botReset} />
+            <Turnstile onToken={handleBotToken} resetSignal={botReset} />
             <SubmitRow
               isSubmitting={isSubmitting}
               status={status}
