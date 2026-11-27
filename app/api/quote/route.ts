@@ -26,7 +26,7 @@ type Lead = {
   name: string;
   email: string;
   website: string | null;
-  /** Comma-separated slugs ("web-design, ai-automation") — the `inbound.service`
+  /** Comma-separated slugs ("website, ai-automation") — the `inbound.service`
    * column is plain text, so several picks travel as one string. */
   service: string;
   details: string;
@@ -84,7 +84,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const parsed = quoteSchema.safeParse(raw);
+  // A page loaded before multi-pick shipped still sends one slug.
+  const parsed = quoteSchema.safeParse(
+    typeof raw.service === "string" ? { ...raw, service: [raw.service] } : raw,
+  );
   if (!parsed.success) {
     logger.warn("quote.invalid", { ip, fields: parsed.error.issues.map((i) => i.path.join(".")) });
     return NextResponse.json(
