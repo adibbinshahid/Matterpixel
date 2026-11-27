@@ -52,11 +52,15 @@ export async function POST(request: Request) {
   const raw = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
 
   // Honeypot first: a bot gets the same answer a person would, and nothing
-  // is stored, sent or counted.
-  if (typeof raw.company_fax === "string" && raw.company_fax.trim()) {
+  // is stored, sent or counted. A filled honeypot with a passing Turnstile
+  // token is a person whose browser autofilled the hidden field, so that
+  // lead goes through rather than being silently dropped.
+  const honeypotFilled = typeof raw.company_fax === "string" && raw.company_fax.trim() !== "";
+  if (honeypotFilled && !(await verifyTurnstile(tokenFrom(raw), ip))) {
     logger.warn("quote.honeypot", { ip });
     return fake();
   }
+  if (honeypotFilled) logger.warn("quote.honeypot_autofill_passed_turnstile", { ip });
 
   if (isIpRateLimited("quote", ip, { windowMs: HOUR_MS, max: 5 })) {
     logger.warn("quote.rate_limited", { ip });
@@ -66,7 +70,8 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!(await verifyTurnstile(tokenFrom(raw), ip))) {
+  // Already verified above when the honeypot was filled; a token is single-use.
+  if (!honeypotFilled && !(await verifyTurnstile(tokenFrom(raw), ip))) {
     return NextResponse.json(
       { ok: false, error: "Bot check failed. Refresh the page and try again." },
       { status: 400 },

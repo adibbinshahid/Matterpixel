@@ -1107,6 +1107,7 @@ function WizardAmbience() {
 
 function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string }) {
   const botToken = useRef<string | null>(null);
+  const honeypot = useRef<HTMLInputElement>(null);
   const [botReset, setBotReset] = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -1360,7 +1361,12 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
       const res = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, utm: readUtm(), turnstileToken: botToken.current }),
+        body: JSON.stringify({
+          ...values,
+          company_fax: honeypot.current?.value ?? "",
+          utm: readUtm(),
+          turnstileToken: botToken.current,
+        }),
       });
       if (!res.ok) {
         // A 500 means neither the database nor the backup email took the
@@ -1414,10 +1420,26 @@ function InquiryPanel({ prefill, src }: { prefill?: InquiryPrefill; src?: string
       {/* Which CTA brought the visitor here — rides along to the email. */}
       <input {...register("src")} type="hidden" />
       {/* Honeypot — hidden from sighted and AT users, real visitors never fill it. */}
+      {/* Honeypot. Its name and label are deliberately meaningless: browsers
+          and password managers ignore autoComplete="off" and will fill a
+          field that looks like "company" or "fax", which would throw a real
+          visitor's quote away as a bot. It is read on submit, not through the
+          form state, so its DOM name can stay unrecognisable. */}
       <div aria-hidden="true" className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">
         <label>
-          Fax
-          <input {...register("company_fax")} type="text" tabIndex={-1} autoComplete="off" />
+          Leave this empty
+          <input
+            ref={honeypot}
+            name="mp_hp_x7"
+            type="text"
+            tabIndex={-1}
+            autoComplete="nope"
+            defaultValue=""
+            data-1p-ignore
+            data-lpignore="true"
+            data-bwignore
+            data-form-type="other"
+          />
         </label>
       </div>
 
