@@ -34,6 +34,11 @@ export function serviceLabel(slug: string | undefined): string {
   return SERVICE_OPTIONS.find((s) => s.slug === slug)?.label ?? slug ?? "";
 }
 
+/** Labels for several picks, comma-separated: "Web Design, AI Automation". */
+export function serviceLabels(slugs: readonly string[] | undefined): string {
+  return (slugs ?? []).map(serviceLabel).join(", ");
+}
+
 /** The kinds of work packages and stack items describe (content/packages.ts).
  * Not asked on the form any more: a link from a package or stack maps its
  * first type onto a `SERVICE_OPTIONS` slug (see `serviceForProjectType`). */
@@ -90,7 +95,11 @@ export const quoteSchema = z.object({
   name: z.string().trim().min(2, "Tell us your name.").max(80, "Keep it under 80 characters."),
   email: z.string().trim().max(320, "That email is too long.").email("Enter a valid email."),
   website: optionalUrl,
-  service: z.enum(SERVICE_SLUGS, { message: "Pick the closest fit." }),
+  /** One or more services — the visitor can tick several. */
+  service: z
+    .array(z.enum(SERVICE_SLUGS, { message: "Pick from the list." }), { message: "Pick at least one." })
+    .min(1, "Pick at least one.")
+    .max(SERVICE_SLUGS.length),
   details: z
     .string()
     .trim()

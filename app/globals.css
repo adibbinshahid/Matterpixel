@@ -1118,6 +1118,13 @@ html.lenis body {
   overflow: hidden;
 }
 
+/* Cal.com popup open (lib/calModal.ts): the page behind it stays put. */
+html.cal-modal-open,
+html.cal-modal-open body {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
 /* ---------------------------------------------------------------------- */
 /* Foundation layer — Phase 06.1. Shared primitives for future sections   */
 /* to consume. Nothing below is applied to any existing markup yet; every */

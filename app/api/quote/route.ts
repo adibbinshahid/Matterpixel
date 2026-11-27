@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { guardFormRequest, isIpRateLimited } from "@/lib/apiGuard";
 import { logger } from "@/lib/logger";
-import { normalizeWebsite, quoteSchema, serviceLabel, utmSchema, type Utm } from "@/lib/schema";
+import { normalizeWebsite, quoteSchema, serviceLabels, SERVICE_OPTIONS, utmSchema, type Utm } from "@/lib/schema";
 import { checkTurnstile, tokenFrom, verifyTurnstile } from "@/lib/turnstile";
 
 export const runtime = "nodejs";
@@ -26,6 +26,8 @@ type Lead = {
   name: string;
   email: string;
   website: string | null;
+  /** Comma-separated slugs ("website, ai-automation") — the `inbound.service`
+   * column is plain text, so several picks travel as one string. */
   service: string;
   details: string;
   budget: string | null;
@@ -82,7 +84,10 @@ export async function POST(request: Request) {
     );
   }
 
-  const parsed = quoteSchema.safeParse(raw);
+  // A page loaded before multi-pick shipped still sends one slug.
+  const parsed = quoteSchema.safeParse(
+    typeof raw.service === "string" ? { ...raw, service: [raw.service] } : raw,
+  );
   if (!parsed.success) {
     logger.warn("quote.invalid", { ip, fields: parsed.error.issues.map((i) => i.path.join(".")) });
     return NextResponse.json(
@@ -96,7 +101,10 @@ export async function POST(request: Request) {
     name: data.name,
     email: data.email,
     website: data.website ? normalizeWebsite(data.website) : null,
-    service: data.service,
+    // Listed order, deduped, so the same picks always read the same way.
+    service: SERVICE_OPTIONS.map((o) => o.slug)
+      .filter((slug) => data.service.includes(slug))
+      .join(", "),
     details: data.details,
     budget: data.budget ?? null,
     timeline: data.timeline ?? null,
@@ -197,7 +205,7 @@ async function sendBackupEmail(lead: Lead, meta: Meta, inboundId: string | null)
     `Name: ${lead.name}`,
     `Email: ${lead.email}`,
     `Website: ${lead.website ?? "-"}`,
-    `Service: ${serviceLabel(lead.service)} (${lead.service})`,
+    `Service: ${serviceLabels(lead.service.split(", "))} (${lead.service})`,
     `Budget: ${lead.budget ?? "-"}`,
     `Timeline: ${lead.timeline ?? "-"}`,
     `Link: ${lead.link ?? "-"}`,
@@ -221,7 +229,7 @@ async function sendBackupEmail(lead: Lead, meta: Meta, inboundId: string | null)
       from,
       to: [to],
       reply_to: lead.email,
-      subject: `[Lead backup] Quote: ${oneLine(lead.name)} – ${serviceLabel(lead.service)}`,
+      subject: `[Lead backup] Quote: ${oneLine(lead.name)} – ${serviceLabels(lead.service.split(", "))}`,
       text,
     }),
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
@@ -249,6 +257,7 @@ async function notifyWebhook(lead: Lead, meta: Meta, inboundId: string | null): 
         email: lead.email,
         website: lead.website,
         service: lead.service,
+        services: lead.service.split(", "),
         details: lead.details,
         budget: lead.budget,
         timeline: lead.timeline,
