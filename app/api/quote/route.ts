@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { guardFormRequest, isIpRateLimited } from "@/lib/apiGuard";
 import { logger } from "@/lib/logger";
 import { normalizeWebsite, quoteSchema, serviceLabel, utmSchema, type Utm } from "@/lib/schema";
-import { tokenFrom, verifyTurnstile } from "@/lib/turnstile";
+import { checkTurnstile, tokenFrom, verifyTurnstile } from "@/lib/turnstile";
 
 export const runtime = "nodejs";
 
@@ -51,17 +51,8 @@ export async function POST(request: Request) {
   const { ip, body } = guard;
   const raw = (body && typeof body === "object" ? body : {}) as Record<string, unknown>;
 
-  // Honeypot first: a bot gets the same answer a person would, and nothing
-  // is stored, sent or counted. A filled honeypot with a passing Turnstile
-  // token is a person whose browser autofilled the hidden field, so that
-  // lead goes through rather than being silently dropped.
-  const honeypotFilled = typeof raw.company_fax === "string" && raw.company_fax.trim() !== "";
-  if (honeypotFilled && !(await verifyTurnstile(tokenFrom(raw), ip))) {
-    logger.warn("quote.honeypot", { ip });
-    return fake();
-  }
-  if (honeypotFilled) logger.warn("quote.honeypot_autofill_passed_turnstile", { ip });
-
+  // Rate limit before anything that calls out (Turnstile), so a flood can't
+  // be used to hammer Cloudflare.
   if (isIpRateLimited("quote", ip, { windowMs: HOUR_MS, max: 5 })) {
     logger.warn("quote.rate_limited", { ip });
     return NextResponse.json(
@@ -70,8 +61,21 @@ export async function POST(request: Request) {
     );
   }
 
-  // Already verified above when the honeypot was filled; a token is single-use.
-  if (!honeypotFilled && !(await verifyTurnstile(tokenFrom(raw), ip))) {
+  // Honeypot: a bot gets the same answer a person would, and nothing is
+  // stored or sent. The one exception is a filled honeypot whose Turnstile
+  // token Cloudflare actually confirmed: that's a person whose browser
+  // autofilled the hidden field. This branch fails closed, so with no
+  // Turnstile secret or Cloudflare unreachable, a filled honeypot is dropped.
+  const honeypotFilled = typeof raw.company_fax === "string" && raw.company_fax.trim() !== "";
+  if (honeypotFilled) {
+    if ((await checkTurnstile(tokenFrom(raw), ip)) !== "passed") {
+      logger.warn("quote.honeypot", { ip });
+      return fake();
+    }
+    logger.warn("quote.honeypot_autofill_passed_turnstile", { ip });
+  } else if (!(await verifyTurnstile(tokenFrom(raw), ip))) {
+    // Normal path: fails open on outage (see lib/turnstile.ts). A token is
+    // single-use, so it is checked once on whichever branch runs.
     return NextResponse.json(
       { ok: false, error: "Bot check failed. Refresh the page and try again." },
       { status: 400 },
