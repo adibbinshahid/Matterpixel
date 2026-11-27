@@ -12,8 +12,9 @@ export const runtime = "nodejs";
  * No lead may be lost, so after the guard the work runs as three
  * independent steps, each in its own try/catch:
  *   1. save to Supabase `inbound` (the source of truth)
- *   2. send a plain-text backup email through Resend
+ *   2. send a plain-text backup email through Resend (5 s timeout)
  *   3. notify n8n (optional, 5 s timeout)
+ * Steps 2 and 3 run in parallel once step 1 settles (both carry its id).
  * The visitor sees success if step 1 OR step 2 worked. Every failed step is
  * logged with its name (console.error, so it shows in Vercel logs).
  */
@@ -21,6 +22,9 @@ export const runtime = "nodejs";
 const HOUR_MS = 60 * 60 * 1000;
 const WEBHOOK_TIMEOUT_MS = 5000;
 const UPSTREAM_TIMEOUT_MS = 8000;
+const EMAIL_TIMEOUT_MS = 5000;
+const DEFAULT_BACKUP_FROM = "Matterpixel Website <noreply@matterpixel.com>";
+const DEFAULT_BACKUP_TO = "adib@matterpixel.com";
 
 type Lead = {
   name: string;
@@ -128,23 +132,26 @@ export async function POST(request: Request) {
     logger.error("quote.step1_supabase_failed", { ip, error: errorText(error) });
   }
 
-  // ── Step 2: backup email ──────────────────────────────────────────────
-  let emailed = false;
-  try {
-    await sendBackupEmail(lead, meta, inboundId);
-    emailed = true;
-  } catch (error) {
-    logger.error("quote.step2_email_failed", { ip, inboundId, error: errorText(error) });
-  }
-
-  // ── Step 3: n8n (PixelScout Telegram alert) ───────────────────────────
-  // Never affects the visitor's response.
-  try {
-    await notifyWebhook(lead, meta, inboundId);
-  } catch (error) {
-    console.error("[quote] n8n notify failed", error);
-    logger.error("quote.step3_webhook_failed", { ip, inboundId, error: errorText(error) });
-  }
+  // ── Steps 2 + 3 in parallel: backup email, n8n (Telegram alert) ──────
+  // Neither waits on the other; n8n never affects the visitor's response.
+  const [emailed] = await Promise.all([
+    (async () => {
+      try {
+        return await sendBackupEmail(lead, meta, inboundId);
+      } catch (error) {
+        logger.error("quote.step2_email_failed", { ip, inboundId, error: errorText(error) });
+        return false;
+      }
+    })(),
+    (async () => {
+      try {
+        await notifyWebhook(lead, meta, inboundId);
+      } catch (error) {
+        console.error("[quote] n8n notify failed", error);
+        logger.error("quote.step3_webhook_failed", { ip, inboundId, error: errorText(error) });
+      }
+    })(),
+  ]);
 
   if (!inboundId && !emailed) {
     logger.error("quote.lead_not_captured", { ip });
@@ -191,12 +198,16 @@ async function saveToSupabase(lead: Lead, meta: Meta): Promise<string> {
   return String(id);
 }
 
-/** Plain-text copy of every field to Adib's inbox, independent of the DB. */
-async function sendBackupEmail(lead: Lead, meta: Meta, inboundId: string | null): Promise<void> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.LEAD_BACKUP_FROM;
-  const to = process.env.LEAD_BACKUP_TO;
-  if (!apiKey || !from || !to) throw new Error("RESEND_API_KEY, LEAD_BACKUP_FROM or LEAD_BACKUP_TO is not set");
+/** Plain-text copy of every field to Adib's inbox, independent of the DB.
+ * Returns false (skipped, not an error) when RESEND_API_KEY is empty. */
+async function sendBackupEmail(lead: Lead, meta: Meta, inboundId: string | null): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    logger.warn("quote.step2_email_skipped", { reason: "RESEND_API_KEY is not set" });
+    return false;
+  }
+  const from = process.env.LEAD_BACKUP_FROM?.trim() || DEFAULT_BACKUP_FROM;
+  const to = process.env.LEAD_BACKUP_TO?.trim() || DEFAULT_BACKUP_TO;
 
   const utmLine = Object.entries(meta.utm)
     .map(([k, v]) => `${k}=${v}`)
@@ -205,21 +216,18 @@ async function sendBackupEmail(lead: Lead, meta: Meta, inboundId: string | null)
     `Name: ${lead.name}`,
     `Email: ${lead.email}`,
     `Website: ${lead.website ?? "-"}`,
-    `Service: ${serviceLabels(lead.service.split(", "))} (${lead.service})`,
+    `Services: ${serviceLabels(lead.service.split(", "))}`,
     `Budget: ${lead.budget ?? "-"}`,
     `Timeline: ${lead.timeline ?? "-"}`,
     `Link: ${lead.link ?? "-"}`,
     `Selection: ${lead.selection ? lead.selection.replace(/\n/g, " · ") : "-"}`,
     `CTA: ${lead.src ?? "-"}`,
-    "",
-    "Details:",
-    lead.details,
-    "",
+    `Details: ${lead.details}`,
     `Source page: ${meta.source_page ?? "-"}`,
     `UTM: ${utmLine || "-"}`,
     `Country: ${meta.country ?? "-"}`,
-    `Inbound ID: ${inboundId ?? "NOT SAVED TO DB"}`,
-    `Received: ${dhakaTimestamp()} (Asia/Dhaka)`,
+    `Saved to DB: ${inboundId ?? "NOT SAVED TO DB"}`,
+    `Time: ${dhakaTimestamp()} (Asia/Dhaka)`,
   ].join("\n");
 
   const res = await fetch("https://api.resend.com/emails", {
@@ -232,9 +240,10 @@ async function sendBackupEmail(lead: Lead, meta: Meta, inboundId: string | null)
       subject: `[Lead backup] Quote: ${oneLine(lead.name)} – ${serviceLabels(lead.service.split(", "))}`,
       text,
     }),
-    signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+    signal: AbortSignal.timeout(EMAIL_TIMEOUT_MS),
   });
   if (!res.ok) throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  return true;
 }
 
 /** Tells n8n (PixelScout) about the lead so it can send the Telegram
